@@ -1,14 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { cliente } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { NextRequest } from 'next/server';
 
-export async function GET(req: NextRequest, context: { params: { dni: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { dni: string } }
+) {
   try {
-    const dni = context.params.dni;
+    const dni = params.dni;
 
-    const result = await db.select().from(cliente).where(eq(cliente.dni, dni)).limit(1);
+    const result = await db
+      .select()
+      .from(cliente)
+      .where(eq(cliente.dni, dni))
+      .limit(1);
 
     if (result.length === 0) {
       return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
