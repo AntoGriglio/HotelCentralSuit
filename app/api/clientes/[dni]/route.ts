@@ -5,9 +5,9 @@ import { eq } from 'drizzle-orm';
 
 export async function GET(
   req: Request,
-  { params }: { params: { dni: string } }
+   context: { params: { dni: string } }
 ) {
-  const { dni } = params;
+  const { dni } = context.params;
 
   const result = await db.select().from(cliente).where(eq(cliente.dni, dni)).limit(1);
 
