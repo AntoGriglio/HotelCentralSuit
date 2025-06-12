@@ -17,22 +17,35 @@ export const {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Contraseña', type: 'password' },
       },
-      async authorize(credentials) {
-        const email = credentials?.email as string;
-        const password = credentials?.password as string;
+async authorize(credentials) {
+  const email = (credentials?.email as string)?.trim();
+  const password = (credentials?.password as string)?.trim();
 
-        if (!email || !password) throw new Error('Credenciales inválidas');
+  console.log('🟡 Credenciales recibidas:', { email, password });
+  console.log('📏 password:', `"${password}"`, 'len:', password.length);
 
-        const users = await db.select().from(usuario).where(eq(usuario.email, email)).limit(1);
-        const user = users[0];
+  if (!email || !password) throw new Error('Credenciales inválidas');
 
-        if (!user) throw new Error('Usuario no encontrado');
+  const users = await db.select().from(usuario).where(eq(usuario.email, email)).limit(1);
+  const user = users[0];
 
-        const valid = await bcrypt.compare(password, user.contrasenia);
-        if (!valid) throw new Error('Contraseña incorrecta');
+  console.log('🔵 Usuario encontrado:', user);
 
-        return { id: user.id, email: user.email, name: user.nombre };
-      },
+  if (!user) throw new Error('Usuario no encontrado');
+
+  const hash = user.contrasenia?.trim();
+  console.log('📏 hash:', `"${hash}"`, 'len:', hash.length);
+
+  const valid = await bcrypt.compare(password, hash);
+  console.log('🟣 Resultado de bcrypt.compare:', valid);
+console.log('🔬 Comparación manual hash === generado:', hash === await bcrypt.hash(password, 10)); // debe dar false
+
+  if (!valid) throw new Error('Contraseña incorrecta');
+
+  return { id: user.id, email: user.email, name: user.nombre };
+}
+
+,
     }),
   ],
   session: { strategy: 'jwt' },

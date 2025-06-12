@@ -5,15 +5,15 @@ import { eq } from 'drizzle-orm';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { dni: string } }
+  context: Promise<{ params: { dni: string } }>
 ) {
-  try {
-    const dni = params.dni;
+  const { params } = await context;
 
+  try {
     const result = await db
       .select()
       .from(cliente)
-      .where(eq(cliente.dni, dni))
+      .where(eq(cliente.dni, params.dni))
       .limit(1);
 
     if (result.length === 0) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { estadia, estado_estadia } from '@/db/schema';
+import { estadia, estado_estadia, unidad_habitacional } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function POST(req: Request) {
@@ -36,33 +36,36 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const data = await db
-  .select({
-    id: estadia.id,
-    cliente_dni: estadia.cliente_dni,
-    habitacion_id: estadia.habitacion_id,
-    cantidad_personas: estadia.cantidad_personas,
-    fecha_ingreso: estadia.fecha_ingreso,
-    fecha_egreso: estadia.fecha_egreso,
-    cochera: estadia.cochera,
-    desayuno: estadia.desayuno,
-    almuerzo: estadia.almuerzo,
-    cena: estadia.cena,
-    ropa_blanca: estadia.ropa_blanca,
-    precio_por_noche: estadia.precio_por_noche,
-    porcentaje_reserva: estadia.porcentaje_reserva,
-    monto_reserva: estadia.monto_reserva,
-    total: estadia.total,
-    estado: estadia.estado_id,
-    observaciones: estadia.observaciones,
-    estado_nombre: estado_estadia.nombre,
-  })
-  .from(estadia)
-  .leftJoin(estado_estadia, eq(estadia.estado_id, estado_estadia.id));
+      .select({
+        id: estadia.id,
+        cliente_dni: estadia.cliente_dni,
+        habitacion_id: estadia.habitacion_id,
+        cantidad_personas: estadia.cantidad_personas,
+        fecha_ingreso: estadia.fecha_ingreso,
+        fecha_egreso: estadia.fecha_egreso,
+        cochera: estadia.cochera,
+        desayuno: estadia.desayuno,
+        almuerzo: estadia.almuerzo,
+        cena: estadia.cena,
+        ropa_blanca: estadia.ropa_blanca,
+        precio_por_noche: estadia.precio_por_noche,
+        porcentaje_reserva: estadia.porcentaje_reserva,
+        monto_reserva: estadia.monto_reserva,
+        total: estadia.total,
+        observaciones: estadia.observaciones,
+        estado: estadia.estado_id,
+        estado_nombre: estado_estadia.nombre,
+        habitacion_numero: unidad_habitacional.numero,
+        habitacion_nombre: unidad_habitacional.nombre,
+      })
+      .from(estadia)
+      .leftJoin(estado_estadia, eq(estadia.estado_id, estado_estadia.id))
+      .leftJoin(unidad_habitacional, eq(estadia.habitacion_id, unidad_habitacional.id));
 
-    
     return NextResponse.json(data);
   } catch (error) {
     console.error('[ERROR GET /api/estadias]', error);
     return NextResponse.json({ error: 'Error al obtener estadías' }, { status: 500 });
   }
 }
+

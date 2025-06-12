@@ -20,31 +20,40 @@ export const tipo_pago = pgTable('tipo_pago', {
   descripcion: varchar('descripcion', { length: 255 }),
 });
 
-// Tabla tipo_unidad_habitacional
+// Tabla tipo_unidad_habitacional (tipos: alquilable, ocupacional)
 export const tipo_unidad_habitacional = pgTable('tipo_unidad_habitacional', {
   id: uuid('id').defaultRandom().primaryKey(),
   descripcion: varchar('descripcion', { length: 255 }),
 });
 
-// Tabla unidad_habitacional
+// Tabla unidad_habitacional (ajustada a estructura real de Supabase)
 export const unidad_habitacional = pgTable('unidad_habitacional', {
   id: uuid('id').defaultRandom().primaryKey(),
+
   capacidad_max: integer('capacidad_max'),
   capacidad_min: integer('capacidad_min'),
   cantidad_normal: integer('capacidad_normal'),
+
   camas_matrimonial: integer('camas_matrimonial'),
   camas_individual: integer('camas_individual'),
+
   pagina_turismo: varchar('pagina_turismo', { length: 255 }),
   de_que_pagina_es: varchar('de_que_pagina_es', { length: 255 }),
+nombre: varchar('nombre', { length: 255 }),
   piso: integer('piso'),
   numero: integer('numero'),
   metros_cuadrados: doublePrecision('metros_cuadrados'),
+
   balcon: boolean('balcon'),
   cantidad_banos: integer('cantidad_banos'),
   cantidad_habitaciones: integer('cantidad_habitaciones'),
+
   check_limpieza: boolean('check_limpieza').default(false),
+  tipo_habitacion_id: uuid('tipo_habitacion_id').references(() => tipo_habitacion.id),
+
   tipo_unidad_id: uuid('tipo_unidad_id').references(() => tipo_unidad_habitacional.id),
 });
+
 
 // Tabla estadia
 export const estadia = pgTable('estadia', {
@@ -116,3 +125,22 @@ export const estado_estadia = pgTable('estado_estadia', {
   id: uuid('id').defaultRandom().primaryKey(),
   nombre: varchar('nombre', { length: 255 }).notNull(),
 });
+
+export const item_precio = pgTable('item_precio', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  nombre: varchar('nombre', { length: 255 }).notNull(), 
+});
+
+export const precio = pgTable('precio', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  item_id: uuid('item_id').notNull().references(() => item_precio.id),
+  monto: doublePrecision('monto').notNull(),
+  desde: timestamp('desde').defaultNow(),
+  hasta: timestamp('hasta'), 
+});
+
+export const tipo_habitacion = pgTable('tipo_habitacion', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  nombre: varchar('nombre', { length: 255 }).notNull(),
+});
+

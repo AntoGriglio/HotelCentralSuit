@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 
 const coloresEstado: Record<string, string> = {
   'sin confirmar': '#9ca3af',
@@ -41,13 +43,29 @@ export default function ListaEstadias() {
     fetchData();
   }, []);
 
-  const estadiasFiltradas = estadias.filter((e) => {
-    const coincideEstado = filtroEstado ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase() : true;
-    const coincideCliente = filtroCliente ? e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) : true;
-    const coincideFechaIngreso = filtroFechaIngreso ? e.fecha_ingreso === filtroFechaIngreso : true;
-    const coincideFechaEgreso = filtroFechaEgreso ? e.fecha_egreso === filtroFechaEgreso : true;
-    return coincideEstado && coincideCliente && coincideFechaIngreso && coincideFechaEgreso;
-  });
+ const estadiasFiltradas = estadias.filter((e) => {
+  const coincideEstado = filtroEstado ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase() : true;
+  const coincideCliente = filtroCliente ? e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) : true;
+
+  const fechaIngresoValida = filtroFechaIngreso
+    ? new Date(e.fecha_ingreso) >= new Date(filtroFechaIngreso)
+    : true;
+
+  const fechaEgresoValida = filtroFechaEgreso
+    ? new Date(e.fecha_egreso) <= new Date(filtroFechaEgreso)
+    : true;
+
+  return coincideEstado && coincideCliente && fechaIngresoValida && fechaEgresoValida;
+});
+
+if (estadiasFiltradas.length === 0) {
+  return (
+    <div className="text-center text-[#2C3639] mt-6">
+      <p className="text-lg">No hay estadías que coincidan con los filtros seleccionados.</p>
+    </div>
+  );
+} 
+
 
   const totalPaginas = Math.ceil(estadiasFiltradas.length / ITEMS_POR_PAGINA);
   const estadiasPaginadas = estadiasFiltradas.slice(
@@ -78,167 +96,91 @@ export default function ListaEstadias() {
     setFiltroEstado('');
   };
 
-  const exportarCSV = () => {
-    const filas = [
-      [
-        'Nro Estadía', 'Cliente', 'Habitación', 'Ingreso', 'Egreso', 'Estado', 'Pagos'
-      ],
-      ...estadiasFiltradas.map((e) => [
-        e.nro_estadia,
-        e.cliente_dni ?? '—',
-        e.habitacion_id ?? '—',
-        e.fecha_ingreso,
-        e.fecha_egreso,
-        e.estado_nombre,
-        obtenerPagosEstadia(e.id)
-          .map((p) => `${new Date(p.fecha_pago).toLocaleDateString()} - ${p.monto} (${p.descripcion_tipo_pago})`)
-          .join(' | ')
-      ])
-    ];
-
-    const csv = filas.map((f) => f.map((c) => `"${c}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'estadias.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const totalPagos = pagos.reduce((acc, p) => acc + Number(p.monto), 0);
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Estadías ({estadiasFiltradas.length})</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-[#2C3639]">Estadías</h1>
         <div className="flex gap-2">
-          <button
-            onClick={exportarCSV}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Exportar CSV
-          </button>
-          <button
-            onClick={() => router.push('/estadias/nueva')}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            + Nueva estadía
-          </button>
+          <button className="bg-[#A27B5B] text-white px-4 py-2 rounded hover:bg-[#8b6244] transition">Exportar CSV</button>
+          <button onClick={() => router.push('/estadias/nueva')} className="bg-[#2C3639] text-white px-4 py-2 rounded hover:bg-[#1f272a] transition">+ Nueva estadía</button>
         </div>
       </div>
 
-      <p className="mb-4 text-sm text-gray-600">Total de pagos registrados: <strong>${totalPagos.toFixed(2)}</strong></p>
+      <p className="mb-4 text-sm text-[#2C3639]">Total pagos registrados: <strong>${totalPagos.toFixed(2)}</strong></p>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Filtrar por cliente (DNI)"
-          value={filtroCliente}
-          onChange={(e) => setFiltroCliente(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-
-        <input
-          type="date"
-          value={filtroFechaIngreso}
-          onChange={(e) => setFiltroFechaIngreso(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-
-        <input
-          type="date"
-          value={filtroFechaEgreso}
-          onChange={(e) => setFiltroFechaEgreso(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-
-        <select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
-        >
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <input type="text" placeholder="DNI" value={filtroCliente} onChange={(e) => setFiltroCliente(e.target.value)} className="p-2 border rounded" />
+        <input type="date" value={filtroFechaIngreso} onChange={(e) => setFiltroFechaIngreso(e.target.value)} className="p-2 border rounded" />
+        <input type="date" value={filtroFechaEgreso} onChange={(e) => setFiltroFechaEgreso(e.target.value)} className="p-2 border rounded" />
+        <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="p-2 border rounded">
           <option value="">Todos los estados</option>
           {Object.keys(coloresEstado).map((estado) => (
             <option key={estado} value={estado}>{estado}</option>
           ))}
         </select>
-
-        <button
-          onClick={limpiarFiltros}
-          className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
-        >
-          Limpiar filtros
-        </button>
+        <button onClick={limpiarFiltros} className="bg-[#DCD7C9] px-4 py-2 rounded hover:bg-[#c9c4b7]">Limpiar</button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-2 border">#</th>
-              <th className="p-2 border">Cliente</th>
-              <th className="p-2 border">Habitación</th>
-              <th className="p-2 border">Ingreso</th>
-              <th className="p-2 border">Egreso</th>
-              <th className="p-2 border">Estado</th>
-              <th className="p-2 border">Acciones</th>
+      <div className="overflow-x-auto border rounded-lg">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-[#2C3639] text-white">
+            <tr>
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">Cliente</th>
+              <th className="px-4 py-3">Habitación</th>
+              <th className="px-4 py-3">Ingreso</th>
+              <th className="px-4 py-3">Egreso</th>
+              <th className="px-4 py-3">Estado</th>
+              <th className="px-4 py-3">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {estadiasPaginadas.map((e) => (
               <>
-                <tr key={e.id} className="hover:bg-gray-50">
-                  <td className="p-2 border">{e.nro_estadia}</td>
-                  <td className="p-2 border">{e.cliente_dni ?? '—'}</td>
-                  <td className="p-2 border">{e.habitacion_id ?? '—'}</td>
-                  <td className="p-2 border">{e.fecha_ingreso}</td>
-                  <td className="p-2 border">{e.fecha_egreso}</td>
-                  <td className="p-2 border">
-                    <span
-                      className="px-2 py-1 rounded text-white text-sm"
-                      style={{ backgroundColor: coloresEstado[e.estado_nombre?.toLowerCase()] || '#6b7280' }}
-                    >
-                      {e.estado_nombre}
-                    </span>
-                  </td>
-                  <td className="p-2 border flex flex-col gap-1">
-                    <button
-                      onClick={() => router.push(`/pagos?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)}
-                      className="text-sm bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
-                    >
-                      + Pago
-                    </button>
-                    <button
-                      onClick={() => router.push(`/estadias/editar/${e.id}`)}
-                      className="text-sm bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
-                    >
-                      Modificar
-                    </button>
-                    <button
-                      onClick={() => eliminarEstadia(e.id)}
-                      className="text-sm bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
-                    >
-                      Eliminar
-                    </button>
-                    <button
-                      onClick={() => setExpandirPagos((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
-                      className="text-sm bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
-                    >
-                      {expandirPagos[e.id] ? 'Ocultar Pagos' : 'Ver Pagos'}
-                    </button>
+                <tr key={e.id} className="border-b hover:bg-[#2C3639]">
+                  <td className="px-4 py-2">{e.nro_estadia}</td>
+                  <td className="px-4 py-2">{e.cliente_dni ?? '—'}</td>
+                  <td className="px-4 py-2">{e.habitacion_numero - e.habitacion_nombre }</td>
+                  <td className="px-4 py-2">{e.fecha_ingreso}</td>
+                  <td className="px-4 py-2">{e.fecha_egreso}</td>
+<td className="px-4 py-2">
+  <span className="inline-block min-w-[150px] text-center px-3 py-1 rounded-md text-white text-sm font-medium" style={{ backgroundColor: coloresEstado[e.estado_nombre?.toLowerCase()] || '#6b7280' }}>
+    {e.estado_nombre}
+  </span>
+</td>
+                  <td className="px-4 py-2">
+                    <div className="flex gap-2 flex-wrap">
+                      <button onClick={() => router.push(`/pagos?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)} title="Agregar pago" className="bg-[#3F4E4F] text-white p-2 rounded hover:bg-[#2C3639]">
+                        <DollarSign size={16} />
+                      </button>
+                      <button onClick={() => router.push(`/estadias/editar/${e.id}`)} title="Modificar" className="bg-[#A27B5B] text-white p-2 rounded hover:bg-[#8b6244]">
+                        <Pencil size={16} />
+                      </button>
+                    {(e.estado_nombre?.toLowerCase() === 'sin confirmar' || e.estado_nombre?.toLowerCase() === 'pendiente') && (
+  <button
+    onClick={() => eliminarEstadia(e.id)}
+    title="Eliminar"
+    className="bg-red-600 text-white p-2 rounded hover:bg-red-700"
+  >
+    <Trash2 size={16} />
+  </button>
+)}
+
+                      <button onClick={() => setExpandirPagos((prev) => ({ ...prev, [e.id]: !prev[e.id] }))} title="Ver pagos" className="bg-[#DCD7C9] text-[#2C3639] p-2 rounded hover:bg-[#c9c4b7]">
+                        {expandirPagos[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 {expandirPagos[e.id] && (
                   <tr>
-                    <td colSpan={7} className="p-2 border bg-gray-50">
+                    <td colSpan={7} className="px-4 py-2 bg-[#2C3639]">
                       <strong>Pagos:</strong>
                       <ul className="ml-4 list-disc text-sm">
                         {obtenerPagosEstadia(e.id).map((p) => (
-                          <li key={p.id}>
-                            {new Date(p.fecha_pago).toLocaleDateString()} - {p.monto} ({p.descripcion_tipo_pago})
-                          </li>
+                          <li key={p.id}>{new Date(p.fecha_pago).toLocaleDateString()} - $:{p.monto} ({p.descripcion_tipo_pago})</li>
                         ))}
                         {obtenerPagosEstadia(e.id).length === 0 && <li>Sin pagos registrados</li>}
                       </ul>
@@ -252,15 +194,9 @@ export default function ListaEstadias() {
       </div>
 
       {totalPaginas > 1 && (
-        <div className="flex justify-center mt-4 gap-2">
+        <div className="flex justify-center mt-6 gap-2">
           {Array.from({ length: totalPaginas }, (_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => setPaginaActual(i + 1)}
-              className={`px-3 py-1 rounded ${paginaActual === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            >
-              {i + 1}
-            </button>
+            <button key={i + 1} onClick={() => setPaginaActual(i + 1)} className={`px-3 py-1 rounded-lg ${paginaActual === i + 1 ? 'bg-[#2C3639] text-white' : 'bg-[#DCD7C9] text-black'}`}>{i + 1}</button>
           ))}
         </div>
       )}
