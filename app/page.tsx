@@ -1,6 +1,6 @@
 // app/page.tsx
+import { redirect } from 'next/navigation'
 
-export default async function Home() {
-
-  return <h1>¡Funciona!</h1>;
+export default function Home() {
+  redirect('/login') // o la ruta que uses para login
 }
