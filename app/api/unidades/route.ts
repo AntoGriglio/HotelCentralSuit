@@ -25,8 +25,9 @@ export async function POST(req: Request) {
   pagina_turismo: null,
   de_que_pagina_es: null,
   nombre: data.nombre || null,
-  tipo_habitacion_id: data.tipo_habitacion_id || null,
-});
+  tipo_habitacion_id: data.tipoHabitacionId || null, // ✅ CAMBIADO AQUÍ
+})
+
 
     return NextResponse.json({ message: 'Unidad habitacional creada con éxito' });
   } catch (error) {

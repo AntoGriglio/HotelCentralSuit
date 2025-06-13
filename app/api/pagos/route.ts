@@ -1,14 +1,12 @@
-// app/api/pagos/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { pago, estadia, tipo_pago } from '@/db/schema'; // ← agregamos tipo_pago acá
+import { pago, estadia, tipo_pago } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
 
-
 const TIPOS_PAGO = {
   RESERVA: '20938997-7fd2-4e74-9862-819b36a52312',
-  SALDO_TOTAL: 'ID_DEL_TIPO_SALDO_TOTAL',
+  SALDO_TOTAL: '30506e89-1ecb-4f12-afe6-32243421ecec', // <-- actualizá esto con el UUID real
 };
 
 export async function POST(req: Request) {
@@ -19,7 +17,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 });
     }
 
-    // Registrar el pago
+    // Registrar el nuevo pago
     await db.insert(pago).values({
       estadia_id: data.estadia_id,
       tipo_pago_id: data.tipo_pago_id,
@@ -28,20 +26,45 @@ export async function POST(req: Request) {
       monto: Number(data.monto),
     });
 
-    // Cargar estados de forma dinámica
-    const ESTADOS = await obtenerEstadosPorNombre();
+    // Buscar los datos de la estadía
+    const [estadiaData] = await db
+      .select()
+      .from(estadia)
+      .where(eq(estadia.id, data.estadia_id))
+      .limit(1);
 
-    let nuevoEstado: string | null = null;
-
-    if (data.tipo_pago_id === TIPOS_PAGO.RESERVA) {
-      nuevoEstado = ESTADOS['reservado'];
-    } else if (data.tipo_pago_id === TIPOS_PAGO.SALDO_TOTAL) {
-      nuevoEstado = ESTADOS['pagado'];
+    if (!estadiaData) {
+      return NextResponse.json({ error: 'Estadía no encontrada' }, { status: 404 });
     }
 
-    if (nuevoEstado) {
+    // Buscar pagos anteriores
+    const pagosPrevios = await db
+      .select({ monto: pago.monto })
+      .from(pago)
+      .where(eq(pago.estadia_id, data.estadia_id));
+
+    const sumaPagos = pagosPrevios.reduce((acc, p) => acc + Number(p.monto), 0);
+    const totalEstadia = Number(estadiaData.total);
+    const pendiente = totalEstadia - sumaPagos;
+
+    const ESTADOS = await obtenerEstadosPorNombre();
+    const estadoPagado = ESTADOS['pagado'];
+    const estadoReservado = ESTADOS['reservado'];
+
+    // Cambiar estado si corresponde
+    if (pendiente <= 0) {
+      if (!estadoPagado) {
+        return NextResponse.json({ error: 'Estado "pagado" no definido' }, { status: 500 });
+      }
       await db.update(estadia)
-        .set({ estado_id: nuevoEstado })
+        .set({ estado_id: estadoPagado })
+        .where(eq(estadia.id, data.estadia_id));
+    } else if (data.tipo_pago_id === TIPOS_PAGO.RESERVA) {
+      if (!estadoReservado) {
+        return NextResponse.json({ error: 'Estado "reservado" no definido' }, { status: 500 });
+      }
+      await db.update(estadia)
+        .set({ estado_id: estadoReservado })
         .where(eq(estadia.id, data.estadia_id));
     }
 
@@ -51,6 +74,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Error al registrar el pago' }, { status: 500 });
   }
 }
+
 export async function GET() {
   try {
     const result = await db
@@ -61,7 +85,6 @@ export async function GET() {
         fecha_pago: pago.fecha_pago,
         comprobante_pago: pago.comprobante_pago,
         tipo_pago_id: pago.tipo_pago_id,
-        // Agregá esto si querés la descripción del tipo
         descripcion_tipo_pago: tipo_pago.descripcion,
       })
       .from(pago)
@@ -73,4 +96,3 @@ export async function GET() {
     return NextResponse.json({ error: 'Error al obtener pagos' }, { status: 500 });
   }
 }
-

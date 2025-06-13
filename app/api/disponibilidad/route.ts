@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { eq, and, sql, gte, lt, gt } from 'drizzle-orm';
-import { db } from '../../../lib/db'; // <- actualizá si tu path es distinto
+import { db } from '../../../lib/db';
 import {
   estadia,
   unidad_habitacional,
@@ -23,9 +23,8 @@ export async function GET(request: Request) {
     .from(estadia)
     .where(
       and(
-lt(estadia.fecha_ingreso, fechaEgreso),
-gt(estadia.fecha_egreso, fechaIngreso)
-
+        lt(estadia.fecha_ingreso, fechaEgreso),
+        gt(estadia.fecha_egreso, fechaIngreso)
       )
     );
 
@@ -39,13 +38,30 @@ gt(estadia.fecha_egreso, fechaIngreso)
   }
 
   if (tipoHabitacionId) {
-    condiciones.push(eq(unidad_habitacional.tipo_habitacion_id, tipoHabitacionId));
-  }
+  condiciones.push(eq(unidad_habitacional.tipo_habitacion_id, tipoHabitacionId));
+}
+
 
   const disponibles = await db
-    .select()
+    .select({
+      unidad_habitacional: {
+        id: unidad_habitacional.id,
+        nombre: unidad_habitacional.nombre,
+        cantidad_normal: unidad_habitacional.cantidad_normal,
+        piso: unidad_habitacional.piso,
+        numero: unidad_habitacional.numero,
+        tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id
+      },
+      tipo_unidad_habitacional: {
+        id: tipo_unidad_habitacional.id,
+        descripcion: tipo_unidad_habitacional.descripcion
+      }
+    })
     .from(unidad_habitacional)
-    .innerJoin(tipo_unidad_habitacional, eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id))
+    .innerJoin(
+      tipo_unidad_habitacional,
+      eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id)
+    )
     .where(and(...condiciones));
 
   return Response.json(disponibles);

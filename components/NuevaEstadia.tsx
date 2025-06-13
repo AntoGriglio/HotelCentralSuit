@@ -58,7 +58,7 @@ useEffect(() => {
     fechaEgreso: fecha_egreso || prev.fechaEgreso,
     cantidadPersonas: cantidad || prev.cantidadPersonas,
   }))
-}, [])
+}, [searchParams])
 useEffect(() => {
   const precio = parseFloat(estadia.precioPorNoche)
   const porcentaje = parseFloat(estadia.porcentajeReserva)
@@ -118,7 +118,7 @@ useEffect(() => {
 
  const buscarCliente = async () => {
   try {
-    const res = await fetch(`/api/clientes?dni=${dni}`) // ✅ query param
+    const res = await fetch(`/api/clientes?dni=${dni}`)
     if (res.ok) {
       const data = await res.json()
       setCliente(data)

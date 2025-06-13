@@ -23,9 +23,19 @@ export default function Disponibilidad() {
     if (cantidad) params.append('cantidad_personas', cantidad);
     if (tipoHabitacion) params.append('tipo_habitacion_id', tipoHabitacion);
 
-    const res = await fetch(`/api/disponibilidad?${params.toString()}`);
-    const data = await res.json();
-    setHabitaciones(data);
+    try {
+      const res = await fetch(`/api/disponibilidad?${params.toString()}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setHabitaciones(data);
+      } else {
+        console.error('Respuesta inesperada al buscar habitaciones:', data);
+        setHabitaciones([]);
+      }
+    } catch (err) {
+      console.error('Error al buscar habitaciones:', err);
+      setHabitaciones([]);
+    }
   };
 
   const limpiarFiltros = () => {
@@ -37,9 +47,23 @@ export default function Disponibilidad() {
   };
 
   useEffect(() => {
-    fetch('/api/tipos-habitacion')
-      .then(res => res.json())
-      .then(setTipos);
+    const cargarTipos = async () => {
+      try {
+        const res = await fetch('/api/tipos-habitacion');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setTipos(data);
+        } else {
+          console.error('Respuesta inesperada de tipos de habitación:', data);
+          setTipos([]);
+        }
+      } catch (error) {
+        console.error('Error al cargar tipos de habitación:', error);
+        setTipos([]);
+      }
+    };
+
+    cargarTipos();
   }, []);
 
   return (
@@ -52,7 +76,9 @@ export default function Disponibilidad() {
         <input type="number" value={cantidad} onChange={e => setCantidad(e.target.value)} placeholder="Personas" className="p-2 border rounded" />
         <select value={tipoHabitacion} onChange={e => setTipoHabitacion(e.target.value)} className="p-2 border rounded">
           <option value="">Todos los tipos</option>
-          {tipos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+          {Array.isArray(tipos) && tipos.map(t => (
+            <option key={t.id} value={t.id}>{t.nombre}</option>
+          ))}
         </select>
       </div>
 

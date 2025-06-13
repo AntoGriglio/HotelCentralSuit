@@ -1,4 +1,4 @@
-import { pgTable, uuid, serial, varchar, integer, boolean, timestamp, date, doublePrecision } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, serial, varchar, integer, boolean, timestamp, date, doublePrecision, text } from 'drizzle-orm/pg-core';
 
 // Tabla cliente
 export const cliente = pgTable('cliente', {
@@ -88,6 +88,7 @@ export const pago = pgTable('pago', {
   comprobante_pago: varchar('comprobante_pago', { length: 255 }),
   tipo_pago_id: uuid('tipo_pago_id').references(() => tipo_pago.id),
   monto: doublePrecision('monto'),
+   forma_pago_id: uuid('forma_pago_id').references(() => forma_pago.id),
 });
 
 // Tabla limpieza
@@ -144,3 +145,7 @@ export const tipo_habitacion = pgTable('tipo_habitacion', {
   nombre: varchar('nombre', { length: 255 }).notNull(),
 });
 
+export const forma_pago = pgTable('forma_pago', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  descripcion: text('descripcion').notNull(),
+});
