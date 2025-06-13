@@ -1,9 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
-export default function CambiarPrecioPage({ params }: { params: { id: string } }) {
-  const itemId = params.id
+export default function CambiarPrecioPage() {
+  const searchParams = useSearchParams()
+  const itemId = searchParams.get('id') ?? ''
+
   const [nuevoPrecio, setNuevoPrecio] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -27,6 +30,7 @@ export default function CambiarPrecioPage({ params }: { params: { id: string } }
     } else {
       setMensaje('❌ Error al actualizar el precio')
     }
+
     setCargando(false)
   }
 

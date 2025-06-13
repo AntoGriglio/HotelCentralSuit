@@ -1,11 +1,58 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { estadia, estado_estadia, unidad_habitacional } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { esTransicionValida } from '@/lib/estadiaEstados';
+import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
 
-export async function POST(req: Request) {
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
+
+  try {
+    if (id) {
+      const result = await db.select().from(estadia).where(eq(estadia.id, id)).limit(1);
+      if (result.length === 0) {
+        return NextResponse.json({ error: 'Estadía no encontrada' }, { status: 404 });
+      }
+      return NextResponse.json(result[0]);
+    } else {
+      const data = await db
+        .select({
+          id: estadia.id,
+          cliente_dni: estadia.cliente_dni,
+          habitacion_id: estadia.habitacion_id,
+          cantidad_personas: estadia.cantidad_personas,
+          fecha_ingreso: estadia.fecha_ingreso,
+          fecha_egreso: estadia.fecha_egreso,
+          cochera: estadia.cochera,
+          desayuno: estadia.desayuno,
+          almuerzo: estadia.almuerzo,
+          cena: estadia.cena,
+          ropa_blanca: estadia.ropa_blanca,
+          precio_por_noche: estadia.precio_por_noche,
+          porcentaje_reserva: estadia.porcentaje_reserva,
+          monto_reserva: estadia.monto_reserva,
+          total: estadia.total,
+          observaciones: estadia.observaciones,
+          estado: estadia.estado_id,
+          estado_nombre: estado_estadia.nombre,
+          habitacion_numero: unidad_habitacional.numero,
+          habitacion_nombre: unidad_habitacional.nombre,
+        })
+        .from(estadia)
+        .leftJoin(estado_estadia, eq(estadia.estado_id, estado_estadia.id))
+        .leftJoin(unidad_habitacional, eq(estadia.habitacion_id, unidad_habitacional.id));
+      return NextResponse.json(data);
+    }
+  } catch (error) {
+    console.error('[ERROR GET /api/estadias]', error);
+    return NextResponse.json({ error: 'Error al obtener estadía(s)' }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
   const data = await req.json();
-
   try {
     await db.insert(estadia).values({
       cliente_dni: data.cliente_dni,
@@ -33,39 +80,110 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
-  try {
-    const data = await db
-      .select({
-        id: estadia.id,
-        cliente_dni: estadia.cliente_dni,
-        habitacion_id: estadia.habitacion_id,
-        cantidad_personas: estadia.cantidad_personas,
-        fecha_ingreso: estadia.fecha_ingreso,
-        fecha_egreso: estadia.fecha_egreso,
-        cochera: estadia.cochera,
-        desayuno: estadia.desayuno,
-        almuerzo: estadia.almuerzo,
-        cena: estadia.cena,
-        ropa_blanca: estadia.ropa_blanca,
-        precio_por_noche: estadia.precio_por_noche,
-        porcentaje_reserva: estadia.porcentaje_reserva,
-        monto_reserva: estadia.monto_reserva,
-        total: estadia.total,
-        observaciones: estadia.observaciones,
-        estado: estadia.estado_id,
-        estado_nombre: estado_estadia.nombre,
-        habitacion_numero: unidad_habitacional.numero,
-        habitacion_nombre: unidad_habitacional.nombre,
-      })
-      .from(estadia)
-      .leftJoin(estado_estadia, eq(estadia.estado_id, estado_estadia.id))
-      .leftJoin(unidad_habitacional, eq(estadia.habitacion_id, unidad_habitacional.id));
+export async function PUT(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-    return NextResponse.json(data);
+  const data = await req.json();
+
+  try {
+    await db.update(estadia)
+      .set({
+        cliente_dni: data.cliente_dni,
+        habitacion_id: data.habitacion_id,
+        cantidad_personas: Number(data.cantidad_personas),
+        fecha_ingreso: data.fecha_ingreso,
+        fecha_egreso: data.fecha_egreso,
+        cochera: Boolean(data.cochera),
+        desayuno: Boolean(data.desayuno),
+        almuerzo: Boolean(data.almuerzo),
+        cena: Boolean(data.cena),
+        ropa_blanca: Boolean(data.ropa_blanca),
+        precio_por_noche: parseFloat(data.precio_por_noche),
+        porcentaje_reserva: parseFloat(data.porcentaje_reserva),
+        monto_reserva: parseFloat(data.monto_reserva),
+        total: parseFloat(data.total),
+        estado_id: data.estado_id,
+        observaciones: data.observaciones || '',
+        canal_id: data.canal_id,
+      })
+      .where(eq(estadia.id, id));
+
+    return NextResponse.json({ message: 'Estadía actualizada correctamente' });
   } catch (error) {
-    console.error('[ERROR GET /api/estadias]', error);
-    return NextResponse.json({ error: 'Error al obtener estadías' }, { status: 500 });
+    console.error('[ERROR PUT /api/estadias]', error);
+    return NextResponse.json({ error: 'Error al actualizar estadía' }, { status: 500 });
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
+  const { estado_nuevo, tieneCliente = false, tienePagoReserva = false, tienePagoTotal = false } = await req.json();
+
+  if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+
+  try {
+    const result = await db.select().from(estadia).where(eq(estadia.id, id)).limit(1);
+    const actual = result[0];
+    if (!actual) return NextResponse.json({ error: 'Estadía no encontrada' }, { status: 404 });
+
+    if (!actual.estado_id) {
+      return NextResponse.json({ error: 'La estadía no tiene un estado asignado aún.' }, { status: 400 });
+    }
+
+    const estadoActual = actual.estado_id;
+
+    if (!esTransicionValida(estadoActual, estado_nuevo, { tieneCliente, tienePagoReserva, tienePagoTotal })) {
+      return NextResponse.json({ error: 'Transición de estado inválida' }, { status: 400 });
+    }
+
+    await db.update(estadia)
+      .set({ estado_id: estado_nuevo })
+      .where(eq(estadia.id, id));
+
+    return NextResponse.json({ message: 'Estado actualizado' });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Error al actualizar estado' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+
+  try {
+    const result = await db.select().from(estadia).where(eq(estadia.id, id)).limit(1);
+    const actual = result[0];
+    if (!actual) return NextResponse.json({ error: 'Estadía no encontrada' }, { status: 404 });
+
+    const ESTADOS = await obtenerEstadosPorNombre();
+    const estadoActual = actual.estado_id;
+
+    const estadoCancelada = ESTADOS['cancelada'];
+    if (!estadoCancelada) {
+      return NextResponse.json({ error: 'No se encontró el estado "cancelada"' }, { status: 500 });
+    }
+
+    if (!estadoActual) {
+      return NextResponse.json({ error: 'La estadía no tiene un estado definido' }, { status: 400 });
+    }
+
+    const puedeCancelar = [ESTADOS['sin confirmar'], ESTADOS['pendiente']].includes(estadoActual);
+    if (!puedeCancelar) {
+      return NextResponse.json({ error: 'Solo se pueden cancelar estadías sin confirmar o pendientes.' }, { status: 400 });
+    }
+
+    await db.update(estadia)
+      .set({ estado_id: estadoCancelada })
+      .where(eq(estadia.id, id));
+
+    return NextResponse.json({ message: 'Estadía cancelada correctamente' });
+  } catch (error) {
+    console.error('[ERROR DELETE /api/estadias]', error);
+    return NextResponse.json({ error: 'Error al cancelar estadía' }, { status: 500 });
+  }
+}

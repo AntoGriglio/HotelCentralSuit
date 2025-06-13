@@ -76,18 +76,19 @@ if (estadiasFiltradas.length === 0) {
   const obtenerPagosEstadia = (id: string) => pagos.filter((p) => p.estadia_id === id);
 
   const eliminarEstadia = async (id: string) => {
-    if (!confirm('Seguro que querés eliminar esta estadía?')) return;
+  if (!confirm('¿Seguro que querés eliminar esta estadía?')) return;
 
-    const res = await fetch(`/api/estadias/${id}`, {
-      method: 'DELETE',
-    });
+  const res = await fetch(`/api/estadias?id=${id}`, {
+    method: 'DELETE',
+  });
 
-    if (res.ok) {
-      setEstadias((prev) => prev.filter((e) => e.id !== id));
-    } else {
-      alert('No se pudo eliminar. Solo pueden eliminarse las que están sin confirmar o anuladas sin pagos.');
-    }
-  };
+  if (res.ok) {
+    setEstadias((prev) => prev.filter((e) => e.id !== id));
+  } else {
+    alert('No se pudo eliminar. Solo pueden eliminarse las que están sin confirmar o anuladas sin pagos.');
+  }
+};
+
 
   const limpiarFiltros = () => {
     setFiltroCliente('');
@@ -155,9 +156,14 @@ if (estadiasFiltradas.length === 0) {
                       <button onClick={() => router.push(`/pagos?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)} title="Agregar pago" className="bg-[#3F4E4F] text-white p-2 rounded hover:bg-[#2C3639]">
                         <DollarSign size={16} />
                       </button>
-                      <button onClick={() => router.push(`/estadias/editar/${e.id}`)} title="Modificar" className="bg-[#A27B5B] text-white p-2 rounded hover:bg-[#8b6244]">
-                        <Pencil size={16} />
-                      </button>
+                     <button
+  onClick={() => router.push(`/estadias/editar?id=${e.id}`)}
+  title="Modificar"
+  className="bg-[#A27B5B] text-white p-2 rounded hover:bg-[#8b6244]"
+>
+  <Pencil size={16} />
+</button>
+
                     {(e.estado_nombre?.toLowerCase() === 'sin confirmar' || e.estado_nombre?.toLowerCase() === 'pendiente') && (
   <button
     onClick={() => eliminarEstadia(e.id)}

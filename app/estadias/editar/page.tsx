@@ -2,10 +2,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function EditarEstadia({ params }: { params: { id: string } }) {
+export default function EditarEstadia() {
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id') ?? ''
   const router = useRouter()
+
   const [estadia, setEstadia] = useState<any>(null)
   const [cliente, setCliente] = useState<any>(null)
   const [dni, setDni] = useState('')
@@ -15,20 +18,37 @@ export default function EditarEstadia({ params }: { params: { id: string } }) {
   const [mensaje, setMensaje] = useState('')
 
   useEffect(() => {
-    fetch(`/api/estadias/${params.id}`).then(res => res.json()).then(setEstadia).catch(console.error)
-    fetch('/api/unidades').then(res => res.json()).then(setHabitaciones)
-    fetch('/api/canales').then(res => res.json()).then(setCanales)
-    fetch('/api/estados').then(res => res.json()).then(setEstados)
-  }, [params.id])
+    if (!id) return
+
+    fetch(`/api/estadias?id=${id}`)
+      .then(res => res.json())
+      .then(setEstadia)
+      .catch(console.error)
+
+    fetch('/api/unidades')
+      .then(res => res.json())
+      .then(setHabitaciones)
+
+    fetch('/api/canales')
+      .then(res => res.json())
+      .then(setCanales)
+
+    fetch('/api/estados')
+      .then(res => res.json())
+      .then(setEstados)
+  }, [id])
 
   useEffect(() => {
     if (estadia?.cliente_dni) {
-      fetch(`/api/clientes/${estadia.cliente_dni}`).then(res => res.json()).then(setCliente).catch(() => setCliente(null))
+      fetch(`/api/clientes?dni=${estadia.cliente_dni}`)
+        .then(res => res.json())
+        .then(setCliente)
+        .catch(() => setCliente(null))
     }
   }, [estadia])
 
   const buscarCliente = async () => {
-    const res = await fetch(`/api/clientes/${dni}`)
+    const res = await fetch(`/api/clientes?dni=${dni}`)
     if (res.ok) {
       const data = await res.json()
       setCliente(data)
@@ -63,7 +83,7 @@ export default function EditarEstadia({ params }: { params: { id: string } }) {
       estado_id: estadia.estado_id,
     }
 
-    const res = await fetch(`/api/estadias/${params.id}`, {
+    const res = await fetch(`/api/estadias?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dataToSend),
@@ -93,13 +113,19 @@ export default function EditarEstadia({ params }: { params: { id: string } }) {
               onChange={(e) => setDni(e.target.value)}
               className="p-2 border border-[#A27B5B] rounded w-full text-[#2C3639]"
             />
-            <button type="button" onClick={buscarCliente} className="bg-[#A27B5B] text-white px-4 py-2 rounded hover:bg-[#8e664e]">
+            <button
+              type="button"
+              onClick={buscarCliente}
+              className="bg-[#A27B5B] text-white px-4 py-2 rounded hover:bg-[#8e664e]"
+            >
               Buscar Cliente
             </button>
           </div>
 
           {cliente && (
-            <p className="text-sm text-green-700">Cliente: {cliente.nombre_completo} ({cliente.email})</p>
+            <p className="text-sm text-green-700">
+              Cliente: {cliente.nombre_completo} ({cliente.email})
+            </p>
           )}
 
           <select

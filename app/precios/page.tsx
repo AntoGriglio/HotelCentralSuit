@@ -55,7 +55,8 @@ export default function ListaPrecios() {
                   <td className="px-4 py-2">{item.desde ? new Date(item.desde).toLocaleDateString() : '-'}</td>
                   <td className="px-4 py-2 flex gap-2 justify-center">
                     <button
-                      onClick={() => router.push(`/precios/nuevo/${item.item_id}`)}
+                     onClick={() => router.push(`/precios/nuevo?id=${item.item_id}`)}
+
                       className="text-sm bg-[#A27B5B] text-white px-3 py-1 rounded hover:bg-[#8b6244]"
                     >
                       Modificar

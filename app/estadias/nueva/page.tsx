@@ -116,22 +116,22 @@ useEffect(() => {
     }
   }, [estadia.fechaIngreso, estadia.fechaEgreso, estadia.precioPorNoche, estadia.porcentajeReserva])
 
-  const buscarCliente = async () => {
-    try {
-      const res = await fetch(`/api/clientes/${dni}`)
-      if (res.ok) {
-        const data = await res.json()
-        setCliente(data)
-        setMensaje('')
-      } else {
-        setCliente(null)
-        setNuevoCliente((prev) => ({ ...prev, dni }))
-        setMostrarModal(true)
-      }
-    } catch (error) {
-      console.error(error)
+ const buscarCliente = async () => {
+  try {
+    const res = await fetch(`/api/clientes?dni=${dni}`) // ✅ query param
+    if (res.ok) {
+      const data = await res.json()
+      setCliente(data)
+      setMensaje('')
+    } else {
+      setCliente(null)
+      setNuevoCliente((prev) => ({ ...prev, dni }))
+      setMostrarModal(true)
     }
+  } catch (error) {
+    console.error(error)
   }
+}
 
   const registrarNuevoCliente = async () => {
     try {
