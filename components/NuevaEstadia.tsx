@@ -1,12 +1,18 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 export default function RegistrarEstadia() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const reciboRef = useRef<HTMLDivElement>(null)
 
   const [dni, setDni] = useState('')
   const [cliente, setCliente] = useState<any>(null)
@@ -15,98 +21,52 @@ export default function RegistrarEstadia() {
   const [estados, setEstados] = useState<any[]>([])
   const [mensaje, setMensaje] = useState('')
   const [mostrarModal, setMostrarModal] = useState(false)
-  const [nuevoCliente, setNuevoCliente] = useState({
-    dni: '',
-    nombre_completo: '',
-    email: '',
-    telefono: ''
-  })
+  const [nuevoCliente, setNuevoCliente] = useState({ dni: '', nombre_completo: '', email: '', telefono: '' })
+  const [cantidadNoches, setCantidadNoches] = useState<number>(0)
 
   const [estadia, setEstadia] = useState({
-    cantidadPersonas: '',
-    fechaIngreso: '',
-    fechaEgreso: '',
-    cochera: false,
-    desayuno: false,
-    almuerzo: false,
-    cena: false,
-    ropaBlanca: false,
-    precioPorNoche: '',
-    porcentajeReserva: '',
-    montoReserva: '',
-    total: '',
-    estado: '',
-    habitacionId: '',
-    observaciones: '',
-    canalId: '',
-    estadoId: '',
+    cantidadPersonas: '', fechaIngreso: '', fechaEgreso: '', cochera: false,
+    desayuno: false, almuerzo: false, cena: false, ropaBlanca: false,
+    precioPorNoche: '', porcentajeReserva: '', montoReserva: '', total: '',
+    estado: '', habitacionId: '', observaciones: '', canalId: '', estadoId: '',
   })
 
+  useEffect(() => {
+    const habitacion_id = searchParams.get('habitacion_id')
+    const fecha_ingreso = searchParams.get('fecha_ingreso')
+    const fecha_egreso = searchParams.get('fecha_egreso')
+    const cantidad = searchParams.get('cantidad_personas')
 
-const searchParams = useSearchParams()
-
-useEffect(() => {
-  const habitacion_id = searchParams.get('habitacion_id')
-  const fecha_ingreso = searchParams.get('fecha_ingreso')
-  const fecha_egreso = searchParams.get('fecha_egreso')
-  const cantidad = searchParams.get('cantidad_personas')
-
-  setEstadia(prev => ({
-    ...prev,
-    habitacionId: habitacion_id || prev.habitacionId,
-    fechaIngreso: fecha_ingreso || prev.fechaIngreso,
-    fechaEgreso: fecha_egreso || prev.fechaEgreso,
-    cantidadPersonas: cantidad || prev.cantidadPersonas,
-  }))
-}, [searchParams])
-useEffect(() => {
-  const precio = parseFloat(estadia.precioPorNoche)
-  const porcentaje = parseFloat(estadia.porcentajeReserva)
-  const fechaIngreso = new Date(estadia.fechaIngreso)
-  const fechaEgreso = new Date(estadia.fechaEgreso)
-
-  if (!isNaN(precio) && estadia.fechaIngreso && estadia.fechaEgreso) {
-    const diferenciaEnMs = fechaEgreso.getTime() - fechaIngreso.getTime()
-    const noches = Math.ceil(diferenciaEnMs / (1000 * 60 * 60 * 24))
-
-    if (noches > 0) {
-      const totalCalculado = noches * precio
-      const montoReservaCalculado = !isNaN(porcentaje)
-        ? (totalCalculado * porcentaje) / 100
-        : 0
-
-      setEstadia(prev => ({
-        ...prev,
-        montoReserva: montoReservaCalculado.toFixed(2),
-        total: totalCalculado.toFixed(2),
-      }))
-    }
-  }
-}, [
-  estadia.fechaIngreso,
-  estadia.fechaEgreso,
-  estadia.precioPorNoche,
-  estadia.porcentajeReserva
-])
+    setEstadia(prev => ({
+      ...prev,
+      habitacionId: habitacion_id || prev.habitacionId,
+      fechaIngreso: fecha_ingreso || prev.fechaIngreso,
+      fechaEgreso: fecha_egreso || prev.fechaEgreso,
+      cantidadPersonas: cantidad || prev.cantidadPersonas,
+    }))
+  }, [searchParams])
 
   useEffect(() => {
-    fetch('/api/unidades').then(res => res.json()).then(setHabitaciones).catch(console.error)
+    fetch('/api/unidades').then(res => res.json()).then(data => {
+      setHabitaciones(data)
+    }).catch(console.error)
+
     fetch('/api/canales').then(res => res.json()).then(setCanales).catch(console.error)
     fetch('/api/estados').then(res => res.json()).then(setEstados).catch(console.error)
+  }, [])
 
+  useEffect(() => {
     const precio = parseFloat(estadia.precioPorNoche)
     const porcentaje = parseFloat(estadia.porcentajeReserva)
     const fechaIngreso = new Date(estadia.fechaIngreso)
     const fechaEgreso = new Date(estadia.fechaEgreso)
-
     const diferenciaEnMs = fechaEgreso.getTime() - fechaIngreso.getTime()
     const noches = Math.ceil(diferenciaEnMs / (1000 * 60 * 60 * 24))
+    setCantidadNoches(noches)
 
     if (!isNaN(precio) && noches > 0) {
       const totalCalculado = noches * precio
-      const montoReservaCalculado = !isNaN(porcentaje)
-        ? (totalCalculado * porcentaje) / 100
-        : 0
+      const montoReservaCalculado = !isNaN(porcentaje) ? (totalCalculado * porcentaje) / 100 : 0
 
       setEstadia(prev => ({
         ...prev,
@@ -116,35 +76,57 @@ useEffect(() => {
     }
   }, [estadia.fechaIngreso, estadia.fechaEgreso, estadia.precioPorNoche, estadia.porcentajeReserva])
 
- const buscarCliente = async () => {
-  try {
-    const res = await fetch(`/api/clientes?dni=${dni}`)
-    if (res.ok) {
-      const data = await res.json()
-      setCliente(data)
-      setMensaje('')
-    } else {
-      setCliente(null)
-      setNuevoCliente((prev) => ({ ...prev, dni }))
-      setMostrarModal(true)
+  useEffect(() => {
+    // filtrar habitaciones disponibles por fechas
+    if (estadia.fechaIngreso && estadia.fechaEgreso) {
+     fetch(`/api/disponibilidad?fecha_ingreso=${estadia.fechaIngreso}&fecha_egreso=${estadia.fechaEgreso}&cantidad_personas=${estadia.cantidadPersonas}`)
+        .then(res => res.json())
+        .then(data => {
+        console.log('habitaciones disponibles', data); // ← 👈 Aca ponelo
+        setHabitaciones(data);
+      })
+        .catch(console.error)
     }
-  } catch (error) {
-    console.error(error)
+  }, [estadia.fechaIngreso, estadia.fechaEgreso])
+
+  useEffect(() => {
+    const estadoAuto = cliente ? 'pendiente' : 'sin confirmar'
+    const encontrado = estados.find(e => e.nombre.toLowerCase() === estadoAuto)
+    if (encontrado) {
+      setEstadia(prev => ({ ...prev, estadoId: encontrado.id }))
+    }
+  }, [cliente, estados])
+
+  const buscarCliente = async () => {
+    try {
+      const res = await fetch(`/api/clientes?dni=${dni}`)
+      if (res.ok) {
+        const data = await res.json()
+        setCliente(data)
+        setMensaje('')
+      } else {
+        setCliente(null)
+        setNuevoCliente(prev => ({ ...prev, dni }))
+        setMostrarModal(true)
+      }
+    } catch (error) {
+      console.error(error)
+    }
   }
-}
 
   const registrarNuevoCliente = async () => {
     try {
       const res = await fetch('/api/clientes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevoCliente),
       })
       if (res.ok) {
         const data = await res.json()
         setCliente(data)
+        setDni(data.dni)
         setMostrarModal(false)
         setMensaje('Cliente registrado y asignado correctamente.')
+        await buscarCliente() // <== Vuelve a buscar luego del registro
       } else {
         setMensaje('Error al registrar cliente.')
       }
@@ -154,9 +136,58 @@ useEffect(() => {
     }
   }
 
+  const generarPDF = async () => {
+    if (!cliente || !habitaciones.length) return
+
+    const habitacion = habitaciones.find(h => h.id === estadia.habitacionId)
+    const canal = canales.find(c => c.id === estadia.canalId)
+    const estado = estados.find(e => e.id === estadia.estadoId)
+
+    const logo = '/central-suites-bg1.png' 
+
+
+    const reciboHTML = `
+      <div style="background:#fff;font-family:sans-serif;padding:2rem;width:800px;color:#2c3639">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem">
+          <img src="${logo}" alt="Logo" style="height:60px"/>
+          <h2 style="text-align:right">Comprobante de Reserva</h2>
+        </div>
+        <p><strong>Cliente:</strong> ${cliente.nombre_completo} (${cliente.dni})</p>
+        <p><strong>Habitación:</strong> ${habitacion?.numero || ''}</p>
+        <p><strong>Ingreso:</strong> ${estadia.fechaIngreso}</p>
+        <p><strong>Egreso:</strong> ${estadia.fechaEgreso}</p>
+        <p><strong>Cantidad de personas:</strong> ${estadia.cantidadPersonas}</p>
+        <p><strong>Total:</strong> $${estadia.total}</p>
+        <p><strong>Reserva:</strong> $${estadia.montoReserva}</p>
+        <p><strong>Incluye:</strong> ${estadia.desayuno ? 'Desayuno ' : ''}${estadia.almuerzo ? 'Almuerzo ' : ''}${estadia.cena ? 'Cena ' : ''}${estadia.cochera ? 'Cochera ' : ''}${estadia.ropaBlanca ? 'Ropa Blanca' : ''}</p>
+        <p><strong>Canal:</strong> ${canal?.descripcion || ''}</p>
+        <p><strong>Estado:</strong> ${estado?.nombre || ''}</p>
+        <p><strong>Observaciones:</strong> ${estadia.observaciones || '—'}</p>
+      </div>
+    `
+
+    const contenedor = document.createElement('div')
+    contenedor.innerHTML = reciboHTML
+    contenedor.style.position = 'absolute'
+    contenedor.style.top = '-9999px'
+    document.body.appendChild(contenedor)
+
+    try {
+      const canvas = await html2canvas(contenedor)
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF()
+      pdf.addImage(imgData, 'PNG', 10, 10, 190, 0)
+      pdf.save(`reserva_${cliente?.dni || 'nueva'}.pdf`)
+    } catch (err) {
+      console.error('Error al generar PDF:', err)
+    } finally {
+      document.body.removeChild(contenedor)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const estadoSeleccionado = estados.find((e) => e.id === estadia.estadoId)
+    const estadoSeleccionado = estados.find(e => e.id === estadia.estadoId)
 
     if (estadoSeleccionado?.nombre !== 'sin confirmar' && !cliente) {
       setMensaje('Debes asignar un cliente si el estado no es "sin confirmar".')
@@ -190,6 +221,7 @@ useEffect(() => {
     })
 
     if (res.ok) {
+      await generarPDF()
       setMensaje('Estadía registrada con éxito')
       router.push('/dashboard')
     } else {
@@ -204,8 +236,7 @@ useEffect(() => {
     <div className="min-h-screen bg-[#3F4E4F] flex items-center justify-center p-6">
       <div className="w-full max-w-3xl bg-[#DCD7C9] p-8 rounded-2xl shadow-lg font-sans">
         <h1 className="text-3xl font-bold mb-6 text-[#2C3639]">Registrar Estadía</h1>
-
-        {estadoSeleccionado?.nombre !== 'sin confirmar' && (
+       {estadoSeleccionado?.nombre !== 'sin confirmar' && (
           <div className="mb-4 flex items-center gap-2">
             <input
               type="text"
@@ -225,11 +256,23 @@ useEffect(() => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+           <input type="number" placeholder="Cantidad de personas" value={estadia.cantidadPersonas} onChange={(e) => setEstadia({ ...estadia, cantidadPersonas: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+          <input type="date" value={estadia.fechaIngreso} onChange={(e) => setEstadia({ ...estadia, fechaIngreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+          <input type="date" value={estadia.fechaEgreso} onChange={(e) => setEstadia({ ...estadia, fechaEgreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
           <select value={estadia.habitacionId} onChange={(e) => setEstadia({ ...estadia, habitacionId: e.target.value })} required className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
             <option value="">Seleccionar habitación</option>
-            {habitaciones.map((h) => (
-              <option key={h.id} value={h.id}>{h.numero} - Piso {h.piso} - Capacidad {h.capacidad_max}</option>
-            ))}
+           {habitaciones
+  .filter(h => h.unidad_habitacional && h.unidad_habitacional.id)
+  .map(h => (
+    <option
+      key={h.unidad_habitacional.id}
+      value={h.unidad_habitacional.id}
+    >
+      {h.unidad_habitacional.nombre} - Piso {h.unidad_habitacional.piso} - Capacidad {h.unidad_habitacional.cantidad_normal}
+    </option>
+))}
+
+
           </select>
 
           <select value={estadia.canalId} onChange={(e) => setEstadia({ ...estadia, canalId: e.target.value })} required className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
@@ -239,20 +282,13 @@ useEffect(() => {
             ))}
           </select>
 
-          <input type="number" placeholder="Cantidad de personas" value={estadia.cantidadPersonas} onChange={(e) => setEstadia({ ...estadia, cantidadPersonas: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-          <input type="date" value={estadia.fechaIngreso} onChange={(e) => setEstadia({ ...estadia, fechaIngreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-          <input type="date" value={estadia.fechaEgreso} onChange={(e) => setEstadia({ ...estadia, fechaEgreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+         
           <input type="number" placeholder="Precio por noche" value={estadia.precioPorNoche} onChange={(e) => setEstadia({ ...estadia, precioPorNoche: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
           <input type="number" placeholder="Porcentaje de reserva" value={estadia.porcentajeReserva} onChange={(e) => setEstadia({ ...estadia, porcentajeReserva: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
           <input type="number" placeholder="Monto de reserva" value={estadia.montoReserva} onChange={(e) => setEstadia({ ...estadia, montoReserva: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
           <input type="number" placeholder="Total" value={estadia.total} onChange={(e) => setEstadia({ ...estadia, total: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
 
-          <select value={estadia.estadoId} onChange={(e) => setEstadia({ ...estadia, estadoId: e.target.value })} required className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
-            <option value="">Seleccionar estado</option>
-            {estados.map((e) => (
-              <option key={e.id} value={e.id}>{e.nombre}</option>
-            ))}
-          </select>
+     
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[#2C3639]">
             <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.cochera} onChange={(e) => setEstadia({ ...estadia, cochera: e.target.checked })} /> Cochera</label>
@@ -287,6 +323,22 @@ useEffect(() => {
           </div>
         </div>
       )}
+
+      <div ref={reciboRef} style={{ display: 'none', padding: '24px', fontSize: '14px', color: '#000' }}>
+        <h2 style={{ textAlign: 'center', fontSize: '20px', marginBottom: '16px' }}>Comprobante de Reserva</h2>
+        <p><strong>Cliente:</strong> {cliente?.nombre_completo} ({cliente?.dni})</p>
+        <p><strong>Habitación:</strong> {habitaciones.find(h => h.id === estadia.habitacionId)?.numero}</p>
+        <p><strong>Ingreso:</strong> {estadia.fechaIngreso}</p>
+        <p><strong>Egreso:</strong> {estadia.fechaEgreso}</p>
+        <p><strong>Cantidad de personas:</strong> {estadia.cantidadPersonas}</p>
+        <p><strong>Precio por noche:</strong> ${estadia.precioPorNoche}</p>
+        <p><strong>Total:</strong> ${estadia.total}</p>
+        <p><strong>Monto de reserva:</strong> ${estadia.montoReserva}</p>
+        <p><strong>Incluye:</strong> {estadia.desayuno ? 'Desayuno, ' : ''}{estadia.almuerzo ? 'Almuerzo, ' : ''}{estadia.cena ? 'Cena, ' : ''}{estadia.cochera ? 'Cochera, ' : ''}{estadia.ropaBlanca ? 'Ropa blanca' : ''}</p>
+        <p><strong>Canal:</strong> {canales.find(c => c.id === estadia.canalId)?.descripcion}</p>
+        <p><strong>Estado:</strong> {estados.find(e => e.id === estadia.estadoId)?.nombre}</p>
+        <p><strong>Observaciones:</strong> {estadia.observaciones || '—'}</p>
+      </div>
     </div>
   )
 }
