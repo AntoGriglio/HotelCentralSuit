@@ -70,8 +70,9 @@ export default function EditarEstadia() {
       fecha_egreso: estadia.fecha_egreso,
       cochera: estadia.cochera,
       desayuno: estadia.desayuno,
-      almuerzo: estadia.almuerzo,
-      cena: estadia.cena,
+      pension_media: estadia.pension_media,
+      pension_completa: estadia.pension_completa,
+      all_inclusive: estadia.all_inclusive,
       ropa_blanca: estadia.ropa_blanca,
       precio_por_noche: parseFloat(estadia.precio_por_noche),
       porcentaje_reserva: parseFloat(estadia.porcentaje_reserva),
@@ -168,8 +169,9 @@ export default function EditarEstadia() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[#2C3639]">
             <label><input type="checkbox" checked={estadia.cochera} onChange={(e) => setEstadia({ ...estadia, cochera: e.target.checked })} /> Cochera</label>
             <label><input type="checkbox" checked={estadia.desayuno} onChange={(e) => setEstadia({ ...estadia, desayuno: e.target.checked })} /> Desayuno</label>
-            <label><input type="checkbox" checked={estadia.almuerzo} onChange={(e) => setEstadia({ ...estadia, almuerzo: e.target.checked })} /> Almuerzo</label>
-            <label><input type="checkbox" checked={estadia.cena} onChange={(e) => setEstadia({ ...estadia, cena: e.target.checked })} /> Cena</label>
+            <label><input type="checkbox" checked={estadia.pension_media} onChange={(e) => setEstadia({ ...estadia, pension_media: e.target.checked })} /> Media pension</label>
+            <label><input type="checkbox" checked={estadia.pension_completa} onChange={(e) => setEstadia({ ...estadia, pension_completa: e.target.checked })} /> Pension completa</label>
+            <label><input type="checkbox" checked={estadia.all_inclusive} onChange={(e) => setEstadia({ ...estadia, all_inclusive: e.target.checked })} /> All inclusive</label>
             <label><input type="checkbox" checked={estadia.ropa_blanca} onChange={(e) => setEstadia({ ...estadia, ropa_blanca: e.target.checked })} /> Ropa Blanca</label>
           </div>
 

@@ -26,7 +26,7 @@ export default function RegistrarEstadia() {
 
   const [estadia, setEstadia] = useState({
     cantidadPersonas: '', fechaIngreso: '', fechaEgreso: '', cochera: false,
-    desayuno: false, almuerzo: false, cena: false, ropaBlanca: false,
+    desayuno: false, pension_media: false, pension_completa: false, ropaBlanca: false,all_inclusive: false,
     precioPorNoche: '', porcentajeReserva: '', montoReserva: '', total: '',
     estado: '', habitacionId: '', observaciones: '', canalId: '', estadoId: '',
   })
@@ -159,7 +159,7 @@ export default function RegistrarEstadia() {
         <p><strong>Cantidad de personas:</strong> ${estadia.cantidadPersonas}</p>
         <p><strong>Total:</strong> $${estadia.total}</p>
         <p><strong>Reserva:</strong> $${estadia.montoReserva}</p>
-        <p><strong>Incluye:</strong> ${estadia.desayuno ? 'Desayuno ' : ''}${estadia.almuerzo ? 'Almuerzo ' : ''}${estadia.cena ? 'Cena ' : ''}${estadia.cochera ? 'Cochera ' : ''}${estadia.ropaBlanca ? 'Ropa Blanca' : ''}</p>
+        <p><strong>Incluye:</strong> ${estadia.desayuno ? 'Desayuno ' : ''}${estadia.pension_media ? 'Almuerzo ' : ''}${estadia.pension_completa ? 'Cena ' : ''}${estadia.cochera ? 'Cochera ' : ''}${estadia.ropaBlanca ? 'Ropa Blanca' : ''}</p>
         <p><strong>Canal:</strong> ${canal?.descripcion || ''}</p>
         <p><strong>Estado:</strong> ${estado?.nombre || ''}</p>
         <p><strong>Observaciones:</strong> ${estadia.observaciones || '—'}</p>
@@ -201,8 +201,9 @@ export default function RegistrarEstadia() {
       fecha_egreso: estadia.fechaEgreso,
       cochera: estadia.cochera,
       desayuno: estadia.desayuno,
-      almuerzo: estadia.almuerzo,
-      cena: estadia.cena,
+      pension_media: estadia.pension_media,
+      pension_completa: estadia.pension_completa,
+      all_inclusive: estadia.all_inclusive,
       ropa_blanca: estadia.ropaBlanca,
       precio_por_noche: parseFloat(estadia.precioPorNoche),
       porcentaje_reserva: parseFloat(estadia.porcentajeReserva),
@@ -293,8 +294,9 @@ export default function RegistrarEstadia() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[#2C3639]">
             <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.cochera} onChange={(e) => setEstadia({ ...estadia, cochera: e.target.checked })} /> Cochera</label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.desayuno} onChange={(e) => setEstadia({ ...estadia, desayuno: e.target.checked })} /> Desayuno</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.almuerzo} onChange={(e) => setEstadia({ ...estadia, almuerzo: e.target.checked })} /> Almuerzo</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.cena} onChange={(e) => setEstadia({ ...estadia, cena: e.target.checked })} /> Cena</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.pension_media} onChange={(e) => setEstadia({ ...estadia, pension_media: e.target.checked })} /> Media Pension</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.pension_completa} onChange={(e) => setEstadia({ ...estadia, pension_completa: e.target.checked })} /> Pension completa</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.all_inclusive} onChange={(e) => setEstadia({ ...estadia, all_inclusive: e.target.checked })} /> All inclusive</label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.ropaBlanca} onChange={(e) => setEstadia({ ...estadia, ropaBlanca: e.target.checked })} /> Ropa Blanca</label>
           </div>
 
@@ -334,7 +336,7 @@ export default function RegistrarEstadia() {
         <p><strong>Precio por noche:</strong> ${estadia.precioPorNoche}</p>
         <p><strong>Total:</strong> ${estadia.total}</p>
         <p><strong>Monto de reserva:</strong> ${estadia.montoReserva}</p>
-        <p><strong>Incluye:</strong> {estadia.desayuno ? 'Desayuno, ' : ''}{estadia.almuerzo ? 'Almuerzo, ' : ''}{estadia.cena ? 'Cena, ' : ''}{estadia.cochera ? 'Cochera, ' : ''}{estadia.ropaBlanca ? 'Ropa blanca' : ''}</p>
+        <p><strong>Incluye:</strong> {estadia.desayuno ? 'Desayuno, ' : ''}{estadia.pension_media ? 'Almuerzo, ' : ''}{estadia.pension_completa ? 'Cena, ' : ''}{estadia.cochera ? 'Cochera, ' : ''}{estadia.ropaBlanca ? 'Ropa blanca' : ''}</p>
         <p><strong>Canal:</strong> {canales.find(c => c.id === estadia.canalId)?.descripcion}</p>
         <p><strong>Estado:</strong> {estados.find(e => e.id === estadia.estadoId)?.nombre}</p>
         <p><strong>Observaciones:</strong> {estadia.observaciones || '—'}</p>

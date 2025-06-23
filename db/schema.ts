@@ -6,7 +6,11 @@ export const cliente = pgTable('cliente', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   nombre_completo: varchar('nombre_completo', { length: 255 }),
   telefono: varchar('telefono', { length: 255 }),
+  localidad: varchar('localidad', { length: 255 }).notNull(),
+  provincia: varchar('provincia', { length: 255 }),
+  pais: varchar('pais', { length: 255 }).notNull(),
 });
+
 
 // Tabla canal_comercializacion
 export const canal_comercializacion = pgTable('canal_comercializacion', {
@@ -54,6 +58,13 @@ nombre: varchar('nombre', { length: 255 }),
   tipo_unidad_id: uuid('tipo_unidad_id').references(() => tipo_unidad_habitacional.id),
 });
 
+export const precio_habitacion = pgTable('precio_habitacion', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  habitacion_id: uuid('habitacion_id').references(() => unidad_habitacional.id),
+  monto: doublePrecision('monto').notNull(),
+  fecha_actualizacion: timestamp('fecha_actualizacion').defaultNow(),
+})
+
 
 // Tabla estadia
 export const estadia = pgTable('estadia', {
@@ -71,8 +82,8 @@ export const estadia = pgTable('estadia', {
   cliente_dni: varchar('cliente_dni', { length: 255 }).references(() => cliente.dni),
   desayuno: boolean('desayuno').default(false),
   pension_completa: boolean('pension_completa').default(false),
-  almuerzo: boolean('almuerzo').default(false),
-  cena: boolean('cena').default(false),
+  pension_media: boolean('pension_media').default(false),
+  all_inclusive: boolean('all_inclusive').default(false),
   canal_id: uuid('canal_id').references(() => canal_comercializacion.id),
   ropa_blanca: boolean('ropa_blanca').default(false),
   observaciones: varchar('observaciones', { length: 1000 }),

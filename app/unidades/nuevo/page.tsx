@@ -133,10 +133,7 @@ export default function CrearUnidadHabitacional() {
               </label>
               <input name="cantidadBanos" placeholder="Cantidad de baños" value={form.cantidadBanos} onChange={handleChange} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
               <input name="cantidadHabitaciones" placeholder="Cantidad de habitaciones" value={form.cantidadHabitaciones} onChange={handleChange} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <label className="flex items-center gap-2 text-[#2C3639]">
-                <input type="checkbox" name="checkLimpieza" checked={form.checkLimpieza} onChange={handleChange} />
-                Check de limpieza
-              </label>
+
             </>
           )}
 

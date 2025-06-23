@@ -14,7 +14,10 @@ export default function ListaUnidadesHabitacionales() {
     const fetchUnidades = async () => {
       const res = await fetch('/api/unidades');
       const data = await res.json();
-      setAlquilables(data.filter((u: any) => u.tipo === 'Alquilable'));
+      const alquilablesOrdenados = data
+        .filter((u: any) => u.tipo === 'Alquilable')
+        .sort((a: any, b: any) => a.numero - b.numero);
+      setAlquilables(alquilablesOrdenados);
       setOcupacionales(data.filter((u: any) => u.tipo === 'Uso comun'));
     };
     fetchUnidades();
@@ -35,13 +38,17 @@ export default function ListaUnidadesHabitacionales() {
       <div className="flex gap-4 mb-6">
         <button
           onClick={() => setVista('alquilable')}
-          className={`px-4 py-2 rounded font-semibold ${vista === 'alquilable' ? 'bg-[#A27B5B] text-white' : 'bg-[#DCD7C9] text-[#2C3639]'}`}
+          className={`px-4 py-2 rounded font-semibold ${
+            vista === 'alquilable' ? 'bg-[#A27B5B] text-white' : 'bg-[#DCD7C9] text-[#2C3639]'
+          }`}
         >
           Alquilables
         </button>
         <button
           onClick={() => setVista('ocupacional')}
-          className={`px-4 py-2 rounded font-semibold ${vista === 'ocupacional' ? 'bg-[#A27B5B] text-white' : 'bg-[#DCD7C9] text-[#2C3639]'}`}
+          className={`px-4 py-2 rounded font-semibold ${
+            vista === 'ocupacional' ? 'bg-[#A27B5B] text-white' : 'bg-[#DCD7C9] text-[#2C3639]'
+          }`}
         >
           Uso Común
         </button>
@@ -52,25 +59,44 @@ export default function ListaUnidadesHabitacionales() {
           <table className="w-full text-sm text-left">
             <thead className="bg-[#DCD7C9] text-[#2C3639]">
               <tr>
+                <th className="px-4 py-2">Número</th>
                 <th className="px-4 py-2">Nombre</th>
                 <th className="px-4 py-2">Piso</th>
-                <th className="px-4 py-2">Numero</th>
+                <th className="px-4 py-2">Tipo</th>
+                <th className="px-4 py-2">Habitaciones</th>
+                <th className="px-4 py-2">Baños</th>
                 <th className="px-4 py-2">Capacidad mínima</th>
                 <th className="px-4 py-2">Capacidad media</th>
                 <th className="px-4 py-2">Capacidad máxima</th>
+                <th className="px-4 py-2">Precio</th>
                 <th className="px-4 py-2">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {alquilables.map((u) => (
                 <tr key={u.id} className="border-b hover:bg-[#F5F5F5]">
+                  <td className="px-4 py-2">{u.numero}</td>
                   <td className="px-4 py-2">{u.nombre}</td>
                   <td className="px-4 py-2">{u.piso}</td>
-                  <td className="px-4 py-2">{u.numero}</td>
+                  <td className="px-4 py-2">{u.tipo_habitacion || '-'}</td>
+                  <td className="px-4 py-2">{u.cantidad_habitaciones ?? '-'}</td>
+                  <td className="px-4 py-2">{u.cantidad_banios ?? '-'}</td>
                   <td className="px-4 py-2">{u.capacidad_minima}</td>
                   <td className="px-4 py-2">{u.capacidad_normal}</td>
                   <td className="px-4 py-2">{u.capacidad_maxima}</td>
-                  <td className="px-4 py-2"></td>
+                  <td className="px-4 py-2">
+  {u.precio != null ? `$${u.precio.toLocaleString('es-AR')}` : '-'}
+</td>
+
+                  <td className="px-4 py-2">
+                    <button
+  onClick={() => router.push(`/unidades/editar?id=${u.id}`)}
+  className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+>
+  Editar
+</button>
+
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -89,7 +115,13 @@ export default function ListaUnidadesHabitacionales() {
               {ocupacionales.map((u) => (
                 <tr key={u.id} className="border-b hover:bg-[#F5F5F5]">
                   <td className="px-4 py-2">{u.nombre}</td>
-                  <td></td>
+                  <td><button
+  onClick={() => router.push(`/unidades/editar?id=${u.id}`)}
+  className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+>
+  Editar
+</button>
+</td>
                 </tr>
               ))}
             </tbody>

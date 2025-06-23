@@ -1,7 +1,7 @@
- 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -60,17 +60,25 @@ export default function ListaClientes() {
           </thead>
           <tbody>
             {clientes.map((cliente) => (
-              <>
-                <tr key={cliente.dni} className="border-b hover:bg-[#DCD7C9]">
+              <React.Fragment key={cliente.dni}>
+                <tr className="border-b hover:bg-[#DCD7C9]">
                   <td className="px-4 py-2">{cliente.dni}</td>
                   <td className="px-4 py-2">{cliente.nombre_completo}</td>
                   <td className="px-4 py-2">{cliente.email}</td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2 space-x-2">
                     <button
-                      onClick={() => setExpandirEstadias((prev) => ({ ...prev, [cliente.dni]: !prev[cliente.dni] }))}
+                      onClick={() =>
+                        setExpandirEstadias((prev) => ({ ...prev, [cliente.dni]: !prev[cliente.dni] }))
+                      }
                       className="text-sm bg-[#A27B5B] text-white px-3 py-1 rounded hover:bg-[#8b6244]"
                     >
                       {expandirEstadias[cliente.dni] ? 'Ocultar Estadías' : 'Ver Estadías'}
+                    </button>
+                    <button
+                      onClick={() => router.push(`/clientes/editar?dni=${cliente.dni}`)}
+                      className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    >
+                      Editar
                     </button>
                   </td>
                 </tr>
@@ -90,12 +98,14 @@ export default function ListaClientes() {
                             </span>
                           </li>
                         ))}
-                        {obtenerEstadiasCliente(cliente.dni).length === 0 && <li>Sin estadías registradas</li>}
+                        {obtenerEstadiasCliente(cliente.dni).length === 0 && (
+                          <li>Sin estadías registradas</li>
+                        )}
                       </ul>
                     </td>
                   </tr>
                 )}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
