@@ -31,6 +31,13 @@ export default function RegistrarEstadia() {
     estado: '', habitacionId: '', observaciones: '', canalId: '', estadoId: '',
   })
 
+function calcularPrecioPorCantidad(precioBase: number, cantidadNormal: number, cantidadPersonas: number): number {
+  const diferencia = cantidadPersonas - cantidadNormal;
+  const ajuste = diferencia * 0.10; // 10% más o menos por persona
+  const precioFinal = precioBase * (1 + ajuste);
+  return Math.max(precioFinal, 0); // evitar precios negativos
+}
+
   useEffect(() => {
     const habitacion_id = searchParams.get('habitacion_id')
     const fecha_ingreso = searchParams.get('fecha_ingreso')
@@ -96,6 +103,78 @@ export default function RegistrarEstadia() {
       setEstadia(prev => ({ ...prev, estadoId: encontrado.id }))
     }
   }, [cliente, estados])
+useEffect(() => {
+  async function calcularConExtras() {
+    if (!estadia.habitacionId || !estadia.cantidadPersonas || !estadia.fechaIngreso || !estadia.fechaEgreso) return;
+
+    const habitacion = habitaciones.find(h => h.unidad_habitacional?.id === estadia.habitacionId);
+    if (!habitacion || !habitacion.unidad_habitacional) return;
+
+    const precioBase = habitacion.precio ?? habitacion.unidad_habitacional.precio;
+    const cantidadNormal = parseInt(habitacion.unidad_habitacional.cantidad_normal);
+    const cantidadActual = parseInt(estadia.cantidadPersonas);
+
+    if (isNaN(precioBase) || isNaN(cantidadNormal) || isNaN(cantidadActual)) return;
+
+    // Ajuste por cantidad de personas
+    const diferencia = cantidadActual - cantidadNormal;
+    let precioFinal = precioBase * (1 + diferencia * 0.1);
+
+    // 🔥 Obtener precios de ítems seleccionados
+    try {
+      const res = await fetch('/api/precios');
+      const items = await res.json();
+
+      const getPrecio = (nombre: string) =>
+        items.find((i: any) => i.item.toLowerCase() === nombre.toLowerCase())?.precio_actual || 0;
+
+      const extras =
+        (estadia.desayuno ? getPrecio('Desayuno buffet') : 0) +
+        (estadia.pension_media ? getPrecio('Media Pension') : 0) +
+        (estadia.pension_completa ? getPrecio('Pension Completa') : 0) +
+        (estadia.all_inclusive ? getPrecio('All inclusive') : 0) +
+        (estadia.cochera ? getPrecio('Cochera') : 0) +
+        (estadia.ropaBlanca ? getPrecio('Ropa Blanca') : 0);
+
+      precioFinal += extras;
+
+      const fechaIngreso = new Date(estadia.fechaIngreso);
+      const fechaEgreso = new Date(estadia.fechaEgreso);
+      const noches = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (noches <= 0) return;
+
+      const total = noches * precioFinal;
+      const porcentajeReserva = estadia.porcentajeReserva ? parseFloat(estadia.porcentajeReserva) : 30;
+      const montoReserva = (total * porcentajeReserva) / 100;
+
+      setCantidadNoches(noches);
+      setEstadia(prev => ({
+        ...prev,
+        precioPorNoche: precioFinal.toFixed(2),
+        total: total.toFixed(2),
+        montoReserva: montoReserva.toFixed(2),
+        porcentajeReserva: porcentajeReserva.toString()
+      }));
+    } catch (err) {
+      console.error('❌ Error obteniendo precios de extras', err);
+    }
+  }
+
+  calcularConExtras();
+}, [
+  estadia.habitacionId,
+  estadia.cantidadPersonas,
+  estadia.fechaIngreso,
+  estadia.fechaEgreso,
+  habitaciones,
+  estadia.desayuno,
+  estadia.pension_media,
+  estadia.pension_completa,
+  estadia.all_inclusive,
+  estadia.cochera,
+  estadia.ropaBlanca
+]);
 
   const buscarCliente = async () => {
     try {
@@ -283,22 +362,129 @@ export default function RegistrarEstadia() {
             ))}
           </select>
 
-         
-          <input type="number" placeholder="Precio por noche" value={estadia.precioPorNoche} onChange={(e) => setEstadia({ ...estadia, precioPorNoche: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-          <input type="number" placeholder="Porcentaje de reserva" value={estadia.porcentajeReserva} onChange={(e) => setEstadia({ ...estadia, porcentajeReserva: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-          <input type="number" placeholder="Monto de reserva" value={estadia.montoReserva} onChange={(e) => setEstadia({ ...estadia, montoReserva: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-          <input type="number" placeholder="Total" value={estadia.total} onChange={(e) => setEstadia({ ...estadia, total: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+        <div className="relative">
+  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2C3639] font-semibold">$</span>
+  <input
+    type="number"
+    placeholder="Precio por noche"
+    value={estadia.precioPorNoche}
+    onChange={(e) => setEstadia({ ...estadia, precioPorNoche: e.target.value })}
+    className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
+  />
+</div>
 
-     
+<div className="relative">
+  <input
+    type="number"
+    placeholder="Porcentaje de reserva"
+    value={estadia.porcentajeReserva}
+    onChange={(e) => setEstadia({ ...estadia, porcentajeReserva: e.target.value })}
+    className="w-full p-2 pr-6 border border-[#A27B5B] rounded text-[#2C3639]"
+  />
+  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#2C3639] font-semibold">%</span>
+</div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[#2C3639]">
-            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.cochera} onChange={(e) => setEstadia({ ...estadia, cochera: e.target.checked })} /> Cochera</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.desayuno} onChange={(e) => setEstadia({ ...estadia, desayuno: e.target.checked })} /> Desayuno</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.pension_media} onChange={(e) => setEstadia({ ...estadia, pension_media: e.target.checked })} /> Media Pension</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.pension_completa} onChange={(e) => setEstadia({ ...estadia, pension_completa: e.target.checked })} /> Pension completa</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.all_inclusive} onChange={(e) => setEstadia({ ...estadia, all_inclusive: e.target.checked })} /> All inclusive</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={estadia.ropaBlanca} onChange={(e) => setEstadia({ ...estadia, ropaBlanca: e.target.checked })} /> Ropa Blanca</label>
-          </div>
+<div className="relative">
+  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2C3639] font-semibold">$</span>
+  <input
+    type="number"
+    placeholder="Monto de reserva"
+    value={estadia.montoReserva}
+    onChange={(e) => setEstadia({ ...estadia, montoReserva: e.target.value })}
+    className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
+  />
+</div>
+
+<div className="relative">
+  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2C3639] font-semibold">$</span>
+  <input
+    type="number"
+    placeholder="Total"
+    value={estadia.total}
+    onChange={(e) => setEstadia({ ...estadia, total: e.target.value })}
+    className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
+  />
+</div>
+
+
+         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[#2C3639]">
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={estadia.desayuno}
+      onChange={(e) =>
+        setEstadia((prev) => ({
+          ...prev,
+          desayuno: e.target.checked,
+          pension_media: false,
+          pension_completa: false,
+          all_inclusive: false,
+        }))
+      }
+    /> Desayuno
+  </label>
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={estadia.pension_media}
+      onChange={(e) =>
+        setEstadia((prev) => ({
+          ...prev,
+          desayuno: false,
+          pension_media: e.target.checked,
+          pension_completa: false,
+          all_inclusive: false,
+        }))
+      }
+    /> Media Pensión
+  </label>
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={estadia.pension_completa}
+      onChange={(e) =>
+        setEstadia((prev) => ({
+          ...prev,
+          desayuno: false,
+          pension_media: false,
+          pension_completa: e.target.checked,
+          all_inclusive: false,
+        }))
+      }
+    /> Pensión Completa
+  </label>
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={estadia.all_inclusive}
+      onChange={(e) =>
+        setEstadia((prev) => ({
+          ...prev,
+          desayuno: false,
+          pension_media: false,
+          pension_completa: false,
+          all_inclusive: e.target.checked,
+        }))
+      }
+    /> All Inclusive
+  </label>
+
+  {/* ✅ Estos dos no afectan el precio, se mantienen normales */}
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={estadia.cochera}
+      onChange={(e) => setEstadia({ ...estadia, cochera: e.target.checked })}
+    /> Cochera
+  </label>
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={estadia.ropaBlanca}
+      onChange={(e) => setEstadia({ ...estadia, ropaBlanca: e.target.checked })}
+    /> Ropa Blanca
+  </label>
+</div>
 
           <textarea placeholder="Observaciones" value={estadia.observaciones} onChange={(e) => setEstadia({ ...estadia, observaciones: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]"></textarea>
 

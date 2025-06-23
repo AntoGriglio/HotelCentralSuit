@@ -47,6 +47,64 @@ export default function EditarEstadia() {
     }
   }, [estadia])
 
+  useEffect(() => {
+    async function calcularConExtras() {
+      if (!estadia?.habitacion_id || !estadia?.cantidad_personas || !estadia?.fecha_ingreso || !estadia?.fecha_egreso) return;
+
+      const habitacion = habitaciones.find(h => h.unidad_habitacional?.id === estadia.habitacion_id);
+      if (!habitacion || !habitacion.unidad_habitacional) return;
+
+      const precioBase = habitacion.precio ?? habitacion.unidad_habitacional.precio;
+      const cantidadNormal = parseInt(habitacion.unidad_habitacional.cantidad_normal);
+      const cantidadActual = parseInt(estadia.cantidad_personas);
+
+      if (isNaN(precioBase) || isNaN(cantidadNormal) || isNaN(cantidadActual)) return;
+
+      const diferencia = cantidadActual - cantidadNormal;
+      let precioFinal = precioBase * (1 + diferencia * 0.1);
+
+      try {
+        const res = await fetch('/api/precios');
+        const items = await res.json();
+
+        const getPrecio = (nombre: string) =>
+          items.find((i: any) => i.item.toLowerCase() === nombre.toLowerCase())?.precio_actual || 0;
+
+        const extras =
+          (estadia.desayuno ? getPrecio('Desayuno buffet') : 0) +
+          (estadia.pension_media ? getPrecio('Media Pension') : 0) +
+          (estadia.pension_completa ? getPrecio('Pension Completa') : 0) +
+          (estadia.all_inclusive ? getPrecio('All inclusive') : 0) +
+          (estadia.cochera ? getPrecio('Cochera') : 0) +
+          (estadia.ropa_blanca ? getPrecio('Ropa Blanca') : 0);
+
+        precioFinal += extras;
+
+        const fechaIngreso = new Date(estadia.fecha_ingreso);
+        const fechaEgreso = new Date(estadia.fecha_egreso);
+        const noches = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (noches <= 0) return;
+
+        const total = noches * precioFinal;
+        const porcentajeReserva = estadia.porcentaje_reserva ? parseFloat(estadia.porcentaje_reserva) : 30;
+        const montoReserva = (total * porcentajeReserva) / 100;
+
+        setEstadia((prev: any) => ({
+          ...prev,
+          precio_por_noche: precioFinal.toFixed(2),
+          total: total.toFixed(2),
+          monto_reserva: montoReserva.toFixed(2),
+          porcentaje_reserva: porcentajeReserva.toString()
+        }));
+      } catch (err) {
+        console.error('❌ Error obteniendo precios de extras', err);
+      }
+    }
+
+    calcularConExtras();
+  }, [estadia.habitacion_id, estadia.cantidad_personas, estadia.fecha_ingreso, estadia.fecha_egreso, habitaciones, estadia.desayuno, estadia.pension_media, estadia.pension_completa, estadia.all_inclusive, estadia.cochera, estadia.ropa_blanca, estadia.porcentaje_reserva]);
+
   const buscarCliente = async () => {
     const res = await fetch(`/api/clientes?dni=${dni}`)
     if (res.ok) {
@@ -99,7 +157,6 @@ export default function EditarEstadia() {
   }
 
   if (!estadia) return <p className="p-4">Cargando estadía...</p>
-
   return (
     <div className="min-h-screen bg-[#3F4E4F] flex items-center justify-center p-6">
       <div className="w-full max-w-3xl bg-[#DCD7C9] p-8 rounded-2xl shadow-lg font-sans">

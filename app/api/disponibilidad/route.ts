@@ -5,6 +5,7 @@ import {
   estadia,
   unidad_habitacional,
   tipo_unidad_habitacional,
+  precio_habitacion
 } from '../../../db/schema';
 
 export async function GET(request: Request) {
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
 
   const condiciones: any[] = [
     eq(tipo_unidad_habitacional.descripcion, 'Alquilable'),
-    sql`${unidad_habitacional.id} NOT IN (${subquery})`,
+    sql`${unidad_habitacional.id} NOT IN (${subquery})`
   ];
 
   if (cantidadPersonas) {
@@ -38,9 +39,8 @@ export async function GET(request: Request) {
   }
 
   if (tipoHabitacionId) {
-  condiciones.push(eq(unidad_habitacional.tipo_habitacion_id, tipoHabitacionId));
-}
-
+    condiciones.push(eq(unidad_habitacional.tipo_habitacion_id, tipoHabitacionId));
+  }
 
   const disponibles = await db
     .select({
@@ -50,7 +50,8 @@ export async function GET(request: Request) {
         cantidad_normal: unidad_habitacional.cantidad_normal,
         piso: unidad_habitacional.piso,
         numero: unidad_habitacional.numero,
-        tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id
+        tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id,
+        precio: precio_habitacion.monto // 👈 acá agregamos el precio
       },
       tipo_unidad_habitacional: {
         id: tipo_unidad_habitacional.id,
@@ -61,6 +62,10 @@ export async function GET(request: Request) {
     .innerJoin(
       tipo_unidad_habitacional,
       eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id)
+    )
+    .leftJoin(
+      precio_habitacion,
+      eq(precio_habitacion.habitacion_id, unidad_habitacional.id)
     )
     .where(and(...condiciones));
 

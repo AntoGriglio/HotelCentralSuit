@@ -54,12 +54,35 @@ export default function Home() {
         </button>
       </section>
 
-      {/* Galería */}
-      <section className="py-12 px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl mx-auto relative z-10">
-        <Image src="/foto1.jpg" alt="Habitación 1" width={400} height={300} className="rounded-lg shadow" />
-        <Image src="/foto2.jpg" alt="Piscina" width={400} height={300} className="rounded-lg shadow" />
-        <Image src="/foto3.jpg" alt="Exterior" width={400} height={300} className="rounded-lg shadow" />
-      </section>
+     {/* Galería tipo carrusel scroll horizontal */} 
+<section className="py-12 px-6 max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-[#A27B5B]">
+  <div className="flex gap-4 w-max">
+    {[
+      '/habitacion1.jpg',
+      '/habitacion2.jpg',
+      '/habitacion4.jpg',
+      '/habitacion5.jpg',
+      '/habitacion3.jpg',
+    ].map((src, index) => (
+      <a
+        key={index}
+        href={src}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-shrink-0"
+      >
+        <div className="relative w-[320px] h-[220px] rounded-lg overflow-hidden shadow-md">
+          <Image
+            src={src}
+            alt={`Habitación ${index + 1}`}
+            fill
+            className="object-cover hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      </a>
+    ))}
+  </div>
+</section>
 
       {/* Ubicación */}
       <section className="py-12 px-6 bg-[#3F4E4F] text-[#DCD7C9] text-center relative z-10">
