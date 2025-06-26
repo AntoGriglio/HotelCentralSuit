@@ -1,13 +1,30 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 'use client'
 
 import Link from 'next/link'
-import { signOut, useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function Navbar() {
-  const { data: session } = useSession()
+  const [user, setUser] = useState<any>(null)
 
-  if (!session) return null
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+    })
+
+    // Para detectar cambios como logout
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      listener.subscription.unsubscribe()
+    }
+  }, [])
+
+  if (!user) return null
 
   return (
     <nav className="bg-[#374e4e] px-6 py-4 flex items-center gap-4 shadow-md text-white font-medium">
@@ -23,10 +40,10 @@ export default function Navbar() {
       <Link href="/clientes" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Clientes</Link>
       <Link href="/unidades" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Unidades</Link>
       <Link href="/precios" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Precios</Link>
-       <Link href="/disponibilidad" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Disponibilidad</Link>
+      <Link href="/disponibilidad" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Disponibilidad</Link>
       <Link href="/reportes" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Reportes</Link>
       <button
-        onClick={() => signOut()}
+        onClick={() => supabase.auth.signOut().then(() => location.reload())}
         className="ml-auto hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors"
       >
         Cerrar sesión

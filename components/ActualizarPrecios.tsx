@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function CambiarPrecioPage() {
   const searchParams = useSearchParams()
   const itemId = searchParams.get('id') ?? ''
-
+const router = useRouter();
   const [nuevoPrecio, setNuevoPrecio] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -37,6 +37,14 @@ export default function CambiarPrecioPage() {
   return (
     <div className="min-h-screen bg-[#3F4E4F] flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-[#DCD7C9] p-8 rounded-2xl shadow-lg font-sans">
+                <button
+  type="button"
+  onClick={() => router.back()}
+  className="mb-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+>
+  ← Atrás
+</button>
+
         <h1 className="text-2xl font-bold mb-4 text-[#2C3639] text-center">Actualizar Precio</h1>
         <label className="block text-sm font-medium mb-1 text-[#2C3639]">Nuevo precio</label>
         <input

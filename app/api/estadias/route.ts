@@ -1,6 +1,7 @@
+// ✅ BACKEND MODIFICADO PARA SALDO PENDIENTE EN /api/estadias
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { estadia, estado_estadia, unidad_habitacional } from '@/db/schema';
+import { estadia, estado_estadia, unidad_habitacional, pago } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { esTransicionValida } from '@/lib/estadiaEstados';
 import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
@@ -44,7 +45,19 @@ export async function GET(req: NextRequest) {
         .from(estadia)
         .leftJoin(estado_estadia, eq(estadia.estado_id, estado_estadia.id))
         .leftJoin(unidad_habitacional, eq(estadia.habitacion_id, unidad_habitacional.id));
-      return NextResponse.json(data);
+
+      const dataConSaldo = await Promise.all(
+        data.map(async (e) => {
+          const pagosEstadia = await db.select({ monto: pago.monto }).from(pago).where(eq(pago.estadia_id, e.id));
+          const totalPagado = pagosEstadia.reduce((sum, p) => sum + Number(p.monto), 0);
+          return {
+            ...e,
+            saldo_pendiente: Math.max((e.total || 0) - totalPagado, 0),
+          };
+        })
+      );
+
+      return NextResponse.json(dataConSaldo);
     }
   } catch (error) {
     console.error('[ERROR GET /api/estadias]', error);

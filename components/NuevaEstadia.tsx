@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import InputMoneda from './inputMoneda'
 
 export default function RegistrarEstadia() {
   const router = useRouter()
@@ -27,7 +28,7 @@ export default function RegistrarEstadia() {
   const [estadia, setEstadia] = useState({
     cantidadPersonas: '', fechaIngreso: '', fechaEgreso: '', cochera: false,
     desayuno: false, pension_media: false, pension_completa: false, ropaBlanca: false,all_inclusive: false,
-    precioPorNoche: '', porcentajeReserva: '', montoReserva: '', total: '',
+    precioPorNoche: '0', porcentajeReserva: '', montoReserva: '0', total: '0',
     estado: '', habitacionId: '', observaciones: '', canalId: '', estadoId: '',
   })
 
@@ -216,34 +217,43 @@ useEffect(() => {
   }
 
   const generarPDF = async () => {
-    if (!cliente || !habitaciones.length) return
+    if (!cliente || !habitaciones) return
 
-    const habitacion = habitaciones.find(h => h.id === estadia.habitacionId)
-    const canal = canales.find(c => c.id === estadia.canalId)
-    const estado = estados.find(e => e.id === estadia.estadoId)
+   const habitacion = habitaciones.find(h => h.unidad_habitacional?.id === estadia.habitacionId)
 
-    const logo = '/central-suites-bg1.png' 
+    const logo = '/logo.png'
 
-
-    const reciboHTML = `
-      <div style="background:#fff;font-family:sans-serif;padding:2rem;width:800px;color:#2c3639">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem">
-          <img src="${logo}" alt="Logo" style="height:60px"/>
-          <h2 style="text-align:right">Comprobante de Reserva</h2>
-        </div>
-        <p><strong>Cliente:</strong> ${cliente.nombre_completo} (${cliente.dni})</p>
-        <p><strong>Habitación:</strong> ${habitacion?.numero || ''}</p>
-        <p><strong>Ingreso:</strong> ${estadia.fechaIngreso}</p>
-        <p><strong>Egreso:</strong> ${estadia.fechaEgreso}</p>
-        <p><strong>Cantidad de personas:</strong> ${estadia.cantidadPersonas}</p>
-        <p><strong>Total:</strong> $${estadia.total}</p>
-        <p><strong>Reserva:</strong> $${estadia.montoReserva}</p>
-        <p><strong>Incluye:</strong> ${estadia.desayuno ? 'Desayuno ' : ''}${estadia.pension_media ? 'Almuerzo ' : ''}${estadia.pension_completa ? 'Cena ' : ''}${estadia.cochera ? 'Cochera ' : ''}${estadia.ropaBlanca ? 'Ropa Blanca' : ''}</p>
-        <p><strong>Canal:</strong> ${canal?.descripcion || ''}</p>
-        <p><strong>Estado:</strong> ${estado?.nombre || ''}</p>
-        <p><strong>Observaciones:</strong> ${estadia.observaciones || '—'}</p>
+const reciboHTML = `
+  <div style="width: 800px; padding: 2rem; font-family: sans-serif; color: #2C3639; border: 2px solid #2C3639; border-radius: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div style="display: flex; flex-direction: column; align-items: start;">
+        <img src="${logo}" alt="Logo" style="height: 70px; margin-bottom: 5px;" />
+        <span style="font-weight: bold; font-size: 18px;">Central Suites Hotel</span>
       </div>
-    `
+      <h2 style="text-align: right; font-size: 20px;">Comprobante de Reserva</h2>
+    </div>
+
+    <div style="border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Cliente:</strong> ${cliente.nombre_completo} (${cliente.dni})</p>
+     <p><strong>Habitación:</strong> ${habitacion?.unidad_habitacional?.nombre} - Piso ${habitacion?.unidad_habitacional?.piso} - Capacidad ${habitacion?.unidad_habitacional?.cantidad_normal}</p>
+
+      <p><strong>Ingreso:</strong> ${estadia.fechaIngreso}</p>
+      <p><strong>Egreso:</strong> ${estadia.fechaEgreso}</p>
+      <p><strong>Cantidad de personas:</strong> ${estadia.cantidadPersonas}</p>
+    </div>
+
+    <div style="margin-top: 1rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Total:</strong> $${parseFloat(estadia.total).toLocaleString('es-AR')}</p>
+      <p><strong>Reserva:</strong> $${parseFloat(estadia.montoReserva).toLocaleString('es-AR')}</p>
+    </div>
+
+    <div style="margin-top: 1rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Incluye:</strong> ${estadia.desayuno ? 'Desayuno ' : ''}${estadia.pension_media ? 'Media Pensión ' : ''}${estadia.pension_completa ? 'Pensión Completa ' : ''}${estadia.all_inclusive ? 'All Inclusive ' : ''}${estadia.cochera ? 'Cochera ' : ''}${estadia.ropaBlanca ? 'Ropa Blanca' : ''}</p>
+      <p><strong>Observaciones:</strong> ${estadia.observaciones || '—'}</p>
+    </div>
+  </div>
+`
+
 
     const contenedor = document.createElement('div')
     contenedor.innerHTML = reciboHTML
@@ -315,6 +325,14 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-[#3F4E4F] flex items-center justify-center p-6">
       <div className="w-full max-w-3xl bg-[#DCD7C9] p-8 rounded-2xl shadow-lg font-sans">
+        <button
+  type="button"
+  onClick={() => router.back()}
+  className="mb-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+>
+  ← Atrás
+</button>
+
         <h1 className="text-3xl font-bold mb-6 text-[#2C3639]">Registrar Estadía</h1>
        {estadoSeleccionado?.nombre !== 'sin confirmar' && (
           <div className="mb-4 flex items-center gap-2">
@@ -363,12 +381,9 @@ useEffect(() => {
           </select>
 
         <div className="relative">
-  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2C3639] font-semibold">$</span>
-  <input
-    type="number"
-    placeholder="Precio por noche"
-    value={estadia.precioPorNoche}
-    onChange={(e) => setEstadia({ ...estadia, precioPorNoche: e.target.value })}
+  <InputMoneda
+    valorInicial={estadia.precioPorNoche}
+   onCambio={(nuevoValor) => setEstadia({ ...estadia, precioPorNoche: nuevoValor.toString() })}
     className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
   />
 </div>
@@ -385,23 +400,17 @@ useEffect(() => {
 </div>
 
 <div className="relative">
-  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2C3639] font-semibold">$</span>
-  <input
-    type="number"
-    placeholder="Monto de reserva"
-    value={estadia.montoReserva}
-    onChange={(e) => setEstadia({ ...estadia, montoReserva: e.target.value })}
+   <InputMoneda
+    valorInicial={estadia.montoReserva}
+   onCambio={(nuevoValor) => setEstadia({ ...estadia, montoReserva: nuevoValor.toString() })}
     className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
   />
 </div>
 
 <div className="relative">
-  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2C3639] font-semibold">$</span>
-  <input
-    type="number"
-    placeholder="Total"
-    value={estadia.total}
-    onChange={(e) => setEstadia({ ...estadia, total: e.target.value })}
+  <InputMoneda
+    valorInicial={estadia.total}
+   onCambio={(nuevoValor) => setEstadia({ ...estadia, total: nuevoValor.toString() })}
     className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
   />
 </div>

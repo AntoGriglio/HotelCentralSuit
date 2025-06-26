@@ -76,6 +76,13 @@ export default function EditarClientePage() {
   return (
     <div className="min-h-screen bg-[#3F4E4F] flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-[#DCD7C9] p-8 rounded-2xl shadow-lg font-sans">
+                <button
+  type="button"
+  onClick={() => router.back()}
+  className="mb-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+>
+  ← Atrás
+</button>
         <h1 className="text-2xl font-bold mb-6 text-center text-[#2C3639]">Editar Cliente</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input name="dni" disabled value={form.dni} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />

@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatearMoneda } from '@/lib/formato';
 
 export default function ListaUnidadesHabitacionales() {
   const [alquilables, setAlquilables] = useState<any[]>([]);
@@ -85,7 +86,7 @@ export default function ListaUnidadesHabitacionales() {
                   <td className="px-4 py-2">{u.capacidad_normal}</td>
                   <td className="px-4 py-2">{u.capacidad_maxima}</td>
                   <td className="px-4 py-2">
-  {u.precio != null ? `$${u.precio.toLocaleString('es-AR')}` : '-'}
+  {u.precio != null ? `${formatearMoneda(u.precio)}` : '-'}
 </td>
 
                   <td className="px-4 py-2">

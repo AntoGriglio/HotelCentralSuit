@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import React from 'react'
+import { formatearMoneda } from '@/lib/formato'
 
 export default function ListaPrecios() {
   const [items, setItems] = useState<any[]>([])
@@ -52,7 +53,7 @@ export default function ListaPrecios() {
   <React.Fragment key={item.item_id}>
     <tr className="border-b hover:bg-[#DCD7C9]">
       <td className="px-4 py-2">{item.item}</td>
-      <td className="px-4 py-2">${item.precio_actual?.toFixed(2) || '-'}</td>
+      <td className="px-4 py-2">{formatearMoneda(item.precio_actual?.toFixed(2) )|| '-'}</td>
       <td className="px-4 py-2">{item.desde ? new Date(item.desde).toLocaleDateString() : '-'}</td>
       <td className="px-4 py-2 flex gap-2 justify-center">
         <button
@@ -85,7 +86,7 @@ export default function ListaPrecios() {
               {historial[item.item_id]?.length > 0 ? (
                 historial[item.item_id].map((h, idx) => (
                   <tr key={idx} className="text-[#2C3639]">
-                    <td className="border px-2 py-1">${h.monto.toFixed(2)}</td>
+                    <td className="border px-2 py-1">{formatearMoneda(h.monto.toFixed(2))}</td>
                     <td className="border px-2 py-1">{new Date(h.desde).toLocaleDateString()}</td>
                     <td className="border px-2 py-1">{h.hasta ? new Date(h.hasta).toLocaleDateString() : '-'}</td>
                   </tr>

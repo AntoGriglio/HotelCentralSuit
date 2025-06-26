@@ -1,39 +1,23 @@
 'use client'
 
-import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import Consulta from '@/components/consultaWh'
 
 export default function Home() {
-  const [formData, setFormData] = useState({
-    nombre: '',
-    mensaje: '',
-  })
 
-  const enviarWhatsApp = () => {
-    const { nombre, mensaje } = formData
-    const telefono = '5493517011639'
-    const texto = `Hola! Soy ${nombre}. ${mensaje}`
-    const url = `https://wa.me/${telefono}?text=${encodeURIComponent(texto)}`
-    window.open(url, '_blank')
-  }
 
   return (
     <div className="relative min-h-screen bg-[#f9f9f9] text-[#2C3639]">
       {/* Imagen de fondo portada */}
       <div className="absolute inset-0 -z-10">
-        <Image
-          src="/Imagen de WhatsApp 2025-06-12 a las 12.14.47_6c4088aa.jpg"
-          alt="Fondo"
-          fill
-          className="object-cover object-center opacity-30"
-        />
+        
       </div>
 
       {/* Navbar */}
       <header className="flex justify-between items-center px-6 py-4 bg-[#DCD7C9] shadow relative z-10">
         <div className="flex items-center gap-2">
-          <Image src="/central-suites-bg.svg" alt="Logo" width={40} height={40} />
+          <Image src="/central-suites-bg.svg" alt="Logo" width={100} height={100} />
         </div>
         <Link href="/login" className="text-[#A27B5B] hover:underline font-medium">
           Iniciar sesión
@@ -100,29 +84,7 @@ export default function Home() {
 
       {/* Formulario */}
       <section id="formulario" className="py-16 px-6 bg-[#DCD7C9] relative z-10">
-        <h3 className="text-2xl font-semibold text-center mb-6 text-[#2C3639]">Consultanos por WhatsApp</h3>
-        <div className="max-w-lg mx-auto space-y-4">
-          <input
-            type="text"
-            placeholder="Tu nombre"
-            className="w-full border border-[#A27B5B] px-4 py-2 rounded-lg"
-            value={formData.nombre}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-          />
-          <textarea
-            placeholder="Tu mensaje o consulta"
-            className="w-full border border-[#A27B5B] px-4 py-2 rounded-lg"
-            rows={4}
-            value={formData.mensaje}
-            onChange={(e) => setFormData({ ...formData, mensaje: e.target.value })}
-          />
-          <button
-            onClick={enviarWhatsApp}
-            className="w-full bg-[#A27B5B] text-white py-3 rounded-lg hover:bg-[#8e664e]"
-          >
-            Enviar por WhatsApp
-          </button>
-        </div>
+        <Consulta></Consulta>
       </section>
 
       {/* Footer */}

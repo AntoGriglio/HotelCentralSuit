@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatearMoneda } from '@/lib/formato';
 
 export default function Disponibilidad() {
   const router = useRouter();
@@ -99,16 +100,18 @@ export default function Disponibilidad() {
               <th className="px-4 py-2">Capacidad</th>
               <th className="px-4 py-2">Piso</th>
               <th className="px-4 py-2">Número</th>
+              <th className="px-4 py-2">Total Estimado</th>
               <th className="px-4 py-2">Acción</th>
             </tr>
           </thead>
           <tbody>
-            {habitaciones.map(({ unidad_habitacional: h }) => (
+            {habitaciones.map(({ unidad_habitacional: h , total_estadia}) => (
               <tr key={h.id} className="border-b hover:bg-[#F5F5F5]">
                 <td className="px-4 py-2">{h.nombre}</td>
                 <td className="px-4 py-2">{h.cantidad_normal}</td>
                 <td className="px-4 py-2">{h.piso}</td>
                 <td className="px-4 py-2">{h.numero}</td>
+                <td className="px-4 py-2">{formatearMoneda(total_estadia)}</td>
                 <td className="px-4 py-2">
                   <button
                     onClick={() =>

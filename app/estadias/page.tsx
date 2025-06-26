@@ -4,7 +4,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import { Eye, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { formatearMoneda } from '@/lib/formato';
 
 const coloresEstado: Record<string, string> = {
   'sin confirmar': '#9ca3af',
@@ -175,6 +176,8 @@ export default function ListaEstadias() {
               <th className="px-4 py-3">Habitación</th>
               <th className="px-4 py-3">Ingreso</th>
               <th className="px-4 py-3">Egreso</th>
+              <th className="px-4 py-3">Saldo Pendiente</th>
+              <th className="px-4 py-3">Total</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3">Acciones</th>
             </tr>
@@ -187,6 +190,8 @@ export default function ListaEstadias() {
                 <td className="px-4 py-2">{e.habitacion_nombre}</td>
                 <td className="px-4 py-2">{e.fecha_ingreso}</td>
                 <td className="px-4 py-2">{e.fecha_egreso}</td>
+                <td className="px-4 py-2">{formatearMoneda(e.saldo_pendiente)}</td>
+                <td className="px-4 py-2">{formatearMoneda(e.total)}</td>
                 <td className="px-4 py-2">
                   <span className="inline-block min-w-[150px] text-center px-3 py-1 rounded-md text-white text-sm font-medium" style={{ backgroundColor: coloresEstado[e.estado_nombre?.toLowerCase()] || '#6b7280' }}>
                     {e.estado_nombre}
@@ -194,9 +199,12 @@ export default function ListaEstadias() {
                 </td>
                 <td className="px-4 py-2">
                   <div className="flex gap-2 flex-wrap">
-                    <button onClick={() => router.push(`/pagos?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)} title="Agregar pago" className="bg-[#3F4E4F] text-white p-2 rounded hover:bg-[#2C3639]">
-                      <DollarSign size={16} />
-                    </button>
+                    {['pendiente', 'reservado'].includes(e.estado_nombre?.toLowerCase()) && (
+  <button onClick={() => router.push(`/pagos?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)} title="Agregar pago" className="bg-[#3F4E4F] text-white p-2 rounded hover:bg-[#2C3639]">
+    <DollarSign size={16} />
+  </button>
+)}
+
                     <button onClick={() => router.push(`/estadias/editar?id=${e.id}`)} title="Modificar" className="bg-[#A27B5B] text-white p-2 rounded hover:bg-[#8b6244]">
                       <Pencil size={16} />
                     </button>
@@ -214,8 +222,24 @@ export default function ListaEstadias() {
                       <strong>Pagos:</strong>
                       <ul className="ml-4 list-disc">
                         {obtenerPagosEstadia(e.id).map((p) => (
-                          <li key={p.id}>{new Date(p.fecha_pago).toLocaleDateString()} - $:{p.monto} ({p.descripcion_tipo_pago})</li>
-                        ))}
+  <li key={p.id} className="flex items-center justify-between">
+    <span>
+      {new Date(p.fecha_pago).toLocaleDateString()} - {formatearMoneda(p.monto)} ({p.descripcion_tipo_pago})
+    </span>
+    {p.comprobante_pago && (
+      <a
+        href={p.comprobante_pago}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Descargar comprobante"
+        className="ml-2 text-[#374e4e] hover:text-[#2C3639] transition"
+      >
+        <Download size={18} />
+      </a>
+    )}
+  </li>
+))}
+
                         {obtenerPagosEstadia(e.id).length === 0 && <li>Sin pagos registrados</li>}
                       </ul>
                     </div>

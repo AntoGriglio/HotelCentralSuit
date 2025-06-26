@@ -1,6 +1,4 @@
-
 import { Geist, Geist_Mono } from "next/font/google";
-import { SessionProvider } from "next-auth/react"; // 👈 Importar SessionProvider
 import Navbar from "@/components/Navbar";
 import "./globals.css";
 
@@ -20,8 +18,7 @@ export const metadata = {
   icons: {
     icon: '/logo-central.png',
   },
-}
-
+};
 
 export default function RootLayout({
   children,
@@ -29,14 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <SessionProvider> {/* 👈 Envuelve todo en SessionProvider */}
-          <Navbar />
-          {children}
-        </SessionProvider>
+    <html lang="es">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Navbar />
+        {children}
       </body>
     </html>
   );
