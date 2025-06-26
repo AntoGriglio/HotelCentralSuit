@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation' // ✅ Correcta para app router
+
 import { useState, useEffect } from 'react'
 
 const provinciasAR = [
