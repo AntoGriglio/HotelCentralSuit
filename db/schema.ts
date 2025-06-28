@@ -160,3 +160,15 @@ export const forma_pago = pgTable('forma_pago', {
   id: uuid('id').defaultRandom().primaryKey(),
   descripcion: text('descripcion').notNull(),
 });
+export const huesped = pgTable('huesped', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  estadia_id: uuid('estadia_id').notNull().references(() => estadia.id),
+  nombre_completo: varchar('nombre_completo', { length: 255 }).notNull(),
+  dni: varchar('dni', { length: 255 }).notNull(),
+  fecha_nacimiento: date('fecha_nacimiento'),
+  sexo: varchar('sexo', { length: 50 }), // puede ser 'masculino', 'femenino', 'otro', etc.
+
+  foto_cara: varchar('foto_cara', { length: 255 }),
+  dni_frente: varchar('dni_frente', { length: 255 }),
+  dni_dorso: varchar('dni_dorso', { length: 255 }),
+});

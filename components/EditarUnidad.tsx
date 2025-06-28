@@ -98,6 +98,7 @@ export default function EditarUnidadHabitacionalPage() {
 </button>
         <h1 className="text-2xl font-bold mb-6 text-center text-[#2C3639]">Editar Unidad Habitacional</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-[#2C3639] mb-1">Tipo Unidad</label>
           <select name="tipoUnidadId" value={form.tipoUnidadId} onChange={handleChange}
             className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" required>
             <option value="">Seleccionar tipo de unidad</option>
@@ -105,43 +106,87 @@ export default function EditarUnidadHabitacionalPage() {
               <option key={t.id} value={t.id}>{t.descripcion}</option>
             ))}
           </select>
-
+<label className="block text-[#2C3639] mb-1">Piso</label>
           <input name="piso" placeholder="Piso" value={form.piso} onChange={handleChange}
             className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+            <label className="block text-[#2C3639] mb-1">Nombre</label>
           <input name="nombre" placeholder="Nombre" value={form.nombre} onChange={handleChange}
             className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
 
           {esAlquilable && (
             <>
-              <input name="numero" placeholder="Número" value={form.numero} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <select name="tipoHabitacionId" value={form.tipoHabitacionId} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
-                <option value="">Seleccionar tipo habitación</option>
-                {tiposHabitacion.map((tipo) => (
-                  <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
-                ))}
-              </select>
-              <input name="capacidadMin" placeholder="Capacidad mínima" value={form.capacidadMin} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <input name="cantidadNormal" placeholder="Capacidad normal" value={form.cantidadNormal} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <input name="capacidadMax" placeholder="Capacidad máxima" value={form.capacidadMax} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <input name="camasMatrimonial" placeholder="Camas matrimoniales" value={form.camasMatrimonial} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <input name="camasIndividual" placeholder="Camas individuales" value={form.camasIndividual} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <input name="metrosCuadrados" placeholder="Metros cuadrados" value={form.metrosCuadrados} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <label className="flex items-center gap-2 text-[#2C3639]">
-                <input type="checkbox" name="balcon" checked={form.balcon} onChange={handleChange} />
-                ¿Tiene balcón?
-              </label>
-              <input name="cantidadBanos" placeholder="Cantidad de baños" value={form.cantidadBanos} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-              <input name="cantidadHabitaciones" placeholder="Cantidad de habitaciones" value={form.cantidadHabitaciones} onChange={handleChange}
-                className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+              <>
+  <div>
+    <label className="block text-[#2C3639] mb-1">Número</label>
+    <input name="numero" value={form.numero} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Tipo de habitación</label>
+    <select name="tipoHabitacionId" value={form.tipoHabitacionId} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
+      <option value="">Seleccionar tipo habitación</option>
+      {tiposHabitacion.map((tipo) => (
+        <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+      ))}
+    </select>
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Capacidad mínima</label>
+    <input name="capacidadMin" value={form.capacidadMin} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Capacidad normal</label>
+    <input name="cantidadNormal" value={form.cantidadNormal} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Capacidad máxima</label>
+    <input name="capacidadMax" value={form.capacidadMax} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Camas matrimoniales</label>
+    <input name="camasMatrimonial" value={form.camasMatrimonial} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Camas individuales</label>
+    <input name="camasIndividual" value={form.camasIndividual} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Metros cuadrados</label>
+    <input name="metrosCuadrados" value={form.metrosCuadrados} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+
+  <div className="flex items-center gap-2 text-[#2C3639]">
+    <input type="checkbox" name="balcon" checked={form.balcon} onChange={handleChange} />
+    <label className="select-none">¿Tiene balcón?</label>
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Cantidad de baños</label>
+    <input name="cantidadBanos" value={form.cantidadBanos} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+
+  <div>
+    <label className="block text-[#2C3639] mb-1">Cantidad de habitaciones</label>
+    <input name="cantidadHabitaciones" value={form.cantidadHabitaciones} onChange={handleChange}
+      className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+  </div>
+</>
+
             </>
           )}
 

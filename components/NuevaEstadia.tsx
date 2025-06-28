@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
@@ -32,12 +31,7 @@ export default function RegistrarEstadia() {
     estado: '', habitacionId: '', observaciones: '', canalId: '', estadoId: '',
   })
 
-function calcularPrecioPorCantidad(precioBase: number, cantidadNormal: number, cantidadPersonas: number): number {
-  const diferencia = cantidadPersonas - cantidadNormal;
-  const ajuste = diferencia * 0.10; // 10% más o menos por persona
-  const precioFinal = precioBase * (1 + ajuste);
-  return Math.max(precioFinal, 0); // evitar precios negativos
-}
+
 
   useEffect(() => {
     const habitacion_id = searchParams.get('habitacion_id')
@@ -104,9 +98,17 @@ function calcularPrecioPorCantidad(precioBase: number, cantidadNormal: number, c
       setEstadia(prev => ({ ...prev, estadoId: encontrado.id }))
     }
   }, [cliente, estados])
+
+const [precioEditado, setPrecioEditado] = useState(false)
+
 useEffect(() => {
   async function calcularConExtras() {
-    if (!estadia.habitacionId || !estadia.cantidadPersonas || !estadia.fechaIngreso || !estadia.fechaEgreso) return;
+    if (
+      !estadia.habitacionId ||
+      !estadia.cantidadPersonas ||
+      !estadia.fechaIngreso ||
+      !estadia.fechaEgreso
+    ) return;
 
     const habitacion = habitaciones.find(h => h.unidad_habitacional?.id === estadia.habitacionId);
     if (!habitacion || !habitacion.unidad_habitacional) return;
@@ -117,11 +119,15 @@ useEffect(() => {
 
     if (isNaN(precioBase) || isNaN(cantidadNormal) || isNaN(cantidadActual)) return;
 
-    // Ajuste por cantidad de personas
     const diferencia = cantidadActual - cantidadNormal;
-    let precioFinal = precioBase * (1 + diferencia * 0.1);
 
-    // 🔥 Obtener precios de ítems seleccionados
+    // 💡 Recalcula precio por noche solo si no fue editado manualmente
+    const precioAjustado = !precioEditado
+      ? precioBase * (1 + diferencia * 0.1)
+      : parseFloat(estadia.precioPorNoche) || 0;
+
+    // 📦 Extras
+    let extras = 0;
     try {
       const res = await fetch('/api/precios');
       const items = await res.json();
@@ -129,37 +135,38 @@ useEffect(() => {
       const getPrecio = (nombre: string) =>
         items.find((i: any) => i.item.toLowerCase() === nombre.toLowerCase())?.precio_actual || 0;
 
-      const extras =
-        (estadia.desayuno ? getPrecio('Desayuno buffet') : 0) +
-        (estadia.pension_media ? getPrecio('Media Pension') : 0) +
-        (estadia.pension_completa ? getPrecio('Pension Completa') : 0) +
-        (estadia.all_inclusive ? getPrecio('All inclusive') : 0) +
-        (estadia.cochera ? getPrecio('Cochera') : 0) +
-        (estadia.ropaBlanca ? getPrecio('Ropa Blanca') : 0);
-
-      precioFinal += extras;
-
-      const fechaIngreso = new Date(estadia.fechaIngreso);
-      const fechaEgreso = new Date(estadia.fechaEgreso);
-      const noches = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24));
-
-      if (noches <= 0) return;
-
-      const total = noches * precioFinal;
-      const porcentajeReserva = estadia.porcentajeReserva ? parseFloat(estadia.porcentajeReserva) : 30;
-      const montoReserva = (total * porcentajeReserva) / 100;
-
-      setCantidadNoches(noches);
-      setEstadia(prev => ({
-        ...prev,
-        precioPorNoche: precioFinal.toFixed(2),
-        total: total.toFixed(2),
-        montoReserva: montoReserva.toFixed(2),
-        porcentajeReserva: porcentajeReserva.toString()
-      }));
+      extras += estadia.desayuno ? getPrecio('Desayuno buffet') : 0;
+      extras += estadia.pension_media ? getPrecio('Media Pension') : 0;
+      extras += estadia.pension_completa ? getPrecio('Pension Completa') : 0;
+      extras += estadia.all_inclusive ? getPrecio('All inclusive') : 0;
+      extras += estadia.cochera ? getPrecio('Cochera') : 0;
+      extras += estadia.ropaBlanca ? getPrecio('Ropa Blanca') : 0;
     } catch (err) {
       console.error('❌ Error obteniendo precios de extras', err);
     }
+
+    // 🧮 Precio final por noche (incluye extras multiplicado por persona)
+    const precioConExtras = precioAjustado + extras * cantidadActual;
+
+    // 🗓️ Noches
+    const fechaIngreso = new Date(estadia.fechaIngreso);
+    const fechaEgreso = new Date(estadia.fechaEgreso);
+    const noches = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24));
+    if (noches <= 0) return;
+
+    // 💰 Total y reserva
+    const total = noches * precioConExtras;
+    const porcentajeReserva = estadia.porcentajeReserva ? parseFloat(estadia.porcentajeReserva) : 30;
+    const montoReserva = (total * porcentajeReserva) / 100;
+
+    setCantidadNoches(noches);
+    setEstadia(prev => ({
+      ...prev,
+      precioPorNoche: precioConExtras.toFixed(2),
+      total: total.toFixed(2),
+      montoReserva: montoReserva.toFixed(2),
+      porcentajeReserva: porcentajeReserva.toString()
+    }));
   }
 
   calcularConExtras();
@@ -174,7 +181,8 @@ useEffect(() => {
   estadia.pension_completa,
   estadia.all_inclusive,
   estadia.cochera,
-  estadia.ropaBlanca
+  estadia.ropaBlanca,
+  precioEditado
 ]);
 
   const buscarCliente = async () => {
@@ -239,6 +247,7 @@ const reciboHTML = `
 
       <p><strong>Ingreso:</strong> ${estadia.fechaIngreso}</p>
       <p><strong>Egreso:</strong> ${estadia.fechaEgreso}</p>
+      <p><strong>Noches:</strong> ${cantidadNoches}</p>
       <p><strong>Cantidad de personas:</strong> ${estadia.cantidadPersonas}</p>
     </div>
 
@@ -251,6 +260,13 @@ const reciboHTML = `
       <p><strong>Incluye:</strong> ${estadia.desayuno ? 'Desayuno ' : ''}${estadia.pension_media ? 'Media Pensión ' : ''}${estadia.pension_completa ? 'Pensión Completa ' : ''}${estadia.all_inclusive ? 'All Inclusive ' : ''}${estadia.cochera ? 'Cochera ' : ''}${estadia.ropaBlanca ? 'Ropa Blanca' : ''}</p>
       <p><strong>Observaciones:</strong> ${estadia.observaciones || '—'}</p>
     </div>
+    <div style="margin-top: 1.5rem; border-top: 1px dashed #999; padding-top: 1rem;">
+  <p style="font-weight: bold; font-size: 16px; margin-bottom: 0.5rem;">Cuenta para transferir reserva:</p>
+  <p><strong>Cta:</strong> 2648/0 - Banco Roela</p>
+  <p><strong>CBU:</strong> 2470005610000000264801</p>
+  <p><strong>Empresa:</strong> IDLG SA</p>
+</div>
+
   </div>
 `
 
@@ -382,10 +398,14 @@ const reciboHTML = `
 
         <div className="relative">
   <InputMoneda
-    valorInicial={estadia.precioPorNoche}
-   onCambio={(nuevoValor) => setEstadia({ ...estadia, precioPorNoche: nuevoValor.toString() })}
-    className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
-  />
+  valorInicial={estadia.precioPorNoche}
+  onCambio={(nuevoValor) => {
+    setEstadia({ ...estadia, precioPorNoche: nuevoValor.toString() })
+    setPrecioEditado(true) // 👉 Se marca como editado manualmente
+  }}
+  className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
+/>
+
 </div>
 
 <div className="relative">
@@ -414,7 +434,12 @@ const reciboHTML = `
     className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
   />
 </div>
-
+<div className='relative'>{cantidadNoches > 0 && (
+  <div className="text-right text-sm font-medium text-[#2C3639] mb-1">
+    Cantidad de noches: {cantidadNoches}
+  </div>
+)}
+ </div>
 
          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[#2C3639]">
   <label className="flex items-center gap-2">

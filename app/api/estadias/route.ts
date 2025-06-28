@@ -5,6 +5,7 @@ import { estadia, estado_estadia, unidad_habitacional, pago } from '@/db/schema'
 import { eq } from 'drizzle-orm';
 import { esTransicionValida } from '@/lib/estadiaEstados';
 import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
+import { desc } from 'drizzle-orm';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -41,8 +42,11 @@ export async function GET(req: NextRequest) {
           estado_nombre: estado_estadia.nombre,
           habitacion_numero: unidad_habitacional.numero,
           habitacion_nombre: unidad_habitacional.nombre,
+          fecha_creacion: estadia.fecha_creacion,
+          nro_estadia: estadia.nro_estadia
         })
         .from(estadia)
+        .orderBy(desc(estadia.fecha_creacion))
         .leftJoin(estado_estadia, eq(estadia.estado_id, estado_estadia.id))
         .leftJoin(unidad_habitacional, eq(estadia.habitacion_id, unidad_habitacional.id));
 

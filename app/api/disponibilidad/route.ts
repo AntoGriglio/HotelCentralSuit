@@ -6,7 +6,8 @@ import {
   estadia,
   unidad_habitacional,
   tipo_unidad_habitacional,
-  precio_habitacion
+  precio_habitacion,
+  tipo_habitacion
 } from '../../../db/schema';
 
 export async function GET(request: Request) {
@@ -46,33 +47,49 @@ export async function GET(request: Request) {
   }
 
   const disponibles = await db
-    .select({
-      unidad_habitacional: {
-        id: unidad_habitacional.id,
-        nombre: unidad_habitacional.nombre,
-        cantidad_normal: unidad_habitacional.cantidad_normal,
-        piso: unidad_habitacional.piso,
-        numero: unidad_habitacional.numero,
-        tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id,
-        precio: precio_habitacion.monto
-      },
-      tipo_unidad_habitacional: {
-        id: tipo_unidad_habitacional.id,
-        descripcion: tipo_unidad_habitacional.descripcion
-      }
-    })
-    .from(unidad_habitacional)
-    .innerJoin(tipo_unidad_habitacional, eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id))
-    .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
-    .where(and(...condiciones));
+  .select({
+    unidad_habitacional: {
+      id: unidad_habitacional.id,
+      nombre: unidad_habitacional.nombre,
+      cantidad_normal: unidad_habitacional.cantidad_normal,
+      piso: unidad_habitacional.piso,
+      numero: unidad_habitacional.numero,
+      tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id,
+      precio: precio_habitacion.monto
+    },
+    tipo_unidad_habitacional: {
+      id: tipo_unidad_habitacional.id,
+      descripcion: tipo_unidad_habitacional.descripcion
+    },
+    tipo_habitacion: {
+      id: tipo_habitacion.id,
+      descripcion: tipo_habitacion.nombre
+    }
+  })
+  .from(unidad_habitacional)
+  .innerJoin(tipo_unidad_habitacional, eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id))
+  .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
+  .leftJoin(tipo_habitacion, eq(unidad_habitacional.tipo_habitacion_id, tipo_habitacion.id))
+  .where(and(...condiciones));
 
-  const resultadosConTotal = disponibles.map((res) => {
+const resultadosConTotal = disponibles
+  .filter((res) => {
+    const capacidadNormal = res.unidad_habitacional.cantidad_normal || 1;
+    const diferencia = capacidadNormal - personas;
+    return personas <= capacidadNormal && diferencia <= 3;
+  })
+
+  .map((res) => {
     const precioBase = res.unidad_habitacional.precio || 0;
     const capacidadNormal = res.unidad_habitacional.cantidad_normal || 1;
 
     let ajuste = 1;
-    if (personas < capacidadNormal) ajuste = 0.9;
-    else if (personas > capacidadNormal) ajuste = 1.1;
+
+    const diferencia = capacidadNormal - personas;
+
+    if (diferencia === 1) ajuste = 0.9;
+    else if (diferencia === 2) ajuste = 0.8;
+    else if (diferencia >= 3) ajuste = 0.7;
 
     const total = precioBase * ajuste * noches;
 
@@ -81,6 +98,7 @@ export async function GET(request: Request) {
       total_estadia: total
     };
   });
+
 console.log('holaa'+resultadosConTotal)
   return Response.json(resultadosConTotal);
 }

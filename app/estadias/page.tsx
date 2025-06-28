@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { Eye, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp, Download, Users } from 'lucide-react';
 import { formatearMoneda } from '@/lib/formato';
 
 const coloresEstado: Record<string, string> = {
@@ -31,6 +31,8 @@ export default function ListaEstadias() {
   const [expandirPagos, setExpandirPagos] = useState<Record<string, boolean>>({});
   const [paginaActual, setPaginaActual] = useState(1);
 
+const [huespedes, setHuespedes] = useState<any[]>([]);
+const [expandirHuespedes, setExpandirHuespedes] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -45,7 +47,16 @@ export default function ListaEstadias() {
     };
     fetchData();
   }, []);
+useEffect(() => {
+  const fetchHuespedes = async () => {
+    const res = await fetch('/api/huespedes');
+    const data = await res.json();
+    setHuespedes(data);
+  };
+  fetchHuespedes();
+}, []);
 
+const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.estadia_id === id);
   const estadiasFiltradas = estadias.filter((e) => {
     const coincideEstado = filtroEstado ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase() : true;
     const coincideCliente = filtroCliente ? e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) : true;
@@ -172,6 +183,7 @@ export default function ListaEstadias() {
           <thead className="bg-[#2C3639] text-white">
             <tr>
               <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">Carga</th>
               <th className="px-4 py-3">Cliente</th>
               <th className="px-4 py-3">Habitación</th>
               <th className="px-4 py-3">Ingreso</th>
@@ -186,12 +198,21 @@ export default function ListaEstadias() {
             {estadiasPaginadas.map((e) => (
               <tr key={e.id} className="border-b hover:bg-[#2C3639]/10">
                 <td className="px-4 py-2">{e.nro_estadia}</td>
+                <td className="px-4 py-2">
+  {new Date(e.fecha_creacion).toISOString().slice(0, 10)}
+</td>
+
                 <td className="px-4 py-2">{e.cliente_dni ?? '—'}</td>
                 <td className="px-4 py-2">{e.habitacion_nombre}</td>
                 <td className="px-4 py-2">{e.fecha_ingreso}</td>
                 <td className="px-4 py-2">{e.fecha_egreso}</td>
-                <td className="px-4 py-2">{formatearMoneda(e.saldo_pendiente)}</td>
-                <td className="px-4 py-2">{formatearMoneda(e.total)}</td>
+             <td className="px-4 py-2 text-left align-middle whitespace-nowrap">
+  <div className="w-full text-left pl-1">{formatearMoneda(e.saldo_pendiente)}</div>
+</td>
+<td className="px-4 py-2 text-left align-middle whitespace-nowrap">
+  <div className="w-full text-left pl-1">{formatearMoneda(e.total)}</div>
+</td>
+
                 <td className="px-4 py-2">
                   <span className="inline-block min-w-[150px] text-center px-3 py-1 rounded-md text-white text-sm font-medium" style={{ backgroundColor: coloresEstado[e.estado_nombre?.toLowerCase()] || '#6b7280' }}>
                     {e.estado_nombre}
@@ -217,6 +238,38 @@ export default function ListaEstadias() {
                       {expandirPagos[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                   </div>
+                  {['reservado', 'pagado'].includes(e.estado_nombre?.toLowerCase()) && (
+  <>
+    <button
+      onClick={() => router.push(`/huesped/nuevo?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)}
+      title="Agregar huéspedes"
+      className="bg-[#4B5563] text-white p-2 rounded hover:bg-[#374151]"
+    >
+      <Users size={16} />
+    </button>
+    <button
+      onClick={() => setExpandirHuespedes((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
+      title="Ver huéspedes"
+      className="bg-[#E5E7EB] text-[#1F2937] p-2 rounded hover:bg-[#D1D5DB]"
+    >
+      {expandirHuespedes[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+    </button>
+  </>
+)}
+{expandirHuespedes[e.id] && (
+  <div className="mt-2 text-sm text-[#2C3639] bg-[#f3f4f6] rounded p-2">
+    <strong>Huéspedes:</strong>
+    <ul className="ml-4 list-disc">
+      {obtenerHuespedesEstadia(e.id).map((h) => (
+        <li key={h.id}>
+          {h.nombre_completo} - DNI: {h.dni} {h.fecha_nacimiento && ` - Nac.: ${new Date(h.fecha_nacimiento).toLocaleDateString()}`}
+        </li>
+      ))}
+      {obtenerHuespedesEstadia(e.id).length === 0 && <li>Sin huéspedes registrados</li>}
+    </ul>
+  </div>
+)}
+
                   {expandirPagos[e.id] && (
                     <div className="mt-2 text-sm text-[#2C3639] bg-[#f3f4f6] rounded p-2">
                       <strong>Pagos:</strong>

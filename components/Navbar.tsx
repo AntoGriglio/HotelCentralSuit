@@ -40,6 +40,8 @@ export default function Navbar() {
       <Link href="/clientes" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Clientes</Link>
       <Link href="/unidades" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Unidades</Link>
       <Link href="/precios" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Precios</Link>
+        <Link href="/huesped" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Huespedes</Link>
+  
       <Link href="/disponibilidad" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Disponibilidad</Link>
       <Link href="/reportes" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Reportes</Link>
       <button

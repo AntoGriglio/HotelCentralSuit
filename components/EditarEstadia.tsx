@@ -10,7 +10,7 @@ export default function EditarEstadia() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id') ?? ''
   const router = useRouter()
-
+  const [mostrarModal, setMostrarModal] = useState(false)
   const [estadia, setEstadia] = useState<any>({
     cantidad_personas: '',
     fecha_ingreso: '',
@@ -31,7 +31,8 @@ export default function EditarEstadia() {
     estado_id: '',
   })
 const [habitacionesCargadas, setHabitacionesCargadas] = useState(false);
-
+  const [nuevoCliente, setNuevoCliente] = useState({ dni: '', nombre_completo: '', email: '', telefono: '' })
+ 
   const [cliente, setCliente] = useState<any>(null)
   const [dni, setDni] = useState('')
   const [habitaciones, setHabitaciones] = useState<any[]>([])
@@ -122,7 +123,27 @@ useEffect(() => {
     }));
   }
 }, [estadia.fecha_egreso, estadia.fecha_ingreso, estadia.porcentaje_reserva, estadia.precio_por_noche]);
-
+ const registrarNuevoCliente = async () => {
+    try {
+      const res = await fetch('/api/clientes', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoCliente),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setCliente(data)
+        setDni(data.dni)
+        setMostrarModal(false)
+        setMensaje('Cliente registrado y asignado correctamente.')
+        await buscarCliente() // <== Vuelve a buscar luego del registro
+      } else {
+        setMensaje('Error al registrar cliente.')
+      }
+    } catch (error) {
+      console.error(error)
+      setMensaje('Error al registrar cliente.')
+    }
+  }
   useEffect(() => {
     if (estadia?.cliente_dni) {
       fetch(`/api/clientes?dni=${estadia.cliente_dni}`)
@@ -237,45 +258,50 @@ useEffect(() => {
   estadia.cochera,
   estadia.ropa_blanca,
   estadia.porcentaje_reserva,
-  habitacionesCargadas // ✅ Ahora sí es seguro
+  habitacionesCargadas 
 ]);
 
-  const buscarCliente = async () => {
-    const res = await fetch(`/api/clientes?dni=${dni}`)
-    if (res.ok) {
-      const data = await res.json()
-      setCliente(data)
-      setMensaje('')
-    } else {
-      setCliente(null)
-      setMensaje('Cliente no encontrado. Redirigiendo...')
-      setTimeout(() => router.push('/clientes'), 2000)
+ const buscarCliente = async () => {
+    try {
+      const res = await fetch(`/api/clientes?dni=${dni}`)
+      if (res.ok) {
+        const data = await res.json()
+        setCliente(data)
+        setMensaje('')
+      } else {
+        setCliente(null)
+        setNuevoCliente(prev => ({ ...prev, dni }))
+        setMostrarModal(true)
+      }
+    } catch (error) {
+      console.error(error)
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const dataToSend = {
-      cliente_dni: cliente?.dni || null,
-      cantidad_personas: parseInt(estadia.cantidad_personas),
-      fecha_ingreso: estadia.fecha_ingreso,
-      fecha_egreso: estadia.fecha_egreso,
-      cochera: estadia.cochera,
-      desayuno: estadia.desayuno,
-      pension_media: estadia.pension_media,
-      pension_completa: estadia.pension_completa,
-      all_inclusive: estadia.all_inclusive,
-      ropa_blanca: estadia.ropa_blanca,
-      precio_por_noche: parseFloat(estadia.precio_por_noche),
-      porcentaje_reserva: parseFloat(estadia.porcentaje_reserva),
-      monto_reserva: parseFloat(estadia.monto_reserva),
-      total: parseFloat(estadia.total),
-      habitacion_id: estadia.habitacion_id,
-      observaciones: estadia.observaciones,
-      canal_id: estadia.canal_id,
-      estado_id: estadia.estado_id,
-    }
+const dataToSend = {
+  cliente_dni: cliente?.dni || null,
+  cantidad_personas: parseInt(estadia.cantidad_personas),
+  fecha_ingreso: estadia.fecha_ingreso,
+  fecha_egreso: estadia.fecha_egreso,
+  cochera: estadia.cochera,
+  desayuno: estadia.desayuno,
+  pension_media: estadia.pension_media,
+  pension_completa: estadia.pension_completa,
+  all_inclusive: estadia.all_inclusive,
+  ropa_blanca: estadia.ropa_blanca,
+  precio_por_noche: parseFloat(estadia.precio_por_noche),
+  porcentaje_reserva: parseFloat(estadia.porcentaje_reserva),
+  monto_reserva: parseFloat(estadia.monto_reserva),
+  total: parseFloat(estadia.total),
+  habitacion_id: estadia.habitacion_id || null,
+  canal_id: estadia.canal_id || null,
+  estado_id: estadia.estado_id || null,
+  observaciones: estadia.observaciones,
+}
+
 
     const res = await fetch(`/api/estadias?id=${id}`, {
       method: 'PUT',
@@ -309,27 +335,33 @@ useEffect(() => {
           {cliente && (
             <p className="text-sm text-green-700">Cliente: {cliente.nombre_completo} ({cliente.email})</p>
           )}
-
+<label className="block text-[#2C3639] mb-1">Habitacion</label>
           <select value={String(estadia.habitacion_id || '')} onChange={(e) => setEstadia({ ...estadia, habitacion_id: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
             <option value="">Seleccionar habitación</option>
             {habitaciones.map(h => (
               <option key={h.id} value={String(h.id)}>{h.numero} - Piso {h.piso}</option>
             ))}
           </select>
-
+<label className="block text-[#2C3639] mb-1">Canal</label>
           <select value={String(estadia.canal_id || '')} onChange={(e) => setEstadia({ ...estadia, canal_id: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
             <option value="">Seleccionar canal</option>
             {canales.map(c => (
               <option key={c.id} value={String(c.id)}>{c.descripcion}</option>
             ))}
           </select>
-
+           <label className="block text-[#2C3639] mb-1">Cantidad personas</label>   
           <input type="number" placeholder="Cantidad personas" value={estadia.cantidad_personas} onChange={(e) => setEstadia({ ...estadia, cantidad_personas: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+            <label className="block text-[#2C3639] mb-1">Fecha Ingreso</label>            
           <input type="date" value={estadia.fecha_ingreso} onChange={(e) => setEstadia({ ...estadia, fecha_ingreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+           <label className="block text-[#2C3639] mb-1">Fecha Egreso</label> 
           <input type="date" value={estadia.fecha_egreso} onChange={(e) => setEstadia({ ...estadia, fecha_egreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+           <label className="block text-[#2C3639] mb-1">Precio por noche</label> 
           <input type="number" placeholder="Precio por noche" value={estadia.precio_por_noche} onChange={(e) => setEstadia({ ...estadia, precio_por_noche: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+           <label className="block text-[#2C3639] mb-1">Porcentaje Reserva</label> 
           <input type="number" placeholder="% Reserva" value={estadia.porcentaje_reserva} onChange={(e) => setEstadia({ ...estadia, porcentaje_reserva: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+          <label className="block text-[#2C3639] mb-1">Total Reserva</label> 
           <input type="number" placeholder="Monto Reserva" value={estadia.monto_reserva} onChange={(e) => setEstadia({ ...estadia, monto_reserva: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+         <label className="block text-[#2C3639] mb-1">Total</label> 
           <input type="number" placeholder="Total" value={estadia.total} onChange={(e) => setEstadia({ ...estadia, total: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 text-[#2C3639]">
@@ -421,8 +453,24 @@ useEffect(() => {
         </form>
 
         {mensaje && <p className="mt-4 text-center text-red-600">{mensaje}</p>}
+          {mostrarModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-[#DCD7C9] p-6 rounded-lg w-full max-w-md text-[#2C3639]">
+            <h2 className="text-xl font-bold mb-4">Registrar nuevo cliente</h2>
+            <input type="text" placeholder="DNI" value={nuevoCliente.dni} onChange={(e) => setNuevoCliente({ ...nuevoCliente, dni: e.target.value })} className="w-full p-2 mb-2 border border-[#A27B5B] rounded" />
+            <input type="text" placeholder="Nombre completo" value={nuevoCliente.nombre_completo} onChange={(e) => setNuevoCliente({ ...nuevoCliente, nombre_completo: e.target.value })} className="w-full p-2 mb-2 border border-[#A27B5B] rounded" />
+            <input type="email" placeholder="Email" value={nuevoCliente.email} onChange={(e) => setNuevoCliente({ ...nuevoCliente, email: e.target.value })} className="w-full p-2 mb-2 border border-[#A27B5B] rounded" />
+            <input type="tel" placeholder="Teléfono" value={nuevoCliente.telefono} onChange={(e) => setNuevoCliente({ ...nuevoCliente, telefono: e.target.value })} className="w-full p-2 mb-4 border border-[#A27B5B] rounded" />
+            <div className="flex justify-between">
+              <button onClick={registrarNuevoCliente} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Guardar</button>
+              <button onClick={() => setMostrarModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
+    
   )
 }
 

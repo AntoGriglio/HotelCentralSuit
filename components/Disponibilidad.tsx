@@ -98,6 +98,7 @@ export default function Disponibilidad() {
             <tr>
               <th className="px-4 py-2">Nombre</th>
               <th className="px-4 py-2">Capacidad</th>
+              <th className="px-4 py-2">Tipo Habitacion</th>
               <th className="px-4 py-2">Piso</th>
               <th className="px-4 py-2">Número</th>
               <th className="px-4 py-2">Total Estimado</th>
@@ -105,10 +106,11 @@ export default function Disponibilidad() {
             </tr>
           </thead>
           <tbody>
-            {habitaciones.map(({ unidad_habitacional: h , total_estadia}) => (
+            {habitaciones.map(({ unidad_habitacional: h , total_estadia, tipo_habitacion: t}) => (
               <tr key={h.id} className="border-b hover:bg-[#F5F5F5]">
                 <td className="px-4 py-2">{h.nombre}</td>
                 <td className="px-4 py-2">{h.cantidad_normal}</td>
+                <td className="px-4 py-2">{t.descripcion}</td>
                 <td className="px-4 py-2">{h.piso}</td>
                 <td className="px-4 py-2">{h.numero}</td>
                 <td className="px-4 py-2">{formatearMoneda(total_estadia)}</td>

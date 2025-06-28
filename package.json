@@ -11,7 +11,9 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.9.1",
     "@supabase/supabase-js": "^2.50.2",
+    "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
+    "date-fns": "^4.1.0",
     "drizzle-orm": "^0.43.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
@@ -21,15 +23,18 @@
     "pg": "^8.16.0",
     "postgres": "^3.4.7",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^5.0.2",
+    "@types/date-fns": "^2.6.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
     "drizzle-kit": "^0.31.2",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",

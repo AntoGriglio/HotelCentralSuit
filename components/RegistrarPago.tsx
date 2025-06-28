@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -5,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -39,30 +40,73 @@ export default function RegistrarPago() {
 
   const [pagosEstadia, setPagosEstadia] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [resEstadias, resTipos, resFormas] = await Promise.all([
-        fetch('/api/estadias'),
-        fetch('/api/tipos-pago'),
-        fetch('/api/formas-pago')
-      ]);
+useEffect(() => {
+  const datosCompletos = 
+    mensaje.includes('Pago registrado') &&
+    clienteNombre.trim().length > 0 &&
+    habitacionNumero.toString().trim().length > 0 &&
+    pago.monto.toString().trim().length > 0;
 
-      const dataEstadias = await resEstadias.json();
-      const dataTipos = await resTipos.json();
-      const dataFormas = await resFormas.json();
+  if (datosCompletos) {
+    console.log('🟢 Datos completos, generando PDF...');
+    generarPDF();
+  } else {
+    console.log('🔴 Esperando datos para generar PDF:', 
+      'mensaje:', mensaje, 
+      '| clienteNombre:', clienteNombre, 
+      '| habitacionNumero:', habitacionNumero, 
+      '| monto:', pago.monto
+    );
+  }
+}, [mensaje, clienteNombre, habitacionNumero, pago.monto]);
 
-      setEstadias(dataEstadias);
-      setTiposPago(dataTipos);
-      setFormasPago(dataFormas);
+useEffect(() => {
+  const fetchData = async () => {
+    const [resEstadias, resTipos, resFormas] = await Promise.all([
+      fetch('/api/estadias'),
+      fetch('/api/tipos-pago'),
+      fetch('/api/formas-pago')
+    ]);
 
-      if (estadiaIdFromUrl) {
-        setPago(prev => ({ ...prev, estadiaId: estadiaIdFromUrl }));
-        cargarPagos(estadiaIdFromUrl, dataEstadias);
+    const dataEstadias = await resEstadias.json();
+    const dataTipos = await resTipos.json();
+    const dataFormas = await resFormas.json();
+
+    setEstadias(dataEstadias);
+    setTiposPago(dataTipos);
+    setFormasPago(dataFormas);
+
+    if (estadiaIdFromUrl) {
+      setPago(prev => ({ ...prev, estadiaId: estadiaIdFromUrl }));
+
+      // 👉 Buscar la estadía correspondiente
+      const estadiaSeleccionada = dataEstadias.find((e: any) => e.id === estadiaIdFromUrl);
+      if (estadiaSeleccionada) {
+        // 👉 Setear número de habitación directamente
+        setHabitacionNumero(estadiaSeleccionada.habitacion_numero || '');
+
+        // 👉 Buscar cliente por DNI
+        const clienteDNI = estadiaSeleccionada.cliente_dni;
+
+        try {
+          const resCliente = await fetch(`/api/clientes?dni=${clienteDNI}`);
+         
+          const dataCliente = await resCliente.json();
+           console.log(dataCliente)
+          setClienteNombre(dataCliente?.nombre_completo || `Cliente DNI: ${clienteDNI}`);
+        } catch (error) {
+          console.error('Error buscando cliente:', error);
+          setClienteNombre(`Cliente DNI: ${clienteDNI}`);
+        }
       }
-    };
 
-    fetchData();
-  }, [ estadiaIdFromUrl]);
+      await cargarPagos(estadiaIdFromUrl, dataEstadias);
+    }
+  };
+
+  fetchData();
+}, [estadiaIdFromUrl]);
+
 
   const cargarPagos = async (estadiaId: string, listaEstadias?: any[]) => {
     const res = await fetch('/api/pagos');
@@ -84,8 +128,6 @@ export default function RegistrarPago() {
 
     setPendiente(total - suma);
     setMontoReserva(reserva);
-    setClienteNombre(est.cliente?.nombre_completo || '');
-    setHabitacionNumero(est.habitacion?.numero || '');
   };
 
   const handleTipoPagoChange = (tipoPagoId: string) => {
@@ -107,49 +149,78 @@ export default function RegistrarPago() {
 
     setPago({ ...pago, tipoPagoId, monto: nuevoMonto });
   };
+const generarPDF = async () => {
+  if (!clienteNombre || !habitacionNumero || !pago.monto) {
+    console.warn('⚠️ Faltan datos para generar el PDF');
+    return;
+  }
 
-  const generarPDF = async () => {
-    if (!clienteNombre || !habitacionNumero || !pago.monto) return;
+  const tipoPagoDesc = tiposPago.find(tp => tp.id === pago.tipoPagoId)?.descripcion || '';
+  const formaPagoDesc = formasPago.find(fp => fp.id === pago.formaPagoId)?.descripcion || '';
+  const estadiaSeleccionada = estadias.find(e => e.id === pago.estadiaId);
+  if (!estadiaSeleccionada) return;
 
-    const tipoPagoDesc = tiposPago.find(tp => tp.id === pago.tipoPagoId)?.descripcion || '';
-    const formaPagoDesc = formasPago.find(fp => fp.id === pago.formaPagoId)?.descripcion || '';
+  const fechaIngreso = new Date(estadiaSeleccionada.fecha_ingreso).toLocaleDateString('es-AR');
+  const fechaEgreso = new Date(estadiaSeleccionada.fecha_egreso).toLocaleDateString('es-AR');
 
-    const reciboHTML = `
-      <div style="background-color: #DCD7C9; color: #2C3639; font-family: Arial; width: 800px; padding: 2rem; border-radius: 1rem;">
-        <h1 style="text-align: center; font-size: 24px;">Recibo de Pago</h1>
-        <p><strong>Cliente:</strong> ${clienteNombre}</p>
-        <p><strong>Habitación:</strong> ${habitacionNumero}</p>
-        <p><strong>Fecha:</strong> ${new Date(pago.fechaPago).toLocaleDateString()}</p>
-        <p><strong>Tipo de pago:</strong> ${tipoPagoDesc}</p>
-        <p><strong>Forma de pago:</strong> ${formaPagoDesc}</p>
-        <p><strong>Monto abonado:</strong> $${parseFloat(pago.monto).toFixed(2)}</p>
-      </div>
-    `;
+  const conceptoTexto = tipoPagoDesc.toLowerCase().includes('reserva')
+    ? `Reserva de estadía desde ${fechaIngreso} hasta ${fechaEgreso}`
+    : `Pago correspondiente a estadía desde ${fechaIngreso} hasta ${fechaEgreso}`;
 
-    const contenedor = document.createElement('div');
-    contenedor.innerHTML = reciboHTML;
-    contenedor.style.position = 'absolute';
-    contenedor.style.top = '-9999px';
-    document.body.appendChild(contenedor);
+  const fechaPagoFormateada = new Date(pago.fechaPago).toLocaleDateString('es-AR');
+  const montoFormateado = `$${parseFloat(pago.monto).toFixed(2)}`;
 
-    try {
-      const canvas = await html2canvas(contenedor);
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF();
-      pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
-      pdf.save(`recibo_${clienteNombre}_hab${habitacionNumero}.pdf`);
-    } finally {
-      document.body.removeChild(contenedor);
-    }
+  const pdf = new jsPDF();
+
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+    });
   };
-const handleSubmit = async (e: React.FormEvent) => {
+
+  try {
+    const background = await loadImage('/comprobante_base.png');
+    // 🧾 Generar PDF
+pdf.addImage(background, 'PNG', 0, 0, 210, 297); // A4
+
+pdf.setFont('helvetica', 'normal');
+pdf.setFontSize(12);
+pdf.setTextColor(50);
+
+// 🗓 Fecha arriba a la derecha
+pdf.text(fechaPagoFormateada, 170, 48, { align: 'right' });
+
+// 🧍 Nombre del cliente
+pdf.setFontSize(13);
+pdf.text(clienteNombre, 50, 145);
+
+// 💵 Monto más destacado
+pdf.setFontSize(15);
+pdf.text(montoFormateado, 55, 158);
+
+// 📄 Concepto de pago con salto de línea automático
+pdf.setFontSize(12);
+const conceptoLíneas = pdf.splitTextToSize(conceptoTexto, 145);
+pdf.text(conceptoLíneas, 63, 172);
+
+
+    const nombreArchivo = `comprobante_${clienteNombre.replaceAll(' ', '_')}_${pago.fechaPago}.pdf`;
+    pdf.save(nombreArchivo);
+  } catch (err) {
+    console.error('❌ Error generando PDF:', err);
+    setMensaje('Error al generar el comprobante PDF');
+  }
+};
+
+
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   const montoIngresado = parseFloat(pago.monto || '0');
 
   let comprobanteURL = '';
-const { data: user } = await supabase.auth.getUser();
-console.log('Usuario autenticado:', user);
-
   if (pago.comprobantePago) {
     const archivo = pago.comprobantePago;
     const extension = archivo.name.split('.').pop();
@@ -162,29 +233,26 @@ console.log('Usuario autenticado:', user);
         upsert: false,
       });
 
-  if (error || !data) {
-  console.error('Error al subir comprobante:', { error, data });
-  setMensaje('Error al subir comprobante (ver consola)');
-  return;
-}
+    if (error || !data) {
+      console.error('❌ Error al subir comprobante:', error);
+      setMensaje('Error al subir comprobante (ver consola)');
+      return;
+    }
 
+    const { data: urlData } = supabase
+      .storage
+      .from('comprobantes-pago')
+      .getPublicUrl(data.path);
 
-const { data: urlData } = supabase
-  .storage
-  .from('comprobantes-pago')
-  .getPublicUrl(data.path);
+    if (!urlData.publicUrl) {
+      setMensaje('No se pudo obtener URL pública del comprobante');
+      return;
+    }
 
-if (!urlData.publicUrl) {
-  console.error('No se pudo obtener la URL pública');
-  setMensaje('Error al obtener URL del comprobante');
-  return;
-}
-
-comprobanteURL = urlData.publicUrl;
-
-
+    comprobanteURL = urlData.publicUrl;
   }
 
+  // Enviar el pago a la API
   const res = await fetch('/api/pagos', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -199,14 +267,14 @@ comprobanteURL = urlData.publicUrl;
   });
 
   if (res.ok) {
-    setMensaje('Pago registrado con éxito');
-    await cargarPagos(pago.estadiaId);
-    setTimeout(() => generarPDF(), 500);
+    setMensaje('✅ Pago registrado con éxito');
+    await cargarPagos(pago.estadiaId); // Esto actualiza clienteNombre y habitacionNumero
   } else {
     const error = await res.json();
-    setMensaje(error.error || 'Error al registrar el pago');
+    setMensaje(error.error || '❌ Error al registrar el pago');
   }
 };
+
 
   return (
     <div className="min-h-screen bg-[#3F4E4F] flex flex-col items-center p-6">
