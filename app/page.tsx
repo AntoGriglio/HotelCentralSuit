@@ -42,7 +42,6 @@ export default function Home() {
 <section className="py-12 px-6 max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-[#A27B5B]">
   <div className="flex gap-4 w-max">
     {[
-      '/habitacion1.jpg',
       '/habitacion2.jpg',
       '/habitacion4.jpg',
       '/habitacion5.jpg',
@@ -89,7 +88,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center text-sm text-[#3F4E4F] py-4 border-t bg-[#DCD7C9] relative z-10">
-        © 2025 Hotel Central Suit. Todos los derechos reservados.
+        © 2025 Hotel Central Suites. Todos los derechos reservados.
       </footer>
     </div>
   )
