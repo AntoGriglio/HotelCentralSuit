@@ -5,8 +5,8 @@ import { eq } from 'drizzle-orm';
 import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
 
 const TIPOS_PAGO = {
-  RESERVA: '20938997-7fd2-4e74-9862-819b36a52312',
-  SALDO_TOTAL: '30506e89-1ecb-4f12-afe6-32243421ecec', // <-- actualizá esto con el UUID real
+  RESERVA: '1b234452-4e8c-42f2-a168-13e286ee3a51',
+  SALDO_TOTAL: 'ac86bb97-f2a0-4f75-a22f-784891ba486c', // <-- actualizá esto con el UUID real
 };
 
 export async function POST(req: Request) {
