@@ -131,7 +131,7 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white text-[#2C3639]">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-[#2C3639]">Estadías</h1>
         <div className="flex gap-2">
@@ -154,7 +154,7 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
         <input type="text" placeholder="DNI" value={filtroCliente} onChange={(e) => setFiltroCliente(e.target.value)} className="p-2 border rounded" />
 
         <div className="col-span-2">
-          <label className="block text-sm text-white mb-1">Ingreso</label>
+          <label className="block text-sm text-[#2C3639] mb-1">Ingreso</label>
           <div className="flex gap-2">
             <input type="date" value={filtroIngresoDesde} onChange={(e) => { setFiltroIngresoDesde(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso desde" title="Ingreso desde" />
             <input type="date" value={filtroIngresoHasta} onChange={(e) => { setFiltroIngresoHasta(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso hasta" title="Ingreso hasta" />
@@ -162,7 +162,7 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
         </div>
 
         <div className="col-span-2">
-          <label className="block text-sm text-white mb-1">Egreso</label>
+          <label className="block text-sm text-[#2C3639] mb-1">Egreso</label>
           <div className="flex gap-2">
             <input type="date" value={filtroEgresoDesde} onChange={(e) => { setFiltroEgresoDesde(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso desde" title="Egreso desde" />
             <input type="date" value={filtroEgresoHasta} onChange={(e) => { setFiltroEgresoHasta(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso hasta" title="Egreso hasta" />
