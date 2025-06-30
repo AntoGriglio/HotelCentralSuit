@@ -42,7 +42,7 @@ export default function TablaDisponibilidad() {
           ◀️ Mes anterior
         </button>
 
-        <p className="font-semibold text-center text-white">{format(fechaBase, 'MMMM yyyy')}</p>
+        <p className="font-semibold text-center">{format(fechaBase, 'MMMM yyyy')}</p>
 
         <button
           onClick={() => setFechaBase(addMonths(fechaBase, 1))}
@@ -67,7 +67,7 @@ export default function TablaDisponibilidad() {
           <tbody>
             {data.map((hab) => (
               <tr key={hab.habitacion_id}>
-                <td className="border px-2 py-1 font-semibold text-white
+                <td className="border px-2 py-1 font-semibold
                 ">
                   {hab.numero || hab.nombre || 'Hab'}
                 </td>
