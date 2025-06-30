@@ -1,26 +1,11 @@
-'use client'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
+import LoginPage from '../login/page'
 
-export default function LoginPage() {
-  const supabase = createClientComponentClient()
-  const searchParams = useSearchParams()
-  const estadiaId = searchParams.get('estadia_id')
-
-  useEffect(() => {
-    const signInWithGoogle = async () => {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/huesped?estadia_id=${estadiaId}`,
-        },
-      })
-    }
-
-    signInWithGoogle()
-  }, [estadiaId])
-
-  return <p className="p-6">Redirigiendo a Google...</p>
+export default function Page() {
+  return (
+    <Suspense fallback={<p className="p-4">Cargando página...</p>}>
+      <LoginPage   />
+    </Suspense>
+  )
 }
