@@ -57,7 +57,7 @@ export default function Home() {
         <div className="relative w-[320px] h-[220px] rounded-lg overflow-hidden shadow-md">
           <Image
             src={src}
-            alt={`Habitación ${index + 1}`}
+            alt={`Habitación ${index + 2}`}
             fill
             className="object-cover hover:scale-105 transition-transform duration-300"
           />
