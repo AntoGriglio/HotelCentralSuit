@@ -102,13 +102,8 @@ export default function RegistrarEstadia() {
 const [precioEditado, setPrecioEditado] = useState(false)
 
 useEffect(() => {
-  async function calcularConExtras() {
-    if (
-      !estadia.habitacionId ||
-      !estadia.cantidadPersonas ||
-      !estadia.fechaIngreso ||
-      !estadia.fechaEgreso
-    ) return;
+  const calcularConExtras = async () => {
+    if (!estadia.habitacionId || !estadia.cantidadPersonas || !estadia.fechaIngreso || !estadia.fechaEgreso) return;
 
     const habitacion = habitaciones.find(h => h.unidad_habitacional?.id === estadia.habitacionId);
     if (!habitacion || !habitacion.unidad_habitacional) return;
@@ -116,18 +111,13 @@ useEffect(() => {
     const precioBase = habitacion.precio ?? habitacion.unidad_habitacional.precio;
     const cantidadNormal = parseInt(habitacion.unidad_habitacional.cantidad_normal);
     const cantidadActual = parseInt(estadia.cantidadPersonas);
-
     if (isNaN(precioBase) || isNaN(cantidadNormal) || isNaN(cantidadActual)) return;
 
     const diferencia = cantidadActual - cantidadNormal;
-
-    // 💡 Recalcula precio por noche solo si no fue editado manualmente
     const precioAjustado = !precioEditado
       ? precioBase * (1 + diferencia * 0.1)
       : parseFloat(estadia.precioPorNoche) || 0;
 
-    // 📦 Extras
-    let extras = 0;
     try {
       const res = await fetch('/api/precios');
       const items = await res.json();
@@ -135,39 +125,39 @@ useEffect(() => {
       const getPrecio = (nombre: string) =>
         items.find((i: any) => i.item.toLowerCase() === nombre.toLowerCase())?.precio_actual || 0;
 
-      extras += estadia.desayuno ? getPrecio('Desayuno buffet') : 0;
-      extras += estadia.pension_media ? getPrecio('Media Pension') : 0;
-      extras += estadia.pension_completa ? getPrecio('Pension Completa') : 0;
-      extras += estadia.all_inclusive ? getPrecio('All inclusive') : 0;
-      extras += estadia.cochera ? getPrecio('Cochera') : 0;
-      extras += estadia.ropaBlanca ? getPrecio('Ropa Blanca') : 0;
+      const extrasSeleccionados = [
+        estadia.desayuno && getPrecio('Desayuno buffet'),
+        estadia.pension_media && getPrecio('Media Pension'),
+        estadia.pension_completa && getPrecio('Pension Completa'),
+        estadia.all_inclusive && getPrecio('All inclusive'),
+        estadia.cochera && getPrecio('Cochera'),
+        estadia.ropaBlanca && getPrecio('Ropa Blanca'),
+      ].filter(Boolean); // Quita los "false"
+
+      const extrasTotal = extrasSeleccionados.reduce((acc, val) => acc + val, 0);
+      const precioConExtras = precioAjustado + extrasTotal * cantidadActual;
+
+      const fechaIngreso = new Date(estadia.fechaIngreso);
+      const fechaEgreso = new Date(estadia.fechaEgreso);
+      const noches = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24));
+      if (noches <= 0) return;
+
+      const total = noches * precioConExtras;
+      const porcentajeReserva = estadia.porcentajeReserva ? parseFloat(estadia.porcentajeReserva) : 30;
+      const montoReserva = (total * porcentajeReserva) / 100;
+
+      setCantidadNoches(noches);
+      setEstadia(prev => ({
+        ...prev,
+        precioPorNoche: precioConExtras.toFixed(2),
+        total: total.toFixed(2),
+        montoReserva: montoReserva.toFixed(2),
+        porcentajeReserva: porcentajeReserva.toString()
+      }));
     } catch (err) {
       console.error('❌ Error obteniendo precios de extras', err);
     }
-
-    // 🧮 Precio final por noche (incluye extras multiplicado por persona)
-    const precioConExtras = precioAjustado + extras * cantidadActual;
-
-    // 🗓️ Noches
-    const fechaIngreso = new Date(estadia.fechaIngreso);
-    const fechaEgreso = new Date(estadia.fechaEgreso);
-    const noches = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24));
-    if (noches <= 0) return;
-
-    // 💰 Total y reserva
-    const total = noches * precioConExtras;
-    const porcentajeReserva = estadia.porcentajeReserva ? parseFloat(estadia.porcentajeReserva) : 30;
-    const montoReserva = (total * porcentajeReserva) / 100;
-
-    setCantidadNoches(noches);
-    setEstadia(prev => ({
-      ...prev,
-      precioPorNoche: precioConExtras.toFixed(2),
-      total: total.toFixed(2),
-      montoReserva: montoReserva.toFixed(2),
-      porcentajeReserva: porcentajeReserva.toString()
-    }));
-  }
+  };
 
   calcularConExtras();
 }, [
@@ -175,15 +165,16 @@ useEffect(() => {
   estadia.cantidadPersonas,
   estadia.fechaIngreso,
   estadia.fechaEgreso,
-  habitaciones,
   estadia.desayuno,
   estadia.pension_media,
   estadia.pension_completa,
   estadia.all_inclusive,
   estadia.cochera,
   estadia.ropaBlanca,
+  habitaciones,
   precioEditado
 ]);
+
 
   const buscarCliente = async () => {
     try {
@@ -283,6 +274,19 @@ const reciboHTML = `
       const pdf = new jsPDF()
       pdf.addImage(imgData, 'PNG', 10, 10, 190, 0)
       pdf.save(`reserva_${cliente?.dni || 'nueva'}.pdf`)
+      // Generar Blob del PDF
+const blob = pdf.output('blob')
+
+// Enviarlo al endpoint con FormData
+const formData = new FormData()
+formData.append('to', cliente.email)
+formData.append('pdf', blob, 'reserva.pdf')
+
+await fetch('/api/enviar-confirmacion', {
+  method: 'POST',
+  body: formData,
+})
+
     } catch (err) {
       console.error('Error al generar PDF:', err)
     } finally {

@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { huesped } from '@/db/schema';
 import { v4 as uuidv4 } from 'uuid';
-
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -17,20 +16,21 @@ export async function POST(req: Request) {
       const fecha_nacimiento = formData.get(`fecha_nacimiento_${i}`) as string;
       const sexo = formData.get(`sexo_${i}`) as string;
 
-      const imagen_cara = formData.get(`imagen_cara_${i}`) as string;
-      const imagen_dni_frente = formData.get(`imagen_dni_frente_${i}`) as string;
-      const imagen_dni_dorso = formData.get(`imagen_dni_dorso_${i}`) as string;
+      // Nombres corregidos para coincidir con la base de datos
+      const foto_cara = formData.get(`imagen_cara_${i}`)?.toString() ?? '';
+      const dni_frente = formData.get(`imagen_dni_frente_${i}`)?.toString() ?? '';
+      const dni_dorso = formData.get(`imagen_dni_dorso_${i}`)?.toString() ?? '';
 
-            huespedes.push({
+      huespedes.push({
         id: uuidv4(),
         estadia_id,
         nombre_completo,
         dni,
         fecha_nacimiento: new Date(fecha_nacimiento).toISOString(),
         sexo,
-        imagen_cara,
-        imagen_dni_frente,
-        imagen_dni_dorso,
+        foto_cara,
+        dni_frente,
+        dni_dorso,
       });
 
       i++;

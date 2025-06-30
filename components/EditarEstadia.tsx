@@ -3,8 +3,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import InputMoneda from './inputMoneda'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 export default function EditarEstadia() {
   const searchParams = useSearchParams()
@@ -40,34 +43,40 @@ const [habitacionesCargadas, setHabitacionesCargadas] = useState(false);
   const [estados, setEstados] = useState<any[]>([])
   const [mensaje, setMensaje] = useState('')
  const [cantidadNoches, setCantidadNoches] = useState<number>(0)
+ const [precioEditado, setPrecioEditado] = useState(false)
+ const clienteCargadoRef = useRef(false);
+ const [estadiaCargada, setEstadiaCargada] = useState(false)
+
+
 useEffect(() => {
   if (!id) return;
 
   fetch(`/api/estadias?id=${id}`)
     .then(res => res.json())
-    .then(data => {
-      console.log('📥 Datos cargados:', data);
+   .then(data => {
+  setEstadia({
+    ...data,
+    cantidad_personas: data.cantidad_personas ?? '',
+    fecha_ingreso: data.fecha_ingreso ?? '',
+    fecha_egreso: data.fecha_egreso ?? '',
+    precio_por_noche: data.precio_por_noche?.toString() ?? '0',
+    porcentaje_reserva: data.porcentaje_reserva?.toString() ?? '30',
+    monto_reserva: data.monto_reserva?.toString() ?? '',
+    total: data.total?.toString() ?? '',
+    habitacion_id: data.habitacion_id ?? '',
+    canal_id: data.canal_id ?? '',
+    observaciones: data.observaciones ?? '',
+    cochera: data.cochera ?? false,
+    desayuno: data.desayuno ?? false,
+    pension_media: data.pension_media ?? false,
+    pension_completa: data.pension_completa ?? false,
+    all_inclusive: data.all_inclusive ?? false,
+    ropa_blanca: data.ropa_blanca ?? false,
+    estado_id: data.estado_id ?? '',
+  });
+  setEstadiaCargada(true); // ✅ NUEVO
 
-      setEstadia({
-        ...data,
-        cantidad_personas: data.cantidad_personas ?? '',
-        fecha_ingreso: data.fecha_ingreso ?? '',
-        fecha_egreso: data.fecha_egreso ?? '',
-        precio_por_noche: data.precio_por_noche?.toString() ?? '0', // 🔧 importante
-        porcentaje_reserva: data.porcentaje_reserva?.toString() ?? '30',
-        monto_reserva: data.monto_reserva?.toString() ?? '',
-        total: data.total?.toString() ?? '',
-        habitacion_id: data.habitacion_id ?? '',
-        canal_id: data.canal_id ?? '',
-        observaciones: data.observaciones ?? '',
-        cochera: data.cochera ?? false,
-        desayuno: data.desayuno ?? false,
-        pension_media: data.pension_media ?? false,
-        pension_completa: data.pension_completa ?? false,
-        all_inclusive: data.all_inclusive ?? false,
-        ropa_blanca: data.ropa_blanca ?? false,
-        estado_id: data.estado_id ?? '',
-      });
+
     })
     .catch(console.error);
 
@@ -144,14 +153,20 @@ useEffect(() => {
       setMensaje('Error al registrar cliente.')
     }
   }
-  useEffect(() => {
-    if (estadia?.cliente_dni) {
-      fetch(`/api/clientes?dni=${estadia.cliente_dni}`)
-        .then(res => res.json())
-        .then(setCliente)
-        .catch(() => setCliente(null))
-    }
-  }, [estadia])
+useEffect(() => {
+  if (!estadia.cliente_dni || clienteCargadoRef.current) return;
+
+  fetch(`/api/clientes?dni=${estadia.cliente_dni}`)
+    .then(res => res.json())
+    .then((data) => {
+      setCliente(data);
+      clienteCargadoRef.current = true; // ← marca que ya cargó
+    })
+    .catch(() => setCliente(null));
+}, [estadia.cliente_dni]);
+useEffect(() => {
+  clienteCargadoRef.current = false;
+}, [id])
 
   useEffect(() => {
     const estadoAuto = cliente ? 'pendiente' : 'sin confirmar'
@@ -160,37 +175,29 @@ useEffect(() => {
       setEstadia((prev: any) => ({ ...prev, estado_id: encontrado.id }))
     }
   }, [cliente, estados])
-
 useEffect(() => {
   async function calcularConExtras() {
-    console.log('🔍 Ejecutando calcularConExtras...');
-
     if (
+      !estadiaCargada || // ✅ NUEVO: asegura que los datos estén listos
       !estadia.habitacion_id ||
       !estadia.cantidad_personas ||
       !estadia.fecha_ingreso ||
       !estadia.fecha_egreso
-    ) {
-      console.log('❗ Faltan datos necesarios para calcular');
-      return;
-    }
+    ) return;
 
     const habitacion = habitaciones.find(h => String(h.id) === String(estadia.habitacion_id));
-    if (!habitacion || !habitacion.unidad_habitacional) {
-      console.log('🏠 Habitación no encontrada o sin unidad asociada');
-      return;
-    }
+    if (!habitacion || !habitacion.unidad_habitacional) return;
 
     const precioBase = habitacion.precio ?? habitacion.unidad_habitacional.precio ?? 0;
     const cantidadNormal = parseInt(habitacion.unidad_habitacional.cantidad_normal ?? '0');
     const cantidadActual = parseInt(estadia.cantidad_personas ?? '0');
 
-    if (isNaN(precioBase) || isNaN(cantidadNormal) || isNaN(cantidadActual)) {
-      console.log('❌ Error con cantidades o precio base', { precioBase, cantidadNormal, cantidadActual });
-      return;
-    }
+    if (isNaN(precioBase) || isNaN(cantidadNormal) || isNaN(cantidadActual)) return;
 
-    let precioFinal = precioBase * (1 + (cantidadActual - cantidadNormal) * 0.1);
+    const diferencia = cantidadActual - cantidadNormal;
+    const precioAjustadoBase = precioBase * (1 + diferencia * 0.1);
+
+    let extrasTotal = 0;
 
     try {
       const res = await fetch('/api/precios');
@@ -199,54 +206,40 @@ useEffect(() => {
       const getPrecio = (nombre: string) =>
         items.find((i: any) => i.item.toLowerCase() === nombre.toLowerCase())?.precio_actual || 0;
 
-      const extras =
-        (estadia.desayuno ? getPrecio('Desayuno buffet') : 0) +
-        (estadia.pension_media ? getPrecio('Media Pension') : 0) +
-        (estadia.pension_completa ? getPrecio('Pension Completa') : 0) +
-        (estadia.all_inclusive ? getPrecio('All inclusive') : 0) +
-        (estadia.cochera ? getPrecio('Cochera') : 0) +
-        (estadia.ropa_blanca ? getPrecio('Ropa Blanca') : 0);
+      extrasTotal += estadia.desayuno ? getPrecio('Desayuno buffet') : 0;
+      extrasTotal += estadia.pension_media ? getPrecio('Media Pension') : 0;
+      extrasTotal += estadia.pension_completa ? getPrecio('Pension Completa') : 0;
+      extrasTotal += estadia.all_inclusive ? getPrecio('All inclusive') : 0;
+      extrasTotal += estadia.cochera ? getPrecio('Cochera') : 0;
+      extrasTotal += estadia.ropa_blanca ? getPrecio('Ropa Blanca') : 0;
 
-      precioFinal += extras;
+      const precioFinalPorNoche = precioAjustadoBase + (extrasTotal * cantidadActual);
 
       const fechaIngreso = new Date(estadia.fecha_ingreso);
       const fechaEgreso = new Date(estadia.fecha_egreso);
-
-      if (isNaN(fechaIngreso.getTime()) || isNaN(fechaEgreso.getTime())) {
-        console.log('❌ Fechas inválidas', { fechaIngreso, fechaEgreso });
-        return;
-      }
-
       const noches = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24));
       if (noches <= 0) return;
 
-      const total = noches * precioFinal;
+      const total = noches * precioFinalPorNoche;
       const porcentajeReserva = estadia.porcentaje_reserva ? parseFloat(estadia.porcentaje_reserva) : 30;
       const montoReserva = (total * porcentajeReserva) / 100;
 
       setCantidadNoches(noches);
       setEstadia((prev: any) => ({
         ...prev,
-        precio_por_noche: precioFinal.toFixed(2),
+        precio_por_noche: precioFinalPorNoche.toFixed(2),
         total: total.toFixed(2),
         monto_reserva: montoReserva.toFixed(2),
-        porcentaje_reserva: porcentajeReserva.toString(),
+        porcentaje_reserva: porcentajeReserva.toString()
       }));
-
-      console.log('✅ Cálculo con extras completo', {
-        noches,
-        precioFinal,
-        total,
-        montoReserva,
-      });
-
     } catch (err) {
       console.error('❌ Error obteniendo precios de extras', err);
     }
   }
 
-   calcularConExtras();
+  calcularConExtras();
 }, [
+  estadiaCargada, // ✅ NUEVO
   estadia.habitacion_id,
   estadia.cantidad_personas,
   estadia.fecha_ingreso,
@@ -258,8 +251,98 @@ useEffect(() => {
   estadia.cochera,
   estadia.ropa_blanca,
   estadia.porcentaje_reserva,
-  habitacionesCargadas 
+  habitacionesCargadas
 ]);
+  const generarPDF = async () => {
+    if (!cliente || !habitaciones) return
+
+   const habitacion = habitaciones.find(h => h.unidad_habitacional?.id === estadia.habitacionId)
+
+    const logo = '/logo.png'
+
+const formatoPesos = (valor: string | number) => {
+  const numero = typeof valor === 'string' ? parseFloat(valor) : valor
+  return isNaN(numero) ? '—' : `$${numero.toLocaleString('es-AR')}`
+}
+
+const reciboHTML = `
+  <div style="width: 800px; padding: 2rem; font-family: sans-serif; color: #2C3639; border: 2px solid #2C3639; border-radius: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div style="display: flex; flex-direction: column; align-items: start;">
+        <img src="${logo}" alt="Logo" style="height: 70px; margin-bottom: 5px;" />
+        <span style="font-weight: bold; font-size: 18px;">Central Suites Hotel</span>
+      </div>
+      <h2 style="text-align: right; font-size: 20px;">Comprobante de Reserva</h2>
+    </div>
+
+    <div style="border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Cliente:</strong> ${cliente.nombre_completo} (${cliente.dni})</p>
+      <p><strong>Habitación:</strong> ${habitacion?.unidad_habitacional?.nombre || '—'} - Piso ${habitacion?.unidad_habitacional?.piso ?? '—'} - Capacidad ${habitacion?.unidad_habitacional?.cantidad_normal ?? '—'}</p>
+
+      <p><strong>Ingreso:</strong> ${estadia.fecha_ingreso}</p>
+      <p><strong>Egreso:</strong> ${estadia.fecha_egreso}</p>
+      <p><strong>Noches:</strong> ${cantidadNoches}</p>
+      <p><strong>Cantidad de personas:</strong> ${estadia.cantidad_personas}</p>
+    </div>
+
+    <div style="margin-top: 1rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Total:</strong> ${formatoPesos(estadia.total)}</p>
+      <p><strong>Reserva:</strong> ${formatoPesos(estadia.monto_reserva)}</p>
+    </div>
+
+    <div style="margin-top: 1rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Incluye:</strong> 
+        ${estadia.desayuno ? 'Desayuno ' : ''}
+        ${estadia.pension_media ? 'Media Pensión ' : ''}
+        ${estadia.pension_completa ? 'Pensión Completa ' : ''}
+        ${estadia.all_inclusive ? 'All Inclusive ' : ''}
+        ${estadia.cochera ? 'Cochera ' : ''}
+        ${estadia.ropa_blanca ? 'Ropa Blanca' : ''}
+      </p>
+      <p><strong>Observaciones:</strong> ${estadia.observaciones || '—'}</p>
+    </div>
+
+    <div style="margin-top: 1.5rem; border-top: 1px dashed #999; padding-top: 1rem;">
+      <p style="font-weight: bold; font-size: 16px; margin-bottom: 0.5rem;">Cuenta para transferir reserva:</p>
+      <p><strong>Cta:</strong> 2648/0 - Banco Roela</p>
+      <p><strong>CBU:</strong> 2470005610000000264801</p>
+      <p><strong>Empresa:</strong> IDLG SA</p>
+    </div>
+  </div>
+`
+
+
+    const contenedor = document.createElement('div')
+    contenedor.innerHTML = reciboHTML
+    contenedor.style.position = 'absolute'
+    contenedor.style.top = '-9999px'
+    document.body.appendChild(contenedor)
+
+    try {
+      const canvas = await html2canvas(contenedor)
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF()
+      pdf.addImage(imgData, 'PNG', 10, 10, 190, 0)
+      pdf.save(`reserva_${cliente?.dni || 'nueva'}.pdf`)
+      // Generar Blob del PDF
+const blob = pdf.output('blob')
+
+// Enviarlo al endpoint con FormData
+const formData = new FormData()
+formData.append('to', cliente.email)
+formData.append('pdf', blob, 'reserva.pdf')
+
+await fetch('/api/enviar-confirmacion', {
+  method: 'POST',
+  body: formData,
+})
+
+    } catch (err) {
+      console.error('Error al generar PDF:', err)
+    } finally {
+      document.body.removeChild(contenedor)
+    }
+  }
 
  const buscarCliente = async () => {
     try {
@@ -310,7 +393,8 @@ const dataToSend = {
     })
 
     if (res.ok) {
-      router.push('/estadias')
+    await generarPDF()
+  router.push('/estadias')
     } else {
       const err = await res.json()
       setMensaje(err.error || 'Error al actualizar estadía')
@@ -356,14 +440,36 @@ const dataToSend = {
            <label className="block text-[#2C3639] mb-1">Fecha Egreso</label> 
           <input type="date" value={estadia.fecha_egreso} onChange={(e) => setEstadia({ ...estadia, fecha_egreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
            <label className="block text-[#2C3639] mb-1">Precio por noche</label> 
-          <input type="number" placeholder="Precio por noche" value={estadia.precio_por_noche} onChange={(e) => setEstadia({ ...estadia, precio_por_noche: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+             <InputMoneda
+  valorInicial={estadia.precio_por_noche}
+  onCambio={(nuevoValor) => {
+    setEstadia({ ...estadia, precio_por_noche: nuevoValor.toString() })
+    setPrecioEditado(true) 
+  }}
+  className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
+/>
            <label className="block text-[#2C3639] mb-1">Porcentaje Reserva</label> 
+        
           <input type="number" placeholder="% Reserva" value={estadia.porcentaje_reserva} onChange={(e) => setEstadia({ ...estadia, porcentaje_reserva: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+        
           <label className="block text-[#2C3639] mb-1">Total Reserva</label> 
-          <input type="number" placeholder="Monto Reserva" value={estadia.monto_reserva} onChange={(e) => setEstadia({ ...estadia, monto_reserva: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+           <InputMoneda
+  valorInicial={estadia.monto_reserva}
+  onCambio={(nuevoValor) => {
+    setEstadia({ ...estadia, monto_reserva: nuevoValor.toString() })
+    setPrecioEditado(true) 
+  }}
+  className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
+/>
          <label className="block text-[#2C3639] mb-1">Total</label> 
-          <input type="number" placeholder="Total" value={estadia.total} onChange={(e) => setEstadia({ ...estadia, total: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-
+ <InputMoneda
+  valorInicial={estadia.total}
+  onCambio={(nuevoValor) => {
+    setEstadia({ ...estadia, total: nuevoValor.toString() })
+    setPrecioEditado(true) 
+  }}
+  className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
+/>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 text-[#2C3639]">
 
   <label className="flex items-center gap-2">
@@ -437,10 +543,11 @@ const dataToSend = {
   </label>
   <label className="flex items-center gap-2">
     <input
-      type="checkbox"
-      checked={estadia.ropaBlanca}
-      onChange={(e) => setEstadia({ ...estadia, ropaBlanca: e.target.checked })}
-    /> Ropa Blanca
+  type="checkbox"
+  checked={estadia.ropa_blanca}
+  onChange={(e) => setEstadia({ ...estadia, ropa_blanca: e.target.checked })}
+/>
+Ropa Blanca
   </label>
 </div>
 

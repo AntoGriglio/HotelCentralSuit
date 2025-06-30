@@ -28,6 +28,7 @@ export default function RegistrarPago() {
   const [montoReserva, setMontoReserva] = useState<number | null>(null);
   const [clienteNombre, setClienteNombre] = useState('');
   const [habitacionNumero, setHabitacionNumero] = useState('');
+const [clienteEmail, setClienteEmail] = useState('');
 
   const [pago, setPago] = useState({
     estadiaId: '',
@@ -94,6 +95,8 @@ useEffect(() => {
           const dataCliente = await resCliente.json();
            console.log(dataCliente)
           setClienteNombre(dataCliente?.nombre_completo || `Cliente DNI: ${clienteDNI}`);
+setClienteEmail(dataCliente?.email || '');
+
         } catch (error) {
           console.error('Error buscando cliente:', error);
           setClienteNombre(`Cliente DNI: ${clienteDNI}`);
@@ -209,6 +212,18 @@ pdf.text(conceptoLíneas, 63, 172);
 
     const nombreArchivo = `comprobante_${clienteNombre.replaceAll(' ', '_')}_${pago.fechaPago}.pdf`;
     pdf.save(nombreArchivo);
+    // 💌 Enviar por mail
+const blob = pdf.output('blob');
+
+const formData = new FormData();
+formData.append('to', clienteEmail); // tenés que tener este valor
+formData.append('pdf', blob, 'comprobante_pago.pdf');
+
+await fetch('/api/enviar-comprobante', {
+  method: 'POST',
+  body: formData,
+});
+
   } catch (err) {
     console.error('❌ Error generando PDF:', err);
     setMensaje('Error al generar el comprobante PDF');
