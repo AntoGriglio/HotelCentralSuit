@@ -33,11 +33,11 @@ export default function TablaDisponibilidad() {
   }, [fechaBase])
 
   return (
-    <div className="overflow-x-auto text-sm text-black">
-      <div className="flex justify-between items-center mb-2">
+    <div className="overflow-x-auto text-sm bg-white text-[#2C3639]">
+      <div className="flex justify-between items-center mb-2  text-[#2C3639]">
         <button
           onClick={() => setFechaBase(subMonths(fechaBase, 1))}
-          className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+          className="px-2 py-1 rounded hover:bg-gray-300"
         >
           ◀️ Mes anterior
         </button>
@@ -55,7 +55,7 @@ export default function TablaDisponibilidad() {
       <div className="overflow-x-auto border rounded">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-gray-100 sticky top-0 z-10">
+            <tr className=" sticky top-0 z-10  text-[#2C3639]">
               <th className="border px-2 py-1 text-left">Habitación</th>
               {diasDelMes.map((dia) => (
                 <th key={dia} className="border px-2 py-1 text-center whitespace-nowrap">
