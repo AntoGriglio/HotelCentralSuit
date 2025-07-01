@@ -136,6 +136,7 @@ setClienteEmail(dataCliente?.email || '');
   const handleTipoPagoChange = (tipoPagoId: string) => {
     const estadiaSeleccionada = estadias.find(e => e.id === pago.estadiaId);
     const tipoReserva = tiposPago.find(tp => tp.descripcion === 'Reserva');
+    console.log('tipo', tipoReserva)
     const tipoSaldo = tiposPago.find(tp => tp.descripcion.includes('Saldo'));
     const yaTieneReserva = pagosEstadia.some((p: any) => p.tipo_pago_id === tipoReserva?.id);
 
