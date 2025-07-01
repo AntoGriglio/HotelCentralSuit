@@ -135,8 +135,8 @@ setClienteEmail(dataCliente?.email || '');
 
   const handleTipoPagoChange = (tipoPagoId: string) => {
     const estadiaSeleccionada = estadias.find(e => e.id === pago.estadiaId);
-    const tipoReserva = tiposPago.find(tp => tp.descripcion.toLowerCase() === 'reserva');
-    const tipoSaldo = tiposPago.find(tp => tp.descripcion.toLowerCase().includes('saldo'));
+    const tipoReserva = tiposPago.find(tp => tp.descripcion.toLowerCase() === 'Reserva');
+    const tipoSaldo = tiposPago.find(tp => tp.descripcion.toLowerCase().includes('Saldo'));
     const yaTieneReserva = pagosEstadia.some((p: any) => p.tipo_pago_id === tipoReserva?.id);
 
     let nuevoMonto = pago.monto;
@@ -166,7 +166,7 @@ const generarPDF = async () => {
   const fechaIngreso = new Date(estadiaSeleccionada.fecha_ingreso).toLocaleDateString('es-AR');
   const fechaEgreso = new Date(estadiaSeleccionada.fecha_egreso).toLocaleDateString('es-AR');
 
-  const conceptoTexto = tipoPagoDesc.toLowerCase().includes('reserva')
+  const conceptoTexto = tipoPagoDesc.toLowerCase().includes('Reserva')
     ? `Reserva de estadía desde ${fechaIngreso} hasta ${fechaEgreso}`
     : `Pago correspondiente a estadía desde ${fechaIngreso} hasta ${fechaEgreso}`;
 
@@ -326,7 +326,7 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
               <option value="">Seleccione tipo</option>
               {tiposPago.map(tp => {
                 const descripcion = tp.descripcion.toLowerCase();
-                const yaTieneReserva = pagosEstadia.some(p => p.tipo_pago_id === tp.id && descripcion === 'reserva');
+                const yaTieneReserva = pagosEstadia.some(p => p.tipo_pago_id === tp.id && descripcion === 'Reserva');
                 if (yaTieneReserva || descripcion === 'saldo') {
                   return <option key={tp.id} value={tp.id}>{tp.descripcion}</option>;
                 }
