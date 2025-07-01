@@ -174,7 +174,13 @@ const generarPDF = async () => {
   const fechaPagoFormateada = new Date(pago.fechaPago).toLocaleDateString('es-AR');
   const montoFormateado = `$${parseFloat(pago.monto).toFixed(2)}`;
 
-  const pdf = new jsPDF();
+  const pdf = new jsPDF({
+  orientation: 'portrait',
+  unit: 'pt',
+  format: 'a4',
+  compress: true, 
+})
+
 
   const loadImage = (src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
