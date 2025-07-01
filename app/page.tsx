@@ -88,7 +88,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center text-sm text-[#3F4E4F] py-4 border-t bg-[#DCD7C9] relative z-10">
-        © 2025 Hotel Central Suites. Todos los derechos reservados.
+        © 2025 Hotel Central Suites. Todos los derechos reservados.       Testing(1.0)
       </footer>
     </div>
   )
