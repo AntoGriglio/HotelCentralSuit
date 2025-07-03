@@ -14,11 +14,14 @@ const coloresEstado: Record<string, string> = {
   'cancelada': '#f97316',
   'cancelada pendiente': '#eab308',
 };
+// ... arriba igual
 
 export default function ListaClientes() {
   const [clientes, setClientes] = useState<any[]>([]);
   const [estadias, setEstadias] = useState<any[]>([]);
   const [expandirEstadias, setExpandirEstadias] = useState<Record<string, boolean>>({});
+  const [filtroDni, setFiltroDni] = useState('');
+  const [filtroNombre, setFiltroNombre] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -34,10 +37,17 @@ export default function ListaClientes() {
     fetchData();
   }, []);
 
-  const obtenerEstadiasCliente = (dni: string) => estadias.filter((e) => e.cliente_dni === dni);
+  const obtenerEstadiasCliente = (dni: string) =>
+    estadias.filter((e) => e.cliente_dni === dni);
+
+  const clientesFiltrados = clientes.filter(
+    (c) =>
+      c.dni?.toLowerCase().includes(filtroDni.toLowerCase()) &&
+      c.nombre_completo?.toLowerCase().includes(filtroNombre.toLowerCase())
+  );
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white text-[#2C3639]">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-[#2C3639]">Clientes</h1>
         <button
@@ -48,6 +58,25 @@ export default function ListaClientes() {
         </button>
       </div>
 
+      {/* Filtros */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Filtrar por DNI"
+          className="p-2 border rounded w-full"
+          value={filtroDni}
+          onChange={(e) => setFiltroDni(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Filtrar por nombre"
+          className="p-2 border rounded w-full"
+          value={filtroNombre}
+          onChange={(e) => setFiltroNombre(e.target.value)}
+        />
+      </div>
+
+      {/* Tabla */}
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm text-left">
           <thead className="bg-[#2C3639] text-white">
@@ -55,20 +84,25 @@ export default function ListaClientes() {
               <th className="px-4 py-3">DNI</th>
               <th className="px-4 py-3">Nombre</th>
               <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Telefono</th>
               <th className="px-4 py-3">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {clientes.map((cliente) => (
+            {clientesFiltrados.map((cliente) => (
               <React.Fragment key={cliente.dni}>
                 <tr className="border-b hover:bg-[#DCD7C9]">
                   <td className="px-4 py-2">{cliente.dni}</td>
                   <td className="px-4 py-2">{cliente.nombre_completo}</td>
                   <td className="px-4 py-2">{cliente.email}</td>
+                  <td className="px-4 py-2">{cliente.telefono}</td>
                   <td className="px-4 py-2 space-x-2">
                     <button
                       onClick={() =>
-                        setExpandirEstadias((prev) => ({ ...prev, [cliente.dni]: !prev[cliente.dni] }))
+                        setExpandirEstadias((prev) => ({
+                          ...prev,
+                          [cliente.dni]: !prev[cliente.dni],
+                        }))
                       }
                       className="text-sm bg-[#A27B5B] text-white px-3 py-1 rounded hover:bg-[#8b6244]"
                     >
@@ -84,7 +118,7 @@ export default function ListaClientes() {
                 </tr>
                 {expandirEstadias[cliente.dni] && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-2 bg-[#F5F5F5] text-[#2C3639]">
+                    <td colSpan={5} className="px-4 py-2 bg-[#F5F5F5] text-[#2C3639]">
                       <strong>Estadías:</strong>
                       <ul className="ml-4 list-disc text-sm">
                         {obtenerEstadiasCliente(cliente.dni).map((e) => (
@@ -92,7 +126,10 @@ export default function ListaClientes() {
                             #{e.nro_estadia} - {e.fecha_ingreso} a {e.fecha_egreso} -
                             <span
                               className="ml-2 inline-block px-2 py-1 rounded text-white text-xs"
-                              style={{ backgroundColor: coloresEstado[e.estado_nombre?.toLowerCase()] || '#6b7280' }}
+                              style={{
+                                backgroundColor:
+                                  coloresEstado[e.estado_nombre?.toLowerCase()] || '#6b7280',
+                              }}
                             >
                               {e.estado_nombre}
                             </span>

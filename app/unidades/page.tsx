@@ -25,7 +25,7 @@ export default function ListaUnidadesHabitacionales() {
   }, []);
 
   return (
-    <div className="p-6">
+    <div className="p-6 text-[#2C3639] bg-white">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-[#2C3639]">Unidades Habitacionales</h1>
         <button

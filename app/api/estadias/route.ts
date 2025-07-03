@@ -43,7 +43,8 @@ export async function GET(req: NextRequest) {
           habitacion_numero: unidad_habitacional.numero,
           habitacion_nombre: unidad_habitacional.nombre,
           fecha_creacion: estadia.fecha_creacion,
-          nro_estadia: estadia.nro_estadia
+          nro_estadia: estadia.nro_estadia,
+          tipo_habitacion_id: estadia.tipo_habitacion_id,
         })
         .from(estadia)
         .orderBy(desc(estadia.fecha_creacion))
@@ -68,13 +69,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Error al obtener estadía(s)' }, { status: 500 });
   }
 }
-
 export async function POST(req: NextRequest) {
   const data = await req.json();
   try {
     await db.insert(estadia).values({
       cliente_dni: data.cliente_dni,
       habitacion_id: data.habitacion_id,
+      tipo_habitacion_id: data.tipo_habitacion_id, // 👈 agregado
       cantidad_personas: Number(data.cantidad_personas),
       fecha_ingreso: data.fecha_ingreso,
       fecha_egreso: data.fecha_egreso,
@@ -89,6 +90,7 @@ export async function POST(req: NextRequest) {
       monto_reserva: parseFloat(data.monto_reserva),
       total: parseFloat(data.total),
       estado_id: data.estado_id,
+      canal_id: data.canal_id,
       observaciones: data.observaciones || '',
     });
 
@@ -111,6 +113,7 @@ export async function PUT(req: NextRequest) {
       .set({
         cliente_dni: data.cliente_dni,
         habitacion_id: data.habitacion_id,
+        tipo_habitacion_id: data.tipo_habitacion_id, // 👈 agregado
         cantidad_personas: Number(data.cantidad_personas),
         fecha_ingreso: data.fecha_ingreso,
         fecha_egreso: data.fecha_egreso,
@@ -125,8 +128,8 @@ export async function PUT(req: NextRequest) {
         monto_reserva: parseFloat(data.monto_reserva),
         total: parseFloat(data.total),
         estado_id: data.estado_id,
-        observaciones: data.observaciones || '',
         canal_id: data.canal_id,
+        observaciones: data.observaciones || '',
       })
       .where(eq(estadia.id, id));
 
@@ -136,6 +139,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Error al actualizar estadía' }, { status: 500 });
   }
 }
+
 
 export async function PATCH(req: NextRequest) {
   const { searchParams } = new URL(req.url);

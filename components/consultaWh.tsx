@@ -17,6 +17,9 @@ export default function Consulta() {
   const [habitaciones, setHabitaciones] = useState<any[]>([])
   const [tipos, setTipos] = useState<any[]>([])
 
+  const [showModal, setShowModal] = useState(false)
+  const [habitacionSeleccionada, setHabitacionSeleccionada] = useState<any>(null)
+
   useEffect(() => {
     fetch('/api/tipos-habitacion')
       .then(res => res.json())
@@ -32,7 +35,27 @@ export default function Consulta() {
     })
     const res = await fetch(`/api/disponibilidad?${params}`)
     const data = await res.json()
-    setHabitaciones(data)
+
+    const habitacionesConTipo = data.map((h: any) => {
+      const tipo = tipos.find((t: any) => t.id === h.unidad_habitacional.tipo_habitacion_id)
+      return {
+        ...h,
+        tipo_habitacion_nombre: tipo?.nombre || 'Sin tipo',
+      }
+    })
+
+    const habitacionesUnicas: any[] = []
+    const tiposIncluidos = new Set()
+
+    for (const h of habitacionesConTipo) {
+      const tipoId = h.unidad_habitacional.tipo_habitacion_id
+      if (!tiposIncluidos.has(tipoId)) {
+        habitacionesUnicas.push(h)
+        tiposIncluidos.add(tipoId)
+      }
+    }
+
+    setHabitaciones(habitacionesUnicas)
   }
 
   const calcularNoches = (inicio: string, fin: string): number => {
@@ -42,14 +65,28 @@ export default function Consulta() {
     return Math.max(Math.ceil(diff / (1000 * 60 * 60 * 24)), 0)
   }
 
-  const consultar = async (h: any) => {
+  const abrirModal = (h: any) => {
+    setHabitacionSeleccionada(h)
+    setShowModal(true)
+  }
+
+  const confirmarConsulta = async () => {
+    if (!habitacionSeleccionada) return
+
+    const h = habitacionSeleccionada
+    const noches = calcularNoches(form.fechaIngreso, form.fechaEgreso)
     const estadoRes = await fetch('/api/estados')
     const estados = await estadoRes.json()
     const estado = estados.find((e: { nombre: string }) => e.nombre.toLowerCase() === 'sin confirmar')
 
-    const noches = calcularNoches(form.fechaIngreso, form.fechaEgreso)
-    const precioPorNoche = noches > 0 ? h.total_estadia / noches : h.total_estadia
-    const montoReserva = h.total_estadia * 0.3
+    const precioPorNoche = h.total_estadia
+      ? h.total_estadia / noches
+      : h.precio_habitacion
+        ? h.precio_habitacion * parseInt(form.cantidad)
+        : 0
+
+    const totalEstadia = noches * precioPorNoche
+    const montoReserva = totalEstadia * 0.3
 
     const payload = {
       nombre_consulta: form.nombre,
@@ -58,12 +95,13 @@ export default function Consulta() {
       cantidad_personas: parseInt(form.cantidad),
       habitacion_id: h.unidad_habitacional.id,
       estado_id: estado.id,
-      total_estadia: h.total_estadia,
+      total: parseFloat(totalEstadia.toFixed(2)),
       precio_por_noche: parseFloat(precioPorNoche.toFixed(2)),
       monto_reserva: parseFloat(montoReserva.toFixed(2)),
       porcentaje_reserva: 30,
+      tipo_habitacion_id: form.tipoHabitacion
     }
-
+console.log(payload)
     await fetch('/api/estadias', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,15 +109,17 @@ export default function Consulta() {
     })
 
     const texto = `Hola! Soy ${form.nombre}, consulto por disponibilidad:
-- Habitación: ${h.unidad_habitacional.nombre}
+- Tipo de habitación: ${h.tipo_habitacion_nombre}
 - Ingreso: ${form.fechaIngreso}
 - Egreso: ${form.fechaEgreso}
 - Personas: ${form.cantidad}
-- Estimado: ${formatearMoneda(h.total_estadia)}
+- Estimado: ${formatearMoneda(totalEstadia)}
 - Señal (30%): ${formatearMoneda(montoReserva)}
 `
 
     window.open(`https://wa.me/5493517011639?text=${encodeURIComponent(texto)}`, '_blank')
+    setShowModal(false)
+    setHabitacionSeleccionada(null)
   }
 
   return (
@@ -100,18 +140,57 @@ export default function Consulta() {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {habitaciones.map((h: any) => (
           <div key={h.unidad_habitacional.id} className="bg-white rounded-lg shadow p-4">
-            <Image src="/habitacion1.jpg" width={300} height={200} alt="Hab" className="rounded mb-2 object-cover" />
-            <h4 className="text-lg font-bold">{h.unidad_habitacional.nombre}</h4>
+            <Image
+  src={`/${h.tipo_habitacion_nombre.replace(/\s+/g, '-')}.PNG`}
+  width={300}
+  height={200}
+  alt={h.tipo_habitacion_nombre}
+  className="rounded mb-2 object-cover"
+/>
+
+            <h4 className="text-lg font-bold">{h.tipo_habitacion_nombre}</h4>
             <p>Capacidad: {h.unidad_habitacional.cantidad_normal}</p>
-            <p>Piso: {h.unidad_habitacional.piso}</p>
-            <p>Número: {h.unidad_habitacional.numero}</p>
-            <p className="mt-2 font-semibold">Total: {formatearMoneda(h.total_estadia)}</p>
-            <button onClick={() => consultar(h)} className="mt-3 w-full bg-[#2C3639] text-white py-2 rounded hover:bg-[#1f272a]">
+            <p className="mt-2 font-semibold">Total estimado: {formatearMoneda(h.total_estadia || h.precio_habitacion * parseInt(form.cantidad))}</p>
+            <button onClick={() => abrirModal(h)} className="mt-3 w-full bg-[#2C3639] text-white py-2 rounded hover:bg-[#1f272a]">
               Consultar
             </button>
           </div>
         ))}
       </div>
+
+      {/* Modal */}
+      {showModal && habitacionSeleccionada && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Confirmar consulta</h2>
+            <p><strong>Tipo:</strong> {habitacionSeleccionada.tipo_habitacion_nombre}</p>
+            <p><strong>Ingreso:</strong> {form.fechaIngreso}</p>
+            <p><strong>Egreso:</strong> {form.fechaEgreso}</p>
+            <p><strong>Personas:</strong> {form.cantidad}</p>
+
+            {(() => {
+              const noches = calcularNoches(form.fechaIngreso, form.fechaEgreso)
+              const precioPorNoche = habitacionSeleccionada.total_estadia
+                ? habitacionSeleccionada.total_estadia / noches
+                : habitacionSeleccionada.precio_habitacion * parseInt(form.cantidad)
+              const total = noches * precioPorNoche
+              const senal = total * 0.3
+
+              return (
+                <>
+                  <p><strong>Precio estimado:</strong> {formatearMoneda(total)}</p>
+                  <p><strong>Seña 30%:</strong> {formatearMoneda(senal)}</p>
+                </>
+              )
+            })()}
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 border rounded">Cancelar</button>
+              <button onClick={confirmarConsulta} className="px-4 py-2 bg-[#2C3639] text-white rounded hover:bg-[#1f272a]">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 export default function TablaHuespedes() {
   const [huespedes, setHuespedes] = useState<any[]>([])
   const [filtroDni, setFiltroDni] = useState('')
+  const [filtroNombre, setFiltroNombre] = useState('')
   const [imagenSeleccionada, setImagenSeleccionada] = useState<string | null>(null)
 
   useEffect(() => {
@@ -19,20 +20,30 @@ export default function TablaHuespedes() {
   }, [])
 
   const huespedesFiltrados = huespedes.filter((h) =>
-    h.dni.toLowerCase().includes(filtroDni.toLowerCase())
+    h.dni.toLowerCase().includes(filtroDni.toLowerCase()) &&
+    h.nombre_completo.toLowerCase().includes(filtroNombre.toLowerCase())
   )
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white text-[#2C3639]">
       <h1 className="text-2xl font-bold mb-4">Huéspedes</h1>
 
-      <input
-        type="text"
-        placeholder="Filtrar por DNI"
-        className="mb-4 p-2 border rounded w-full max-w-sm"
-        value={filtroDni}
-        onChange={(e) => setFiltroDni(e.target.value)}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Filtrar por DNI"
+          className="p-2 border rounded w-full"
+          value={filtroDni}
+          onChange={(e) => setFiltroDni(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Filtrar por nombre"
+          className="p-2 border rounded w-full"
+          value={filtroNombre}
+          onChange={(e) => setFiltroNombre(e.target.value)}
+        />
+      </div>
 
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm text-left">
@@ -53,15 +64,6 @@ export default function TablaHuespedes() {
                 <td className="px-4 py-2">{new Date(h.fecha_nacimiento).toLocaleDateString()}</td>
                 <td className="px-4 py-2">{h.sexo}</td>
                 <td className="px-4 py-2 space-x-2">
-                  {h.foto_cara && (
-                    <img
-                      src={h.foto_cara}
-                      alt="Cara"
-                      className="inline-block w-12 h-12 object-cover rounded border cursor-pointer"
-                      onClick={() => setImagenSeleccionada(h.foto_cara)}
-                      title="Ver Cara"
-                    />
-                  )}
                   {h.dni_frente && (
                     <img
                       src={h.dni_frente}
@@ -87,7 +89,7 @@ export default function TablaHuespedes() {
         </table>
       </div>
 
-      {/* MODAL DE ZOOM */}
+      {/* Modal de zoom */}
       {imagenSeleccionada && (
         <div
           className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"

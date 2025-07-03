@@ -34,6 +34,8 @@ export default function ListaEstadias() {
 const [huespedes, setHuespedes] = useState<any[]>([]);
 const [expandirHuespedes, setExpandirHuespedes] = useState<Record<string, boolean>>({});
   const router = useRouter();
+const [filtroNumeroEstadia, setFiltroNumeroEstadia] = useState('');
+const [filtroNombreHabitacion, setFiltroNombreHabitacion] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +62,13 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
   const estadiasFiltradas = estadias.filter((e) => {
     const coincideEstado = filtroEstado ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase() : true;
     const coincideCliente = filtroCliente ? e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) : true;
+const coincideNumeroEstadia = filtroNumeroEstadia
+  ? e.nro_estadia?.toString().includes(filtroNumeroEstadia)
+  : true;
+
+const coincideNombreHabitacion = filtroNombreHabitacion
+  ? e.habitacion_nombre?.toLowerCase().includes(filtroNombreHabitacion.toLowerCase())
+  : true;
 
     const fechaIngresoValida = filtroIngresoDesde || filtroIngresoHasta
       ? (!filtroIngresoDesde || new Date(e.fecha_ingreso) >= new Date(filtroIngresoDesde)) &&
@@ -73,8 +82,8 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
 
     const soloUnoActivo = !(filtroIngresoDesde || filtroIngresoHasta) || !(filtroEgresoDesde || filtroEgresoHasta);
 
-    return coincideEstado && coincideCliente && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
-  });
+return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNombreHabitacion && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
+ });
 
   const totalPaginas = Math.ceil(estadiasFiltradas.length / ITEMS_POR_PAGINA);
   const estadiasPaginadas = estadiasFiltradas.slice(
@@ -131,7 +140,7 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white text-[#2C3639]">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-[#2C3639]">Estadías</h1>
         <div className="flex gap-2">
@@ -150,11 +159,27 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 text-[#2C3639]">
         <input type="text" placeholder="DNI" value={filtroCliente} onChange={(e) => setFiltroCliente(e.target.value)} className="p-2 border rounded" />
+<input
+  type="text"
+  placeholder="N° Estadía"
+  className="p-2 border rounded w-full max-w-[120px]"
+  value={filtroNumeroEstadia}
+  onChange={(e) => setFiltroNumeroEstadia(e.target.value)}
+/>
+<input
+  type="text"
+  placeholder="Habitación"
+  className="p-2 border rounded w-full max-w-[120px]"
+  value={filtroNombreHabitacion}
+  onChange={(e) => setFiltroNombreHabitacion(e.target.value)}
+/>
+
+
 
         <div className="col-span-2">
-          <label className="block text-sm text-white mb-1">Ingreso</label>
+          <label className="block text-sm mb-1">Ingreso</label>
           <div className="flex gap-2">
             <input type="date" value={filtroIngresoDesde} onChange={(e) => { setFiltroIngresoDesde(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso desde" title="Ingreso desde" />
             <input type="date" value={filtroIngresoHasta} onChange={(e) => { setFiltroIngresoHasta(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso hasta" title="Ingreso hasta" />
@@ -162,7 +187,7 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
         </div>
 
         <div className="col-span-2">
-          <label className="block text-sm text-white mb-1">Egreso</label>
+          <label className="block text-sm  mb-1">Egreso</label>
           <div className="flex gap-2">
             <input type="date" value={filtroEgresoDesde} onChange={(e) => { setFiltroEgresoDesde(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso desde" title="Egreso desde" />
             <input type="date" value={filtroEgresoHasta} onChange={(e) => { setFiltroEgresoHasta(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso hasta" title="Egreso hasta" />
