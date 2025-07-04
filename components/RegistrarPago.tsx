@@ -13,6 +13,7 @@ import jsPDF from 'jspdf';
 import { supabase } from '@/lib/supabaseClient';
 import { formatearMoneda } from '@/lib/formato';
 import InputMoneda from './inputMoneda';
+import Loader from './loader';
 
 export default function RegistrarPago() {
   const router = useRouter();
@@ -40,6 +41,7 @@ const [clienteEmail, setClienteEmail] = useState('');
   });
 
   const [pagosEstadia, setPagosEstadia] = useState<any[]>([]);
+const [cargando, setCargando] = useState(true)
 
 useEffect(() => {
   const datosCompletos = 
@@ -104,6 +106,8 @@ setClienteEmail(dataCliente?.email || '');
       }
 
       await cargarPagos(estadiaIdFromUrl, dataEstadias);
+      setCargando(false)
+
     }
   };
 
@@ -154,149 +158,170 @@ setClienteEmail(dataCliente?.email || '');
     setPago({ ...pago, tipoPagoId, monto: nuevoMonto });
   };
 const generarPDF = async () => {
-  if (!clienteNombre || !habitacionNumero || !pago.monto) {
-    console.warn('⚠️ Faltan datos para generar el PDF');
-    return;
-  }
+  if (!clienteNombre || !habitacionNumero || !pago.monto) return
 
-  const tipoPagoDesc = tiposPago.find(tp => tp.id === pago.tipoPagoId)?.descripcion || '';
-  const formaPagoDesc = formasPago.find(fp => fp.id === pago.formaPagoId)?.descripcion || '';
-  const estadiaSeleccionada = estadias.find(e => e.id === pago.estadiaId);
-  if (!estadiaSeleccionada) return;
+  const tipoPagoDesc = tiposPago.find(tp => tp.id === pago.tipoPagoId)?.descripcion || ''
+  const formaPagoDesc = formasPago.find(fp => fp.id === pago.formaPagoId)?.descripcion || ''
+  const estadiaSeleccionada = estadias.find(e => e.id === pago.estadiaId)
+  if (!estadiaSeleccionada) return
 
-  const fechaIngreso = new Date(estadiaSeleccionada.fecha_ingreso).toLocaleDateString('es-AR');
-  const fechaEgreso = new Date(estadiaSeleccionada.fecha_egreso).toLocaleDateString('es-AR');
+  const fechaIngreso = new Date(estadiaSeleccionada.fecha_ingreso).toLocaleDateString('es-AR')
+  const fechaEgreso = new Date(estadiaSeleccionada.fecha_egreso).toLocaleDateString('es-AR')
 
   const conceptoTexto = tipoPagoDesc.includes('Reserva')
     ? `Reserva de estadía desde ${fechaIngreso} hasta ${fechaEgreso}`
-    : `Pago correspondiente a estadía desde ${fechaIngreso} hasta ${fechaEgreso}`;
+    : `Pago correspondiente a estadía desde ${fechaIngreso} hasta ${fechaEgreso}`
 
-  const fechaPagoFormateada = new Date(pago.fechaPago).toLocaleDateString('es-AR');
-  const montoFormateado = `$${parseFloat(pago.monto).toFixed(2)}`;
+  const fechaPagoFormateada = new Date(pago.fechaPago).toLocaleDateString('es-AR')
+  const montoFormateado = `$${parseFloat(pago.monto).toFixed(2)}`
 
-  const pdf = new jsPDF({
-  orientation: 'portrait',
-  unit: 'pt',
-  format: 'a4',
-  compress: true, 
-})
+  const pdf = new jsPDF({ unit: 'pt', format: 'a4' })
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const margin = 50
+  const lineSpacing = 30
+  let y = margin
 
+  // 🟡 Borde
+  pdf.setDrawColor('#2C3639')
+  pdf.setLineWidth(2)
+  pdf.rect(margin - 20, margin - 20, pageWidth - 2 * (margin - 20), 720)
 
-  const loadImage = (src: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-    });
-  };
+  // 🟡 Logo
+  const logo = new Image()
+  logo.src = '/logo.png' // asegurate que esté en /public/logo.png
+  await new Promise(resolve => {
+    logo.onload = () => {
+      pdf.addImage(logo, 'PNG', margin, y, 60, 60)
+      resolve(null)
+    }
+  })
 
-  try {
-    const background = await loadImage('/comprobante_base.png');
-    // 🧾 Generar PDF
-pdf.addImage(background, 'PNG', 0, 0, 210, 297); // A4
+  // 🟡 Hotel y Título
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(18)
+  pdf.text('Central Suites Hotel', margin + 70, y + 25)
+  pdf.setFontSize(16)
+  pdf.text('COMPROBANTE DE PAGO', pageWidth - margin, y + 25, { align: 'right' })
 
-pdf.setFont('helvetica', 'normal');
-pdf.setFontSize(12);
-pdf.setTextColor(50);
+  y += 70
 
-// 🗓 Fecha arriba a la derecha
-pdf.text(fechaPagoFormateada, 170, 48, { align: 'right' });
+  // 🟡 Fecha
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(12)
+  pdf.text(`Fecha de emisión: ${fechaPagoFormateada}`, pageWidth - margin, y, { align: 'right' })
 
-// 🧍 Nombre del cliente
-pdf.setFontSize(13);
-pdf.text(clienteNombre, 50, 145);
+  y += lineSpacing
 
-// 💵 Monto más destacado
-pdf.setFontSize(15);
-pdf.text(montoFormateado, 55, 158);
+  const datos = [
+    ['Recibí de:', clienteNombre],
+    ['Habitación:', habitacionNumero],
+    ['La suma de:', montoFormateado],
+    ['Forma de pago:', formaPagoDesc],
+    ['En concepto de:', conceptoTexto],
+  ]
 
-// 📄 Concepto de pago con salto de línea automático
-pdf.setFontSize(12);
-const conceptoLíneas = pdf.splitTextToSize(conceptoTexto, 145);
-pdf.text(conceptoLíneas, 63, 172);
+  datos.forEach(([label, valor]) => {
+    pdf.setFont('helvetica', 'bold')
+    pdf.text(`${label}`, margin, y)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(`${valor}`, margin + 140, y)
+    y += lineSpacing
+  })
 
-
-    const nombreArchivo = `comprobante_${clienteNombre.replaceAll(' ', '_')}_${pago.fechaPago}.pdf`;
-    pdf.save(nombreArchivo);
-    // 💌 Enviar por mail
-const blob = pdf.output('blob');
-
-const formData = new FormData();
-formData.append('to', clienteEmail); // tenés que tener este valor
-formData.append('pdf', blob, 'comprobante_pago.pdf');
-
-await fetch('/api/enviar-comprobante', {
-  method: 'POST',
-  body: formData,
-});
-
-  } catch (err) {
-    console.error('❌ Error generando PDF:', err);
-    setMensaje('Error al generar el comprobante PDF');
-  }
-};
+  y += 20
+  pdf.setLineWidth(0.5)
+  pdf.setDrawColor(150)
+  pdf.line(margin, y, pageWidth - margin, y)
+  y += lineSpacing
 
 
+  // 🟡 Guardar y enviar
+  const nombreArchivo = `comprobante_${clienteNombre.replaceAll(' ', '_')}_${pago.fechaPago}.pdf`
+  pdf.save(nombreArchivo)
+
+  const blob = pdf.output('blob')
+  const formData = new FormData()
+  formData.append('to', clienteEmail)
+  formData.append('pdf', blob, 'comprobante_pago.pdf')
+
+  await fetch('/api/enviar-comprobante', {
+    method: 'POST',
+    body: formData,
+  })
+}
 const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
   e.preventDefault();
-  const montoIngresado = parseFloat(pago.monto || '0');
+  setCargando(true)
 
-  let comprobanteURL = '';
-  if (pago.comprobantePago) {
-    const archivo = pago.comprobantePago;
-    const extension = archivo.name.split('.').pop();
-    const nombreArchivo = `comprobante_${Date.now()}.${extension}`;
+  try {
+    const montoIngresado = parseFloat(pago.monto || '0');
 
-    const { data, error } = await supabase.storage
-      .from('comprobantes-pago')
-      .upload(nombreArchivo, archivo, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+    let comprobanteURL = '';
+    if (pago.comprobantePago) {
+      const archivo = pago.comprobantePago;
+      const extension = archivo.name.split('.').pop();
+      const nombreArchivo = `comprobante_${Date.now()}.${extension}`;
 
-    if (error || !data) {
-      console.error('❌ Error al subir comprobante:', error);
-      setMensaje('Error al subir comprobante (ver consola)');
-      return;
+      const { data, error } = await supabase.storage
+        .from('comprobantes-pago')
+        .upload(nombreArchivo, archivo, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error || !data) {
+        console.error('❌ Error al subir comprobante:', error);
+        setMensaje('Error al subir comprobante (ver consola)');
+        return;
+      }
+
+      const { data: urlData } = supabase
+        .storage
+        .from('comprobantes-pago')
+        .getPublicUrl(data.path);
+
+      if (!urlData.publicUrl) {
+        setMensaje('No se pudo obtener URL pública del comprobante');
+        return;
+      }
+
+      comprobanteURL = urlData.publicUrl;
     }
 
-    const { data: urlData } = supabase
-      .storage
-      .from('comprobantes-pago')
-      .getPublicUrl(data.path);
-
-    if (!urlData.publicUrl) {
-      setMensaje('No se pudo obtener URL pública del comprobante');
-      return;
-    }
-
-    comprobanteURL = urlData.publicUrl;
-  }
-
-  // Enviar el pago a la API
-  const res = await fetch('/api/pagos', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      estadia_id: pago.estadiaId,
-      tipo_pago_id: pago.tipoPagoId,
-      forma_pago_id: pago.formaPagoId,
-      monto: montoIngresado,
-      comprobante_pago: comprobanteURL,
-      fecha_pago: pago.fechaPago
-    })
-  });
+    // Enviar el pago a la API
+    const res = await fetch('/api/pagos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        estadia_id: pago.estadiaId,
+        tipo_pago_id: pago.tipoPagoId,
+        forma_pago_id: pago.formaPagoId,
+        monto: montoIngresado,
+        comprobante_pago: comprobanteURL,
+        fecha_pago: pago.fechaPago
+      })
+    });
 
   if (res.ok) {
-    setMensaje('✅ Pago registrado con éxito');
-    await cargarPagos(pago.estadiaId); // Esto actualiza clienteNombre y habitacionNumero
-  } else {
-    const error = await res.json();
-    setMensaje(error.error || '❌ Error al registrar el pago');
+  setMensaje('✅ Pago registrado correctamente');
+  await cargarPagos(pago.estadiaId);
+  setTimeout(() => {
+    router.push('/estadias');
+  }, 1500);
+
+    } else {
+      const error = await res.json();
+      setMensaje(error.error || '❌ Error al registrar el pago');
+    }
+  } catch (error) {
+    console.error('❌ Error inesperado:', error);
+    setMensaje('❌ Error inesperado');
+  } finally {
+    setCargando(false);
   }
 };
 
+if (cargando) return <Loader/>
 
   return (
     <div className="min-h-screen bg-[#3F4E4F] flex flex-col items-center p-6">

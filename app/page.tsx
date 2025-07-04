@@ -5,14 +5,10 @@ import Link from 'next/link'
 import Consulta from '@/components/consultaWh'
 
 export default function Home() {
-
-
   return (
     <div className="relative min-h-screen bg-[#f9f9f9] text-[#2C3639]">
       {/* Imagen de fondo portada */}
-      <div className="absolute inset-0 -z-10">
-        
-      </div>
+      <div className="absolute inset-0 -z-10"></div>
 
       {/* Navbar */}
       <header className="flex justify-between items-center px-6 py-4 bg-[#DCD7C9] shadow relative z-10">
@@ -38,34 +34,83 @@ export default function Home() {
         </button>
       </section>
 
-     {/* Galería tipo carrusel scroll horizontal */} 
-<section className="py-12 px-6 max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-[#A27B5B]">
-  <div className="flex gap-4 w-max">
-    {[
-      '/habitacion2.jpg',
-      '/habitacion4.jpg',
-      '/habitacion5.jpg',
-      '/habitacion3.jpg',
-    ].map((src, index) => (
-      <a
-        key={index}
-        href={src}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex-shrink-0"
-      >
-        <div className="relative w-[320px] h-[220px] rounded-lg overflow-hidden shadow-md">
-          <Image
-            src={src}
-            alt={`Habitación ${index + 1}`}
-            fill
-            className="object-cover hover:scale-105 transition-transform duration-300"
-          />
+      {/* Galería tipo carrusel scroll horizontal */} 
+      <section className="py-12 px-6 max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-[#A27B5B]">
+        <div className="flex gap-4 w-max">
+          {[
+            '/habitacion2.jpg',
+            '/habitacion4.jpg',
+            '/habitacion5.jpg',
+            '/habitacion3.jpg',
+          ].map((src, index) => (
+            <a
+              key={index}
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0"
+            >
+              <div className="relative w-[320px] h-[220px] rounded-lg overflow-hidden shadow-md">
+                <Image
+                  src={src}
+                  alt={`Habitación ${index + 1}`}
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            </a>
+          ))}
         </div>
-      </a>
+      </section>
+
+      {/* Amenities y Servicios */}
+      <section className="py-16 px-6 bg-[#f0ebe3] text-center">
+        <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Amenities y Servicios</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 max-w-4xl mx-auto text-[#3F4E4F]">
+          {[
+            'TV por cable',
+            'Aire acondicionado',
+            'Cochera cubierta',
+            'Terraza con pileta',
+            'Comedor',
+            'WiFi',
+            'Ropa blanca',
+            'Desayuno buffet'
+          ].map((item, index) => (
+            <div key={index} className="bg-white shadow-md rounded-lg py-4 px-3 text-sm font-medium">
+              {item}
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 max-w-md mx-auto">
+          <Image src="/buffet.png" alt="Desayuno Buffet" width={600} height={400} className="rounded-lg shadow-md object-cover w-full h-auto" />
+        </div>
+      </section>
+
+{/* Tipos de habitaciones */}
+<section className="py-16 px-6 bg-[#DCD7C9] text-center">
+  <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Tipos de habitaciones</h3>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+    {[
+      { nombre: 'Apart 1 dormitorio', img: '/Apart-1D.PNG' },
+      { nombre: 'Apart 2 dormitorios', img: '/Apart-2D.PNG' },
+      { nombre: 'Apart superior', img: '/Apart-Sup.PNG' },
+      { nombre: 'Habitación', img: '/Habitacion.PNG' },
+    ].map((tipo, index) => (
+      <div key={index} className="bg-white rounded-lg overflow-hidden shadow-md">
+        <Image
+          src={tipo.img}
+          alt={tipo.nombre}
+          width={400}
+          height={250}
+          className="object-cover w-full h-[200px]"
+        />
+        <div className="p-4 text-[#2C3639] font-medium">{tipo.nombre}</div>
+      </div>
     ))}
   </div>
 </section>
+
 
       {/* Ubicación */}
       <section className="py-12 px-6 bg-[#3F4E4F] text-[#DCD7C9] text-center relative z-10">

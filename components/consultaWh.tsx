@@ -4,8 +4,10 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { formatearMoneda } from '@/lib/formato'
+import Loader from './loader'
 
 export default function Consulta() {
+  const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
     nombre: '',
     fechaIngreso: '',
@@ -21,18 +23,28 @@ export default function Consulta() {
   const [habitacionSeleccionada, setHabitacionSeleccionada] = useState<any>(null)
 
   useEffect(() => {
-    fetch('/api/tipos-habitacion')
-      .then(res => res.json())
-      .then(setTipos)
+    const fetchTipos = async () => {
+      try {
+        const res = await fetch('/api/tipos-habitacion')
+        const data = await res.json()
+        setTipos(data)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchTipos()
   }, [])
 
   const buscar = async () => {
+    setLoading(true)
+
     const params = new URLSearchParams({
       fecha_ingreso: form.fechaIngreso,
       fecha_egreso: form.fechaEgreso,
       cantidad_personas: form.cantidad,
       tipo_habitacion_id: form.tipoHabitacion,
     })
+
     const res = await fetch(`/api/disponibilidad?${params}`)
     const data = await res.json()
 
@@ -56,6 +68,7 @@ export default function Consulta() {
     }
 
     setHabitaciones(habitacionesUnicas)
+    setLoading(false)
   }
 
   const calcularNoches = (inicio: string, fin: string): number => {
@@ -100,9 +113,10 @@ export default function Consulta() {
       monto_reserva: parseFloat(montoReserva.toFixed(2)),
       porcentaje_reserva: 30,
       tipo_habitacion_id: h.unidad_habitacional.tipo_habitacion_id
-
     }
-console.log(payload)
+
+    console.log(payload)
+
     await fetch('/api/estadias', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -123,9 +137,12 @@ console.log(payload)
     setHabitacionSeleccionada(null)
   }
 
+  if (loading) return <Loader />
+
   return (
     <section className="py-16 px-6 bg-[#DCD7C9]">
       <h3 className="text-2xl font-semibold text-center mb-6 text-[#2C3639]">Consultá disponibilidad</h3>
+
       <div className="max-w-4xl mx-auto grid gap-4 mb-6 md:grid-cols-4">
         <input type="text" placeholder="Tu nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="p-2 border rounded" />
         <input type="date" value={form.fechaIngreso} onChange={e => setForm({ ...form, fechaIngreso: e.target.value })} className="p-2 border rounded" />
@@ -142,13 +159,12 @@ console.log(payload)
         {habitaciones.map((h: any) => (
           <div key={h.unidad_habitacional.id} className="bg-white rounded-lg shadow p-4">
             <Image
-  src={`/${h.tipo_habitacion_nombre.replace(/\s+/g, '-')}.PNG`}
-  width={300}
-  height={200}
-  alt={h.tipo_habitacion_nombre}
-  className="rounded mb-2 object-cover"
-/>
-
+              src={`/${h.tipo_habitacion_nombre.replace(/\s+/g, '-')}.PNG`}
+              width={300}
+              height={200}
+              alt={h.tipo_habitacion_nombre}
+              className="rounded mb-2 object-cover"
+            />
             <h4 className="text-lg font-bold">{h.tipo_habitacion_nombre}</h4>
             <p>Capacidad: {h.unidad_habitacional.cantidad_normal}</p>
             <p className="mt-2 font-semibold">Total estimado: {formatearMoneda(h.total_estadia || h.precio_habitacion * parseInt(form.cantidad))}</p>
@@ -159,7 +175,6 @@ console.log(payload)
         ))}
       </div>
 
-      {/* Modal */}
       {showModal && habitacionSeleccionada && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">

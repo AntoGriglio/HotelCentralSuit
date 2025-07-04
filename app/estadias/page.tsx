@@ -18,6 +18,12 @@ const coloresEstado: Record<string, string> = {
 };
 
 const ITEMS_POR_PAGINA = 10;
+const calcularNoches = (ingreso: string, egreso: string) => {
+  const fechaIngreso = new Date(ingreso)
+  const fechaEgreso = new Date(egreso)
+  const diff = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24))
+  return diff > 0 ? diff : 0
+}
 
 export default function ListaEstadias() {
   const [estadias, setEstadias] = useState<any[]>([]);
@@ -207,12 +213,13 @@ return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNom
         <table className="w-full text-sm text-left">
           <thead className="bg-[#2C3639] text-white">
             <tr>
-              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">N°</th>
               <th className="px-4 py-3">Carga</th>
               <th className="px-4 py-3">Cliente</th>
               <th className="px-4 py-3">Habitación</th>
               <th className="px-4 py-3">Ingreso</th>
               <th className="px-4 py-3">Egreso</th>
+              <th className="px-4 py-3">Noches</th>
               <th className="px-4 py-3">Saldo Pendiente</th>
               <th className="px-4 py-3">Total</th>
               <th className="px-4 py-3">Estado</th>
@@ -231,6 +238,8 @@ return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNom
                 <td className="px-4 py-2">{e.habitacion_nombre}</td>
                 <td className="px-4 py-2">{e.fecha_ingreso}</td>
                 <td className="px-4 py-2">{e.fecha_egreso}</td>
+                <td className="px-4 py-2">{calcularNoches(e.fecha_ingreso, e.fecha_egreso)}</td>
+
              <td className="px-4 py-2 text-left align-middle whitespace-nowrap">
   <div className="w-full text-left pl-1">{formatearMoneda(e.saldo_pendiente)}</div>
 </td>

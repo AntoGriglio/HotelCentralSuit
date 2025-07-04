@@ -8,12 +8,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import InputMoneda from './inputMoneda'
+import Loader from './loader'
 
 export default function EditarEstadia() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
 const [todasHabitacionesDisponibles, setTodasHabitacionesDisponibles] = useState<any[]>([])
+const [cargando, setCargando] = useState(true)
 
   const [estadia, setEstadia] = useState<any>(null)
   const [cliente, setCliente] = useState<any>(null)
@@ -89,8 +91,10 @@ useEffect(() => {
           return yaIncluida ? prev : [...prev, habActual]
         })
       }
-console.log('todas',todasHabitaciones)
+
       setHabitaciones(todasHabitaciones)
+      setCargando(false)
+
     })
 }, [id])
 
@@ -102,6 +106,8 @@ useEffect(() => {
 
 // Consulta disponibilidad + filtro por tipo
 useEffect(() => {
+  setCargando(true)
+
   const consultarDisponibilidad = async () => {
     if (!estadia?.fecha_ingreso || !estadia?.fecha_egreso || !estadia?.cantidad_personas) return
 
@@ -136,6 +142,8 @@ console.log('filtradas',filtradas)
         habitacion_id: filtradas[0]?.id || ''
       }))
     }
+    setCargando(false)
+
   }
 
   consultarDisponibilidad()
@@ -295,34 +303,52 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
       setMensaje('Error al registrar cliente')
     }
   }
-
   const generarPDF = async () => {
-    if (!estadia || !cliente) return
+    if (!cliente || !habitaciones) return
 
-   const habitacion = habitaciones.find(h => h.id === estadia.habitacion_id)
+   const habitacion = habitaciones.find(h => h.unidad_habitacional?.id === estadia.habitacionId)
 
-    const reciboHTML = `
-      <div style="font-family: Arial; padding: 30px; max-width: 600px;">
-        <h2>Central Suites</h2>
-        <p><strong>Cliente:</strong> ${cliente.nombre_completo}</p>
-        <p><strong>Email:</strong> ${cliente.email}</p>
-        <p><strong>DNI:</strong> ${cliente.dni}</p>
-        <p><strong>Habitación:</strong> ${habitacion?.unidad_habitacional?.nombre || ''}</p>
-        <p><strong>Ingreso:</strong> ${estadia.fechaIngreso}</p>
-        <p><strong>Egreso:</strong> ${estadia.fechaEgreso}</p>
-        <p><strong>Noches:</strong> ${cantidadNoches}</p>
-        <p><strong>Total:</strong> $${estadia.total}</p>
-        <p><strong>Seña:</strong> $${estadia.montoReserva}</p>
-        <p><strong>Incluye:</strong> ${[
-          estadia.desayuno && 'Desayuno',
-          estadia.pension_media && 'Media pensión',
-          estadia.pension_completa && 'Pensión completa',
-          estadia.all_inclusive && 'All inclusive',
-          estadia.cochera && 'Cochera',
-          estadia.ropaBlanca && 'Ropa blanca'
-        ].filter(Boolean).join(', ')}</p>
+    const logo = '/logo.png'
+
+const reciboHTML = `
+  <div style="width: 800px; padding: 2rem; font-family: sans-serif; color: #2C3639; border: 2px solid #2C3639; border-radius: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div style="display: flex; flex-direction: column; align-items: start;">
+        <img src="${logo}" alt="Logo" style="height: 70px; margin-bottom: 5px;" />
+        <span style="font-weight: bold; font-size: 18px;">Central Suites Hotel</span>
       </div>
-    `
+      <h2 style="text-align: right; font-size: 20px;">Comprobante de Reserva</h2>
+    </div>
+
+    <div style="border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Cliente:</strong> ${cliente.nombre_completo} (${cliente.dni})</p>
+     <p><strong>Habitación:</strong> ${habitacion?.unidad_habitacional?.nombre} - Piso ${habitacion?.unidad_habitacional?.piso} - Capacidad ${habitacion?.unidad_habitacional?.cantidad_normal}</p>
+
+      <p><strong>Ingreso:</strong> ${estadia.fechaIngreso}</p>
+      <p><strong>Egreso:</strong> ${estadia.fechaEgreso}</p>
+      <p><strong>Noches:</strong> ${cantidadNoches}</p>
+      <p><strong>Cantidad de personas:</strong> ${estadia.cantidadPersonas}</p>
+    </div>
+
+    <div style="margin-top: 1rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Total:</strong> $${parseFloat(estadia.total).toLocaleString('es-AR')}</p>
+      <p><strong>Reserva:</strong> $${parseFloat(estadia.montoReserva).toLocaleString('es-AR')}</p>
+    </div>
+
+    <div style="margin-top: 1rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+      <p><strong>Incluye:</strong> ${estadia.desayuno ? 'Desayuno ' : ''}${estadia.pension_media ? 'Media Pensión ' : ''}${estadia.pension_completa ? 'Pensión Completa ' : ''}${estadia.all_inclusive ? 'All Inclusive ' : ''}${estadia.cochera ? 'Cochera ' : ''}${estadia.ropaBlanca ? 'Ropa Blanca' : ''}</p>
+      <p><strong>Observaciones:</strong> ${estadia.observaciones || '—'}</p>
+    </div>
+    <div style="margin-top: 1.5rem; border-top: 1px dashed #999; padding-top: 1rem;">
+  <p style="font-weight: bold; font-size: 16px; margin-bottom: 0.5rem;">Cuenta para transferir reserva:</p>
+  <p><strong>Cta:</strong> 2648/0 - Banco Roela</p>
+  <p><strong>CBU:</strong> 2470005610000000264801</p>
+  <p><strong>Empresa:</strong> IDLG SA</p>
+</div>
+
+  </div>
+`
+
 
     const contenedor = document.createElement('div')
     contenedor.innerHTML = reciboHTML
@@ -335,17 +361,20 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
       const imgData = canvas.toDataURL('image/png')
       const pdf = new jsPDF()
       pdf.addImage(imgData, 'PNG', 10, 10, 190, 0)
-      pdf.save(`reserva_${cliente.dni}.pdf`)
+      pdf.save(`reserva_${cliente?.dni || 'nueva'}.pdf`)
+      // Generar Blob del PDF
+const blob = pdf.output('blob')
 
-      const blob = pdf.output('blob')
-      const formData = new FormData()
-      formData.append('to', cliente.email)
-      formData.append('pdf', blob, 'reserva.pdf')
+// Enviarlo al endpoint con FormData
+const formData = new FormData()
+formData.append('to', cliente.email)
+formData.append('pdf', blob, 'reserva.pdf')
 
-      await fetch('/api/enviar-confirmacion', {
-        method: 'POST',
-        body: formData,
-      })
+await fetch('/api/enviar-confirmacion', {
+  method: 'POST',
+  body: formData,
+})
+
     } catch (err) {
       console.error('Error al generar PDF:', err)
     } finally {
@@ -353,27 +382,32 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!estadia) return
-    const estadoSeleccionado = estados.find(e => e.id === estadia.estado_id)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!estadia) return
+  setCargando(true) // mostrar loader
 
-    if (estadoSeleccionado?.nombre !== 'sin confirmar' && !cliente) {
-      setMensaje('Debes asignar un cliente si el estado no es "sin confirmar".')
-      return
-    }
-    await fetch(`/api/estadias?id=${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(estadia),
-    })
+  const estadoSeleccionado = estados.find(e => e.id === estadia.estado_id)
 
-    await generarPDF()
-    router.push('/estadias')
+  if (estadoSeleccionado?.nombre !== 'sin confirmar' && !cliente) {
+    setMensaje('Debes asignar un cliente si el estado no es "sin confirmar".')
+    setCargando(false)
+    return
   }
 
+  await fetch(`/api/estadias?id=${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(estadia),
+  })
+
+  await generarPDF()
+  router.push('/estadias') 
+}
+
   const estadoSeleccionado = estados.find((e) => e.id === estadia?.estado_id)
-  if (!estadia) return <p className="p-4">Cargando estadía...</p>
+if (cargando) return <Loader />
+
   return (<div className="min-h-screen bg-[#3F4E4F] flex items-center justify-center p-6">
       <div className="w-full max-w-3xl bg-[#DCD7C9] p-8 rounded-2xl shadow-lg font-sans">
         <button type="button" onClick={() => router.back()} className="mb-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">

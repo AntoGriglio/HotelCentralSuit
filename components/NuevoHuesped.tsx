@@ -156,7 +156,7 @@ export default function RegistrarHuespedesPage() {
                 <option value="M">Masculino</option>
                 <option value="X">Otro</option>
               </select>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm">DNI frente</label>
                   <input type="file" accept="image/*" onChange={(e) => handleInput(i, 'foto_dni_frente', e.target.files?.[0] || null)} />
