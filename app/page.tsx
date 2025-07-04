@@ -89,7 +89,7 @@ export default function Home() {
 
 {/* Tipos de habitaciones */}
 <section className="py-16 px-6 bg-[#DCD7C9] text-center">
-  <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Tipos de habitaciones</h3>
+  <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Unidades Disponibles</h3>
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
     {[
       { nombre: 'Apart 1 dormitorio', img: '/Apart-1D.PNG' },
