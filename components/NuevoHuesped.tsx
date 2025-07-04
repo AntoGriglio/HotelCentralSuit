@@ -14,7 +14,6 @@ interface Huesped {
   dni: string
   fecha_nacimiento: string
   sexo: string
-  foto_cara: File | null
   foto_dni_frente: File | null
   foto_dni_dorso: File | null
 }
@@ -44,7 +43,6 @@ export default function RegistrarHuespedesPage() {
             dni: '',
             fecha_nacimiento: '',
             sexo: '',
-            foto_cara: null,
             foto_dni_frente: null,
             foto_dni_dorso: null,
           }))
@@ -91,10 +89,9 @@ export default function RegistrarHuespedesPage() {
 
   for (let i = 0; i < huespedes.length; i++) {
     const h = huespedes[i];
-    let urlCara = '', urlFrente = '', urlDorso = '';
+    let  urlFrente = '', urlDorso = '';
 
     try {
-      if (h.foto_cara) urlCara = await subirArchivo(h.foto_cara, `cara_${h.dni}`);
       if (h.foto_dni_frente) urlFrente = await subirArchivo(h.foto_dni_frente, `frente_${h.dni}`);
       if (h.foto_dni_dorso) urlDorso = await subirArchivo(h.foto_dni_dorso, `dorso_${h.dni}`);
     } catch (err) {
@@ -106,7 +103,6 @@ export default function RegistrarHuespedesPage() {
     formData.append(`dni_${i}`, h.dni);
     formData.append(`fecha_nacimiento_${i}`, h.fecha_nacimiento);
     formData.append(`sexo_${i}`, h.sexo);
-    formData.append(`imagen_cara_${i}`, urlCara);
     formData.append(`imagen_dni_frente_${i}`, urlFrente);
     formData.append(`imagen_dni_dorso_${i}`, urlDorso);
   }
@@ -160,11 +156,7 @@ export default function RegistrarHuespedesPage() {
                 <option value="M">Masculino</option>
                 <option value="X">Otro</option>
               </select>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm">Foto de cara</label>
-                  <input type="file" accept="image/*" onChange={(e) => handleInput(i, 'foto_cara', e.target.files?.[0] || null)} />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm">DNI frente</label>
                   <input type="file" accept="image/*" onChange={(e) => handleInput(i, 'foto_dni_frente', e.target.files?.[0] || null)} />

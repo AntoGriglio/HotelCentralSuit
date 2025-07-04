@@ -36,7 +36,7 @@ export default function ListaPrecios() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white text-[#2C3639]">
       <h2 className="text-3xl font-bold text-[#2C3639] mb-6">Lista de Precios por persona</h2>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm text-left">

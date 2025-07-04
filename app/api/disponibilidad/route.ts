@@ -12,6 +12,7 @@ import {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  console.log(searchParams)
   const fechaIngreso = searchParams.get('fecha_ingreso');
   const fechaEgreso = searchParams.get('fecha_egreso');
   const cantidadPersonas = searchParams.get('cantidad_personas');
@@ -71,7 +72,6 @@ export async function GET(request: Request) {
   .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
   .leftJoin(tipo_habitacion, eq(unidad_habitacional.tipo_habitacion_id, tipo_habitacion.id))
   .where(and(...condiciones));
-
 const resultadosConTotal = disponibles
   .filter((res) => {
     const capacidadNormal = res.unidad_habitacional.cantidad_normal || 1;
@@ -95,7 +95,8 @@ const resultadosConTotal = disponibles
 
     return {
       ...res,
-      total_estadia: total
+      total_estadia: total,
+      tipo_id: res.unidad_habitacional.tipo_habitacion_id, 
     };
   });
 
