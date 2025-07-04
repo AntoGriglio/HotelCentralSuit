@@ -99,7 +99,8 @@ export default function Consulta() {
       precio_por_noche: parseFloat(precioPorNoche.toFixed(2)),
       monto_reserva: parseFloat(montoReserva.toFixed(2)),
       porcentaje_reserva: 30,
-      tipo_habitacion_id: form.tipoHabitacion
+      tipo_habitacion_id: h.unidad_habitacional.tipo_habitacion_id
+
     }
 console.log(payload)
     await fetch('/api/estadias', {

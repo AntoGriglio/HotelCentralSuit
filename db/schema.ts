@@ -167,9 +167,7 @@ export const huesped = pgTable('huesped', {
   nombre_completo: varchar('nombre_completo', { length: 255 }).notNull(),
   dni: varchar('dni', { length: 255 }).notNull(),
   fecha_nacimiento: date('fecha_nacimiento'),
-  sexo: varchar('sexo', { length: 50 }), // puede ser 'masculino', 'femenino', 'otro', etc.
-
-  foto_cara: varchar('foto_cara', { length: 255 }),
+  sexo: varchar('sexo', { length: 50 }),
   dni_frente: varchar('dni_frente', { length: 255 }),
   dni_dorso: varchar('dni_dorso', { length: 255 }),
 });

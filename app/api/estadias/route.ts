@@ -10,7 +10,7 @@ import { desc } from 'drizzle-orm';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
-
+console.log('id',id)
   try {
     if (id) {
       const result = await db.select().from(estadia).where(eq(estadia.id, id)).limit(1);
@@ -103,11 +103,12 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+  console.log('searche', searchParams)
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
   const data = await req.json();
-
+console.log('dataaa', data )
   try {
     await db.update(estadia)
       .set({

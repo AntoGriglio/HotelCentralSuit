@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
@@ -13,12 +13,11 @@ export default function EditarEstadia() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
+const [todasHabitacionesDisponibles, setTodasHabitacionesDisponibles] = useState<any[]>([])
 
   const [estadia, setEstadia] = useState<any>(null)
   const [cliente, setCliente] = useState<any>(null)
   const [habitaciones, setHabitaciones] = useState<any[]>([])
-  const [habitacionesDisponibles, setHabitacionesDisponibles] = useState<any[]>([])
-  const [habitacionesDisponiblesPorTipo, setHabitacionesDisponiblesPorTipo] = useState<any[]>([])
   const [tiposHabitacion, setTiposHabitacion] = useState<any[]>([])
   const [canales, setCanales] = useState<any[]>([])
   const [mensaje, setMensaje] = useState('')
@@ -33,187 +32,178 @@ export default function EditarEstadia() {
     telefono: '',
     localidad: ''
   })
+const [estados, setEstados] = useState<any[]>([])
 
-  useEffect(() => {
-    if (!id) return
-    fetch(`/api/estadias?id=${id}`)
-      .then(res => res.json())
-      .then(async data => {
-        console.log('data',data)
-        setEstadia({
-          ...data,
-          cantidad_personas: data.cantidad_personas?.toString() || '',
-          precio_por_noche: data.precio_por_noche?.toString() || '',
-          porcentaje_reserva: data.porcentaje_reserva?.toString() || '',
-          monto_reserva: data.monto_reserva?.toString() || '',
-          total: data.total?.toString() || '',
-          fecha_ingreso: data.fecha_ingreso,
-          fecha_egreso: data.fecha_egreso,
-          habitacion_id: data.habitacion_id || '',
-          tipoHabitacionId: data.tipo_habitacion_id || '',
-          canal_id: data.canal_id,
-          estado_id: data.estado_id,
-          desayuno: data.desayuno,
-          pension_media: data.pension_media,
-          pension_completa: data.pension_completa,
-          all_inclusive: data.all_inclusive,
-          cochera: data.cochera,
-          ropaBlanca: data.ropa_blanca,
-          observaciones: data.observaciones || ''
-        })
+useEffect(() => {
+  fetch('/api/estados').then(res => res.json()).then(setEstados)
+}, [])
 
-        const resHab = await fetch('/api/unidades')
-        const todasHabitaciones = await resHab.json()
-        console.log('todas habita',todasHabitaciones)
-        const habActual = todasHabitaciones.find((h: { id: any }) => h.id === data.habitacion_id)
-        console.log('hab actual',habActual)
-        if (habActual) {
-          setHabitacionesDisponibles(prev => {
-            const yaIncluida = prev.some(h => h.id === habActual.id)
-            return yaIncluida ? prev : [...prev, habActual]
-          })
+// Carga inicial: estadía + cliente + habitaciones
+useEffect(() => {
+  if (!id) return
+  fetch(`/api/estadias?id=${id}`)
+    .then(res => res.json())
+    .then(async data => {
+      console.log(data)
+      setEstadia({
+        ...data,
+        cantidad_personas: data.cantidad_personas?.toString() || '',
+        precio_por_noche: data.precio_por_noche?.toString() || '',
+        porcentaje_reserva: data.porcentaje_reserva?.toString() || '',
+        monto_reserva: data.monto_reserva?.toString() || '',
+        total: data.total?.toString() || '',
+        fecha_ingreso: data.fecha_ingreso,
+        fecha_egreso: data.fecha_egreso,
+        habitacion_id: data.habitacion_id || '',
+        tipoHabitacionId: data.tipo_habitacion_id || '',
+        canal_id: data.canal_id,
+        estado_id: data.estado_id,
+        desayuno: data.desayuno,
+        pension_media: data.pension_media,
+        pension_completa: data.pension_completa,
+        all_inclusive: data.all_inclusive,
+        cochera: data.cochera,
+        ropaBlanca: data.ropa_blanca,
+        observaciones: data.observaciones || ''
+      })
+
+      if (data.cliente_dni) {
+        setDni(data.cliente_dni)
+        const resCliente = await fetch(`/api/clientes?dni=${data.cliente_dni}`)
+        if (resCliente.ok) {
+          const clienteData = await resCliente.json()
+          setCliente(clienteData)
         }
-        setHabitaciones(todasHabitaciones)
-      })
-  }, [id])
-
-  useEffect(() => {
-    fetch('/api/canales').then(res => res.json()).then(setCanales)
-    fetch('/api/tipos-habitacion').then(res => res.json()).then(setTiposHabitacion)
-  }, [])
-
-  useEffect(() => {
-    const consultarDisponibilidad = async () => {
-      if (!estadia?.fecha_ingreso || !estadia?.fecha_egreso || !estadia?.cantidad_personas) return
-
-      const params = new URLSearchParams({
-        fecha_ingreso: estadia.fecha_ingreso,
-        fecha_egreso: estadia.fecha_egreso,
-        cantidad_personas: estadia.cantidad_personas,
-        tipo_habitacion_id: estadia.tipoHabitacionId
-      })
-      const res = await fetch(`/api/disponibilidad?${params.toString()}`)
-      const disponibles = await res.json()
-      let disponiblesConActual = disponibles
-      const habActual = habitaciones.find(h => h.id === estadia.habitacion_id)
-      if (habActual && !disponibles.find((h: any) => h.id === habActual.id)) {
-        disponiblesConActual = [...disponibles, habActual]
       }
-      console.log('dis',disponiblesConActual)
-      setHabitacionesDisponibles(disponiblesConActual)
-      const porTipo = disponiblesConActual.filter((h: any) => h.tipo_id === estadia.tipoHabitacionId)
-      setHabitacionesDisponiblesPorTipo(porTipo)
+
+      const resHab = await fetch('/api/unidades')
+      const todasHabitaciones = await resHab.json()
+
+      const habActual = data.habitacion_id
+        ? todasHabitaciones.find((h: any) => h.id === data.habitacion_id)
+        : null
+
+      if (habActual) {
+        setHabitaciones((prev) => {
+          const yaIncluida = prev.some(h => h.id === habActual.id)
+          return yaIncluida ? prev : [...prev, habActual]
+        })
+      }
+console.log('todas',todasHabitaciones)
+      setHabitaciones(todasHabitaciones)
+    })
+}, [id])
+
+// Carga de canales y tipos
+useEffect(() => {
+  fetch('/api/canales').then(res => res.json()).then(setCanales)
+  fetch('/api/tipos-habitacion').then(res => res.json()).then(setTiposHabitacion)
+}, [])
+
+// Consulta disponibilidad + filtro por tipo
+useEffect(() => {
+  const consultarDisponibilidad = async () => {
+    if (!estadia?.fecha_ingreso || !estadia?.fecha_egreso || !estadia?.cantidad_personas) return
+
+    const params = new URLSearchParams({
+      fecha_ingreso: estadia.fecha_ingreso,
+      fecha_egreso: estadia.fecha_egreso,
+      cantidad_personas: estadia.cantidad_personas,
+      tipo_habitacion_id: estadia.tipoHabitacionId
+    })
+
+    const res = await fetch(`/api/disponibilidad?${params.toString()}`)
+    const disponibles = await res.json()
+
+    const habActual = habitaciones.find(h => h.id === estadia.habitacion_id)
+    let disponiblesConActual = disponibles
+
+    if (habActual && !disponibles.find((h: any) => h.id === habActual.id)) {
+      disponiblesConActual = [...disponibles, habActual]
     }
 
-    if (habitaciones.length && estadia?.tipoHabitacionId) {
-      consultarDisponibilidad()
-    }
-  }, [estadia?.fecha_ingreso, estadia?.fecha_egreso, estadia?.cantidad_personas, estadia?.tipoHabitacionId, habitaciones])
+    setTodasHabitacionesDisponibles(disponiblesConActual)
 
-  useEffect(() => {
-    if (!habitacionesDisponibles.length || !estadia) return
-
-    const disponiblesFiltradas = habitacionesDisponibles.filter(
-      (h) => h.tipo_id === estadia.tipoHabitacionId
+    const filtradas = disponiblesConActual.filter(
+      (h: any) => h.tipo_id === estadia.tipoHabitacionId
     )
+console.log('filtradas',filtradas)
+    setHabitaciones(filtradas)
 
-    const habitacionActualDisponible = disponiblesFiltradas.find(
-      (h) => h.id === estadia.habitacion_id
-    )
-
-    if (!habitacionActualDisponible) {
-      setEstadia((prev: any) => ({ ...prev, habitacion_id: disponiblesFiltradas[0]?.id || '' }))
-    }
-
-    setHabitacionesDisponiblesPorTipo(disponiblesFiltradas)
-  }, [habitacionesDisponibles, estadia?.tipoHabitacionId, estadia?.habitacion_id])
-
-  const handleTipoHabitacionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const nuevoTipo = e.target.value
-    const porTipo = habitacionesDisponibles.filter((h) => h.tipo_id === nuevoTipo)
-    setHabitacionesDisponiblesPorTipo(porTipo)
-    setEstadia((prev: any) => ({ ...prev, tipoHabitacionId: nuevoTipo, habitacion_id: porTipo[0]?.id || '' }))
-  }
-
-  const handleHabitacionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setEstadia((prev: any) => ({ ...prev, habitacion_id: e.target.value }))
-  }
-  useEffect(() => {
-    if (!habitacionesDisponibles.length || !estadia) return
-
-    const disponiblesFiltradas = habitacionesDisponibles.filter(
-      (h) => h.tipo_id === estadia.tipoHabitacionId
-    )
-
-    if (!disponiblesFiltradas.length) {
-      setEstadia((prev: any) => ({ ...prev, habitacion_id: '' }))
-      return
-    }
-
-    const habitacionActualDisponible = disponiblesFiltradas.find(
-      (h) => h.id === estadia.habitacion_id
-    )
-
-    if (habitacionActualDisponible) return
-
-    const habitacionGuardada = disponiblesFiltradas.find(
-      (h) => h.id === estadia.habitacion_id
-    )
-
-    if (habitacionGuardada) {
-      setEstadia((prev: any) => ({ ...prev, habitacion_id: habitacionGuardada.id }))
-    } else {
-      setEstadia((prev: any) => ({ ...prev, habitacion_id: disponiblesFiltradas[0].id }))
-    }
-  }, [habitacionesDisponibles, estadia?.tipoHabitacionId, estadia?.habitacion_id])
-
-  useEffect(() => {
-    if (!estadia?.habitacion_id && habitacionesDisponibles.length && habitacionesDisponibles.some(h => h.id === estadia?.habitacion_id)) {
+    if (!filtradas.find((h: any) => h.id === estadia.habitacion_id)) {
       setEstadia((prev: any) => ({
         ...prev,
-        habitacion_id: habitacionesDisponibles[0].id
+        habitacion_id: filtradas[0]?.id || ''
       }))
     }
-  }, [habitacionesDisponibles])
+  }
 
-  useEffect(() => {
-    const calcular = async () => {
-      if (
-        !estadia?.habitacion_id ||
-        !estadia?.cantidad_personas ||
-        !estadia?.fecha_ingreso ||
-        !estadia?.fecha_egreso
-      ) return
+  consultarDisponibilidad()
+}, [
+  estadia?.fecha_ingreso,
+  estadia?.fecha_egreso,
+  estadia?.cantidad_personas,
+  estadia?.tipoHabitacionId
+])
+useEffect(() => {
+  const estadoAuto = cliente ? 'pendiente' : 'sin confirmar'
+  const encontrado = estados.find(e => e.nombre.toLowerCase() === estadoAuto)
+  if (encontrado) {
+    setEstadia((prev: any) => ({ ...prev, estado_id: encontrado.id }))
+  }
+}, [cliente, estados])
 
-      const resultado = await obtenerPrecioConExtras(estadia, habitaciones, precioEditado)
-      if (!resultado) return
+// Recalcular precio
+useEffect(() => {
+  const calcular = async () => {
+    if (
+      !estadia?.habitacion_id ||
+      !estadia?.cantidad_personas ||
+      !estadia?.fecha_ingreso ||
+      !estadia?.fecha_egreso
+    ) return
 
-      setCantidadNoches(resultado.noches)
-      setEstadia((prev: any) => ({
-        ...prev,
-        precio_por_noche: resultado.precio_por_noche,
-        total: resultado.total,
-        monto_reserva: resultado.monto_reserva,
-        porcentaje_reserva: resultado.porcentaje_reserva
-      }))
-    }
+    const resultado = await obtenerPrecioConExtras(estadia, habitaciones, precioEditado)
+    if (!resultado) return
 
-    calcular()
-  }, [
-    estadia?.habitacion_id,
-    estadia?.cantidad_personas,
-    estadia?.fecha_ingreso,
-    estadia?.fecha_egreso,
-    estadia?.desayuno,
-    estadia?.pension_media,
-    estadia?.pension_completa,
-    estadia?.all_inclusive,
-    estadia?.cochera,
-    estadia?.ropaBlanca,
-    precioEditado,
-    habitaciones.length
-  ])
+    setCantidadNoches(resultado.noches)
+    setEstadia((prev: any) => ({
+      ...prev,
+      precio_por_noche: resultado.precio_por_noche,
+      total: resultado.total,
+      monto_reserva: resultado.monto_reserva,
+      porcentaje_reserva: resultado.porcentaje_reserva
+    }))
+  }
 
+  calcular()
+}, [
+  estadia?.habitacion_id,
+  estadia?.cantidad_personas,
+  estadia?.fecha_ingreso,
+  estadia?.fecha_egreso,
+  estadia?.desayuno,
+  estadia?.pension_media,
+  estadia?.pension_completa,
+  estadia?.all_inclusive,
+  estadia?.cochera,
+  estadia?.ropaBlanca,
+  precioEditado,
+  habitaciones.length
+])
+
+// Cambio manual del tipo habitación
+const handleTipoHabitacionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const nuevoTipo = e.target.value
+  const porTipo = todasHabitacionesDisponibles.filter(h => h.tipo_id === nuevoTipo)
+console.log('portipo', porTipo)
+  setHabitaciones(porTipo)
+  setEstadia((prev: any) => ({
+    ...prev,
+    tipoHabitacionId: nuevoTipo,
+    habitacion_id: porTipo[0]?.id || ''
+  }))
+}
 
 
 const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEditado: boolean) => {
@@ -269,7 +259,7 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
   const buscarCliente = async () => {
     if (!dni) return
     try {
-      const res = await fetch(`/api/clientes/${dni}`)
+     const res = await fetch(`/api/clientes?dni=${dni}`)
       if (res.ok) {
         const clienteData = await res.json()
         setCliente(clienteData)
@@ -309,7 +299,7 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
   const generarPDF = async () => {
     if (!estadia || !cliente) return
 
-    const habitacion = habitaciones.find(h => h.unidad_habitacional?.id === estadia.habitacionId)
+   const habitacion = habitaciones.find(h => h.id === estadia.habitacion_id)
 
     const reciboHTML = `
       <div style="font-family: Arial; padding: 30px; max-width: 600px;">
@@ -366,17 +356,23 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!estadia) return
+    const estadoSeleccionado = estados.find(e => e.id === estadia.estado_id)
 
-    await fetch(`/api/estadias/${id}`, {
+    if (estadoSeleccionado?.nombre !== 'sin confirmar' && !cliente) {
+      setMensaje('Debes asignar un cliente si el estado no es "sin confirmar".')
+      return
+    }
+    await fetch(`/api/estadias?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(estadia),
     })
 
     await generarPDF()
-    router.push('/dashboard/estadias')
+    router.push('/estadias')
   }
 
+  const estadoSeleccionado = estados.find((e) => e.id === estadia?.estado_id)
   if (!estadia) return <p className="p-4">Cargando estadía...</p>
   return (<div className="min-h-screen bg-[#3F4E4F] flex items-center justify-center p-6">
       <div className="w-full max-w-3xl bg-[#DCD7C9] p-8 rounded-2xl shadow-lg font-sans">
@@ -387,23 +383,34 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
         <h1 className="text-2xl font-bold mb-6 text-[#2C3639]">Editar Estadía</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex gap-2">
-            <input type="text" placeholder="DNI del cliente" value={dni} onChange={(e) => setDni(e.target.value)} className="p-2 border border-[#A27B5B] rounded w-full text-[#2C3639]" />
-            <button type="button" onClick={buscarCliente} className="bg-[#A27B5B] text-white px-4 py-2 rounded hover:bg-[#8e664e]">Buscar Cliente</button>
+             {estadoSeleccionado?.nombre !== 'sin confirmar' && (
+          <div className="mb-4 flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="DNI del cliente"
+              value={dni}
+              onChange={(e) => setDni(e.target.value)}
+              className="p-2 rounded border border-[#A27B5B] w-full text-[#2C3639]"
+            />
+            <button type="button" onClick={buscarCliente} className="bg-[#A27B5B] text-white px-4 py-2 rounded hover:bg-[#8e664e]">
+              Buscar Cliente
+            </button>
           </div>
+        )}
 
-          {cliente && (
-            <p className="text-sm text-green-700">Cliente: {cliente.nombre_completo} ({cliente.email})</p>
-          )}
-          <label className="block text-[#2C3639] mb-1">Tipo de habitación</label>
+        {cliente && estadoSeleccionado?.nombre !== 'sin confirmar' && (
+          <p className="mb-4 text-sm text-green-700">Cliente: {cliente.nombre_completo} ({cliente.email})</p>
+        )}
+
+<label className="block text-[#2C3639] mb-1">Tipo de habitación</label>
 <select
-  value={estadia.tipoHabitacionId || ''}
+  value={String(estadia.tipoHabitacionId || '')}
   onChange={handleTipoHabitacionChange}
   className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]"
 >
   <option value="">Seleccionar tipo</option>
   {tiposHabitacion.map((tipo: any) => (
-    <option key={tipo.id} value={tipo.id}>
+    <option key={String(tipo.id)} value={String(tipo.id)}>
       {tipo.nombre}
     </option>
   ))}
@@ -413,15 +420,20 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
 <select
   value={String(estadia.habitacion_id || '')}
   onChange={(e) =>
-    setEstadia((prev: any) => ({ ...prev, habitacion_id: e.target.value }))
+    setEstadia((prev: any) => ({
+      ...prev,
+      habitacion_id: e.target.value
+    }))
   }
   className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]"
 >
-  {habitacionesDisponibles.map((h) => (
-    <option key={h.unidad_habitacional?.id} value={String(h.unidad_habitacional?.id)}>
-      {h.unidad_habitacional?.nombre} - Piso {h.unidad_habitacional?.piso}
-    </option>
-  ))}
+  <option value="">Seleccionar habitación</option>
+{habitaciones.map((h) => (
+  <option key={h.id} value={String(h.id)}>
+    {h.nombre} - Piso {h.piso}
+  </option>
+))}
+
 </select>
 
 
