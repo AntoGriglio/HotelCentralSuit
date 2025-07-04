@@ -132,7 +132,7 @@ export default function Consulta() {
 - Señal (30%): ${formatearMoneda(montoReserva)}
 `
 
-    window.open(`https://wa.me/5493517011639?text=${encodeURIComponent(texto)}`, '_blank')
+    window.open(`https://wa.me/5493541774444?text=${encodeURIComponent(texto)}`, '_blank')
     setShowModal(false)
     setHabitacionSeleccionada(null)
   }
