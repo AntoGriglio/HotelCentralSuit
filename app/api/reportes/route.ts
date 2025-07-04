@@ -79,21 +79,30 @@ export async function GET(req: Request) {
 
       const desdeEst = new Date(est.fecha_ingreso);
       const hastaEst = new Date(est.fecha_egreso);
+for (const dia of dias) {
+  const diaDate = new Date(dia);
+  const estado = est.estado_nombre?.toLowerCase();
 
-      for (const dia of dias) {
-        const diaDate = new Date(dia);
-        if (
-          (isEqual(diaDate, desdeEst) || isAfter(diaDate, desdeEst)) &&
-          (isEqual(diaDate, hastaEst) || isBefore(diaDate, hastaEst))
-        ) {
-          const estado = est.estado_nombre?.toLowerCase();
-          if (estado?.includes('reservado') || estado?.includes('pagado')) {
-            disponibilidad[dia] = 'reservado';
-          } else if (estado?.includes('pendiente') || estado?.includes('sin confirmar')) {
-            disponibilidad[dia] = 'pendiente';
-          }
-        }
-      }
+  if (
+    (isEqual(diaDate, desdeEst) || isAfter(diaDate, desdeEst)) &&
+    isBefore(diaDate, hastaEst) // 🔥 excluye el egreso
+  ) {
+    if (estado?.includes('reservado') || estado?.includes('pagado')) {
+      disponibilidad[dia] = 'reservado';
+    } else if (estado?.includes('pendiente') || estado?.includes('sin confirmar')) {
+      disponibilidad[dia] = 'pendiente';
+    }
+  }
+
+  if (isEqual(diaDate, desdeEst)) {
+    disponibilidad[dia] += '_ingreso';
+  }
+
+  if (isEqual(diaDate, hastaEst)) {
+    disponibilidad[dia] += '_egreso';
+  }
+}
+
     }
 
     return {

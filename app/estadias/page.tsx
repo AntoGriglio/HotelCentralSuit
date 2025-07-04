@@ -18,6 +18,12 @@ const coloresEstado: Record<string, string> = {
 };
 
 const ITEMS_POR_PAGINA = 10;
+const calcularNoches = (ingreso: string, egreso: string) => {
+  const fechaIngreso = new Date(ingreso)
+  const fechaEgreso = new Date(egreso)
+  const diff = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24))
+  return diff > 0 ? diff : 0
+}
 
 export default function ListaEstadias() {
   const [estadias, setEstadias] = useState<any[]>([]);
@@ -34,6 +40,8 @@ export default function ListaEstadias() {
 const [huespedes, setHuespedes] = useState<any[]>([]);
 const [expandirHuespedes, setExpandirHuespedes] = useState<Record<string, boolean>>({});
   const router = useRouter();
+const [filtroNumeroEstadia, setFiltroNumeroEstadia] = useState('');
+const [filtroNombreHabitacion, setFiltroNombreHabitacion] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +68,13 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
   const estadiasFiltradas = estadias.filter((e) => {
     const coincideEstado = filtroEstado ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase() : true;
     const coincideCliente = filtroCliente ? e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) : true;
+const coincideNumeroEstadia = filtroNumeroEstadia
+  ? e.nro_estadia?.toString().includes(filtroNumeroEstadia)
+  : true;
+
+const coincideNombreHabitacion = filtroNombreHabitacion
+  ? e.habitacion_nombre?.toLowerCase().includes(filtroNombreHabitacion.toLowerCase())
+  : true;
 
     const fechaIngresoValida = filtroIngresoDesde || filtroIngresoHasta
       ? (!filtroIngresoDesde || new Date(e.fecha_ingreso) >= new Date(filtroIngresoDesde)) &&
@@ -73,8 +88,8 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
 
     const soloUnoActivo = !(filtroIngresoDesde || filtroIngresoHasta) || !(filtroEgresoDesde || filtroEgresoHasta);
 
-    return coincideEstado && coincideCliente && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
-  });
+return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNombreHabitacion && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
+ });
 
   const totalPaginas = Math.ceil(estadiasFiltradas.length / ITEMS_POR_PAGINA);
   const estadiasPaginadas = estadiasFiltradas.slice(
@@ -150,11 +165,28 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 text-[#2C3639]">
         <input type="text" placeholder="DNI" value={filtroCliente} onChange={(e) => setFiltroCliente(e.target.value)} className="p-2 border rounded" />
+<input
+  type="text"
+  placeholder="N° Estadía"
+  className="p-2 border rounded w-full max-w-[120px]"
+  value={filtroNumeroEstadia}
+  onChange={(e) => setFiltroNumeroEstadia(e.target.value)}
+/>
+<input
+  type="text"
+  placeholder="Habitación"
+  className="p-2 border rounded w-full max-w-[120px]"
+  value={filtroNombreHabitacion}
+  onChange={(e) => setFiltroNombreHabitacion(e.target.value)}
+/>
+
+
 
         <div className="col-span-2">
-          <label className="block text-sm text-[#2C3639] mb-1">Ingreso</label>
+          <label className="block text-sm mb-1">Ingreso</label>
+
           <div className="flex gap-2">
             <input type="date" value={filtroIngresoDesde} onChange={(e) => { setFiltroIngresoDesde(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso desde" title="Ingreso desde" />
             <input type="date" value={filtroIngresoHasta} onChange={(e) => { setFiltroIngresoHasta(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso hasta" title="Ingreso hasta" />
@@ -162,7 +194,8 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
         </div>
 
         <div className="col-span-2">
-          <label className="block text-sm text-[#2C3639] mb-1">Egreso</label>
+          <label className="block text-sm  mb-1">Egreso</label>
+
           <div className="flex gap-2">
             <input type="date" value={filtroEgresoDesde} onChange={(e) => { setFiltroEgresoDesde(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso desde" title="Egreso desde" />
             <input type="date" value={filtroEgresoHasta} onChange={(e) => { setFiltroEgresoHasta(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso hasta" title="Egreso hasta" />
@@ -182,12 +215,13 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
         <table className="w-full text-sm text-left">
           <thead className="bg-[#2C3639] text-white">
             <tr>
-              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">N°</th>
               <th className="px-4 py-3">Carga</th>
               <th className="px-4 py-3">Cliente</th>
               <th className="px-4 py-3">Habitación</th>
               <th className="px-4 py-3">Ingreso</th>
               <th className="px-4 py-3">Egreso</th>
+              <th className="px-4 py-3">Noches</th>
               <th className="px-4 py-3">Saldo Pendiente</th>
               <th className="px-4 py-3">Total</th>
               <th className="px-4 py-3">Estado</th>
@@ -206,6 +240,8 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
                 <td className="px-4 py-2">{e.habitacion_nombre}</td>
                 <td className="px-4 py-2">{e.fecha_ingreso}</td>
                 <td className="px-4 py-2">{e.fecha_egreso}</td>
+                <td className="px-4 py-2">{calcularNoches(e.fecha_ingreso, e.fecha_egreso)}</td>
+
              <td className="px-4 py-2 text-left align-middle whitespace-nowrap">
   <div className="w-full text-left pl-1">{formatearMoneda(e.saldo_pendiente)}</div>
 </td>

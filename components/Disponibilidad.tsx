@@ -68,7 +68,7 @@ export default function Disponibilidad() {
   }, []);
 
   return (
-    <div className="p-6">
+    <div className="p-6  bg-white  text-[#2C3639]">
       <h1 className="text-3xl font-bold text-[#2C3639] mb-6">Disponibilidad</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">

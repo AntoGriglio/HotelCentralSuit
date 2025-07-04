@@ -1,7 +1,18 @@
+'use client'
+
+import Image from 'next/image'
+
 export default function Loader() {
   return (
-    <div className="flex items-center justify-center py-10">
-      <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-gray-500"></div>
+    <div className="fixed inset-0 bg-[#DCD7C9] bg-opacity-90 z-50 flex flex-col items-center justify-center">
+      <Image
+        src="/logo.png" 
+        width={80}
+        height={80}
+        alt="Cargando..."
+        className="animate-spin-slow"
+      />
+      <p className="mt-4 text-[#2C3639] font-semibold text-lg">Cargando...</p>
     </div>
   )
 }

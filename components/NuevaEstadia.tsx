@@ -23,12 +23,14 @@ export default function RegistrarEstadia() {
   const [mostrarModal, setMostrarModal] = useState(false)
   const [nuevoCliente, setNuevoCliente] = useState({ dni: '', nombre_completo: '', email: '', telefono: '' })
   const [cantidadNoches, setCantidadNoches] = useState<number>(0)
+const [tiposHabitacion, setTiposHabitacion] = useState<any[]>([])
 
   const [estadia, setEstadia] = useState({
     cantidadPersonas: '', fechaIngreso: '', fechaEgreso: '', cochera: false,
     desayuno: false, pension_media: false, pension_completa: false, ropaBlanca: false,all_inclusive: false,
     precioPorNoche: '0', porcentajeReserva: '', montoReserva: '0', total: '0',
-    estado: '', habitacionId: '', observaciones: '', canalId: '', estadoId: '',
+    estado: '', habitacionId: '', observaciones: '', canalId: '', estadoId: '',tipoHabitacionId: '',
+
   })
 
 
@@ -52,6 +54,10 @@ export default function RegistrarEstadia() {
     fetch('/api/unidades').then(res => res.json()).then(data => {
       setHabitaciones(data)
     }).catch(console.error)
+fetch('/api/tipos-habitacion')
+  .then(res => res.json())
+  .then(setTiposHabitacion)
+  .catch(console.error)
 
     fetch('/api/canales').then(res => res.json()).then(setCanales).catch(console.error)
     fetch('/api/estados').then(res => res.json()).then(setEstados).catch(console.error)
@@ -78,18 +84,33 @@ export default function RegistrarEstadia() {
     }
   }, [estadia.fechaIngreso, estadia.fechaEgreso, estadia.precioPorNoche, estadia.porcentajeReserva])
 
-  useEffect(() => {
-    // filtrar habitaciones disponibles por fechas
-    if (estadia.fechaIngreso && estadia.fechaEgreso) {
-     fetch(`/api/disponibilidad?fecha_ingreso=${estadia.fechaIngreso}&fecha_egreso=${estadia.fechaEgreso}&cantidad_personas=${estadia.cantidadPersonas}`)
-        .then(res => res.json())
-        .then(data => {
-        console.log('habitaciones disponibles', data); // ← 👈 Aca ponelo
-        setHabitaciones(data);
-      })
-        .catch(console.error)
+useEffect(() => {
+  const obtenerDisponibles = async () => {
+    if (!estadia.fechaIngreso || !estadia.fechaEgreso || !estadia.cantidadPersonas) return;
+
+    let url = `/api/disponibilidad?fecha_ingreso=${estadia.fechaIngreso}&fecha_egreso=${estadia.fechaEgreso}&cantidad_personas=${estadia.cantidadPersonas}`
+
+    if (estadia.tipoHabitacionId) {
+      url += `&tipo=${estadia.tipoHabitacionId}`
     }
-  }, [estadia.fechaIngreso, estadia.fechaEgreso])
+
+    try {
+      const res = await fetch(url)
+      const data = await res.json()
+      setHabitaciones(data)
+    } catch (err) {
+      console.error('Error al obtener disponibilidad:', err)
+    }
+  }
+
+  obtenerDisponibles()
+}, [
+  estadia.fechaIngreso,
+  estadia.fechaEgreso,
+  estadia.cantidadPersonas,
+  estadia.tipoHabitacionId
+])
+
 
   useEffect(() => {
     const estadoAuto = cliente ? 'pendiente' : 'sin confirmar'
@@ -322,6 +343,8 @@ await fetch('/api/enviar-confirmacion', {
       observaciones: estadia.observaciones,
       canal_id: estadia.canalId,
       estado_id: estadia.estadoId,
+      tipo_habitacion_id: estadia.tipoHabitacionId,
+      
     }
 
     const res = await fetch('/api/estadias', {
@@ -380,23 +403,58 @@ await fetch('/api/enviar-confirmacion', {
           <input type="date" value={estadia.fechaIngreso} onChange={(e) => setEstadia({ ...estadia, fechaIngreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
            <label className="block text-[#2C3639] mb-1">Fecha Egreso</label>
           <input type="date" value={estadia.fechaEgreso} onChange={(e) => setEstadia({ ...estadia, fechaEgreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-          <label className="block text-[#2C3639] mb-1">Habitacion</label>
-          <select value={estadia.habitacionId} onChange={(e) => setEstadia({ ...estadia, habitacionId: e.target.value })} required className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
-            <option value="">Seleccionar habitación</option>
-           {habitaciones
-  .filter(h => h.unidad_habitacional && h.unidad_habitacional.id)
-  .map(h => (
-    <option
-      key={h.unidad_habitacional.id}
-      value={h.unidad_habitacional.id}
-    >
-      {h.unidad_habitacional.nombre} - Piso {h.unidad_habitacional.piso} - Capacidad {h.unidad_habitacional.cantidad_normal}
-    </option>
-))}
+
+<select
+  value={estadia.tipoHabitacionId}
+  onChange={(e) => {
+    const nuevoTipo = e.target.value
+    setEstadia(prev => ({
+      ...prev,
+      tipoHabitacionId: nuevoTipo,
+      habitacionId: '' // resetear habitación
+    }))
+  }}
+  className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]"
+>
+  <option value="">Seleccionar tipo de habitación</option>
+  {tiposHabitacion.map((tipo) => (
+    <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+  ))}
+</select>
 
 
-          </select>
-<label className="block text-[#2C3639] mb-1">Canal de venta</label>
+         <select
+  value={estadia.habitacionId}
+  onChange={(e) => {
+    const nuevaHabitacionId = e.target.value
+    const habitacionSeleccionada = habitaciones.find(h => h.unidad_habitacional?.id === nuevaHabitacionId)
+    setEstadia(prev => ({
+      ...prev,
+      habitacionId: nuevaHabitacionId,
+      tipoHabitacionId: habitacionSeleccionada?.tipo_habitacion?.id || prev.tipoHabitacionId
+    }))
+  }}
+  required
+  className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]"
+>
+  <option value="">Seleccionar habitación</option>
+  {habitaciones
+    .filter(h =>
+      h.unidad_habitacional &&
+      h.unidad_habitacional.id &&
+      h.tipo_habitacion?.id === estadia.tipoHabitacionId
+    )
+    .map(h => (
+      <option
+        key={h.unidad_habitacional.id}
+        value={h.unidad_habitacional.id}
+      >
+        {h.unidad_habitacional.nombre} - Piso {h.unidad_habitacional.piso} - Capacidad {h.unidad_habitacional.cantidad_normal}
+      </option>
+    ))}
+</select>
+
+
           <select value={estadia.canalId} onChange={(e) => setEstadia({ ...estadia, canalId: e.target.value })} required className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
             <option value="">Seleccionar canal</option>
             {canales.map((c) => (

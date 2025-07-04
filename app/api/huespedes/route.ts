@@ -17,7 +17,6 @@ export async function POST(req: Request) {
       const sexo = formData.get(`sexo_${i}`) as string;
 
       // Nombres corregidos para coincidir con la base de datos
-      const foto_cara = formData.get(`imagen_cara_${i}`)?.toString() ?? '';
       const dni_frente = formData.get(`imagen_dni_frente_${i}`)?.toString() ?? '';
       const dni_dorso = formData.get(`imagen_dni_dorso_${i}`)?.toString() ?? '';
 
@@ -28,7 +27,6 @@ export async function POST(req: Request) {
         dni,
         fecha_nacimiento: new Date(fecha_nacimiento).toISOString(),
         sexo,
-        foto_cara,
         dni_frente,
         dni_dorso,
       });
