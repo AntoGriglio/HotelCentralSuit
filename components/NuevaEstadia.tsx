@@ -397,10 +397,13 @@ await fetch('/api/enviar-confirmacion', {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+           <label className="block text-[#2C3639] mb-1">Cantidad Personas</label>
            <input type="number" placeholder="Cantidad de personas" value={estadia.cantidadPersonas} onChange={(e) => setEstadia({ ...estadia, cantidadPersonas: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+         <label className="block text-[#2C3639] mb-1">Fecha Ingreso</label>
           <input type="date" value={estadia.fechaIngreso} onChange={(e) => setEstadia({ ...estadia, fechaIngreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+           <label className="block text-[#2C3639] mb-1">Fecha Egreso</label>
           <input type="date" value={estadia.fechaEgreso} onChange={(e) => setEstadia({ ...estadia, fechaEgreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
-      
+
 <select
   value={estadia.tipoHabitacionId}
   onChange={(e) => {
@@ -451,6 +454,7 @@ await fetch('/api/enviar-confirmacion', {
     ))}
 </select>
 
+
           <select value={estadia.canalId} onChange={(e) => setEstadia({ ...estadia, canalId: e.target.value })} required className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]">
             <option value="">Seleccionar canal</option>
             {canales.map((c) => (
@@ -459,6 +463,7 @@ await fetch('/api/enviar-confirmacion', {
           </select>
 
         <div className="relative">
+           <label className="block text-[#2C3639] mb-1">Precio por noche</label>
   <InputMoneda
   valorInicial={estadia.precioPorNoche}
   onCambio={(nuevoValor) => {
@@ -471,6 +476,7 @@ await fetch('/api/enviar-confirmacion', {
 </div>
 
 <div className="relative">
+   <label className="block text-[#2C3639] mb-1">Porcentaje Reserva</label>
   <input
     type="number"
     placeholder="Porcentaje de reserva"
@@ -482,6 +488,7 @@ await fetch('/api/enviar-confirmacion', {
 </div>
 
 <div className="relative">
+   <label className="block text-[#2C3639] mb-1">Total Reserva</label>
    <InputMoneda
     valorInicial={estadia.montoReserva}
    onCambio={(nuevoValor) => setEstadia({ ...estadia, montoReserva: nuevoValor.toString() })}
@@ -490,6 +497,7 @@ await fetch('/api/enviar-confirmacion', {
 </div>
 
 <div className="relative">
+   <label className="block text-[#2C3639] mb-1">Total</label>
   <InputMoneda
     valorInicial={estadia.total}
    onCambio={(nuevoValor) => setEstadia({ ...estadia, total: nuevoValor.toString() })}

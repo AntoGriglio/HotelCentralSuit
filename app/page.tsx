@@ -34,34 +34,7 @@ export default function Home() {
         </button>
       </section>
 
-      {/* Galería tipo carrusel scroll horizontal */} 
-      <section className="py-12 px-6 max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-[#A27B5B]">
-        <div className="flex gap-4 w-max">
-          {[
-            '/habitacion2.jpg',
-            '/habitacion4.jpg',
-            '/habitacion5.jpg',
-            '/habitacion3.jpg',
-          ].map((src, index) => (
-            <a
-              key={index}
-              href={src}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-shrink-0"
-            >
-              <div className="relative w-[320px] h-[220px] rounded-lg overflow-hidden shadow-md">
-                <Image
-                  src={src}
-                  alt={`Habitación ${index + 1}`}
-                  fill
-                  className="object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            </a>
-          ))}
-        </div>
-      </section>
+
 
       {/* Amenities y Servicios */}
       <section className="py-16 px-6 bg-[#f0ebe3] text-center">
@@ -81,6 +54,29 @@ export default function Home() {
               {item}
             </div>
           ))}
+     {/* Galería tipo carrusel scroll horizontal */} 
+<section className="py-12 px-6 max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-[#A27B5B]">
+  <div className="flex gap-4 w-max">
+    {[
+      '/habitacion2.jpg',
+      '/habitacion4.jpg',
+      '/habitacion5.jpg',
+      '/habitacion3.jpg',
+    ].map((src, index) => (
+      <a
+        key={index}
+        href={src}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-shrink-0"
+      >
+        <div className="relative w-[320px] h-[220px] rounded-lg overflow-hidden shadow-md">
+          <Image
+            src={src}
+            alt={`Habitación ${index + 2}`}
+            fill
+            className="object-cover hover:scale-105 transition-transform duration-300"
+          />
         </div>
         <div className="mt-8 max-w-md mx-auto">
           <Image src="/buffet.png" alt="Desayuno Buffet" width={600} height={400} className="rounded-lg shadow-md object-cover w-full h-auto" />

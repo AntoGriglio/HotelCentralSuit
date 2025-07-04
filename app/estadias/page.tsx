@@ -186,6 +186,7 @@ return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNom
 
         <div className="col-span-2">
           <label className="block text-sm mb-1">Ingreso</label>
+
           <div className="flex gap-2">
             <input type="date" value={filtroIngresoDesde} onChange={(e) => { setFiltroIngresoDesde(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso desde" title="Ingreso desde" />
             <input type="date" value={filtroIngresoHasta} onChange={(e) => { setFiltroIngresoHasta(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso hasta" title="Ingreso hasta" />
@@ -194,6 +195,7 @@ return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNom
 
         <div className="col-span-2">
           <label className="block text-sm  mb-1">Egreso</label>
+
           <div className="flex gap-2">
             <input type="date" value={filtroEgresoDesde} onChange={(e) => { setFiltroEgresoDesde(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso desde" title="Egreso desde" />
             <input type="date" value={filtroEgresoHasta} onChange={(e) => { setFiltroEgresoHasta(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso hasta" title="Egreso hasta" />
