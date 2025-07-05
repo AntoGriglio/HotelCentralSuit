@@ -3,9 +3,120 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import Consulta from '@/components/consultaWh'
+import { useState } from 'react'
+
+const IMAGENES_POR_TIPO: Record<string, string[]> = {
+  'Apart-1D': [
+    '/Apart-1D/Apart-1D-1.jpg',
+    '/Apart-1D/Apart-1D-2.jpg',
+    '/Apart-1D/Apart-1D-3.jpg',
+    '/Apart-1D/Apart-1D-4.jpg',
+    '/Apart-1D/Apart-1D-5.jpg',
+    '/Apart-1D/Apart-1D-6.jpg',
+    '/Apart-1D/Apart-1D-7.jpg',
+    '/Apart-1D/Apart-1D-8.jpg',
+    '/Apart-1D/Apart-1D-9.jpg',
+  ],
+  'Apart-2D': [
+    '/Apart-2D/Apart-2D-1.jpg',
+    '/Apart-2D/Apart-2D-2.jpg',
+    '/Apart-2D/Apart-2D-3.jpg',
+    '/Apart-2D/Apart-2D-4.jpg',
+    '/Apart-2D/Apart-2D-5.jpg',
+    '/Apart-2D/Apart-2D-6.jpg',
+    '/Apart-2D/Apart-2D-7.jpg',
+  ],
+  'Apart-Sup': [
+    '/Apart-Sup/Apart-Sup-1.jpg',
+    '/Apart-Sup/Apart-Sup-2.jpg',
+    '/Apart-Sup/Apart-Sup-3.PNG',
+    '/Apart-Sup/Apart-Sup-4.jpg',
+    '/Apart-Sup/Apart-Sup-5.PNG',
+    '/Apart-Sup/Apart-Sup-6.PNG',
+    '/Apart-Sup/Apart-Sup-7.PNG',
+    '/Apart-Sup/Apart-Sup-8.PNG',
+    '/Apart-Sup/Apart-Sup-9.jpg',
+    '/Apart-Sup/Apart-Sup-10.jpg',
+    '/Apart-Sup/Apart-Sup-11.PNG',
+    '/Apart-Sup/Apart-Sup-12.PNG',
+    '/Apart-Sup/Apart-Sup-13.PNG',
+  ],
+  'Habitacion': [
+    '/Habitacion/img1.jpg',
+    '/Habitacion/img2.jpg',
+  ],
+}
 
 export default function Home() {
+  const [modalAbierto, setModalAbierto] = useState(false)
+const [carpetaSeleccionada, setCarpetaSeleccionada] = useState('')
+const [imagenes, setImagenes] = useState<string[]>([])
+const [imagenActual, setImagenActual] = useState(0)
+
+const abrirCarrusel = (carpeta: string) => {
+  setImagenes(IMAGENES_POR_TIPO[carpeta] || [])
+  setCarpetaSeleccionada(carpeta)
+  setImagenActual(0)
+  setModalAbierto(true)
+}
+
+
   return (
+    <div className="relative min-h-screen bg-[#f9f9f9] text-[#2C3639]">
+      {/* MODAL */}
+  {modalAbierto && (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center px-4">
+    <div className="bg-white p-6 rounded-lg w-full max-w-4xl relative">
+      <button
+        onClick={() => setModalAbierto(false)}
+        className="absolute top-2 right-4 text-2xl text-gray-600 hover:text-black font-bold"
+      >
+        ✕
+      </button>
+
+      {/* Título del tipo de habitación */}
+      <h2 className="text-2xl font-semibold text-center mb-4 text-[#2C3639]">
+        {carpetaSeleccionada.replace(/-/g, ' ')}
+      </h2>
+
+      {/* Carrusel con flechas */}
+      <div className="relative">
+        {/* Flecha izquierda */}
+        <button
+          onClick={() =>
+            setImagenActual((prev) => (prev === 0 ? imagenes.length - 1 : prev - 1))
+          }
+          className="absolute left-0 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 p-2 rounded-full shadow-md z-10"
+        >
+          ←
+        </button>
+
+        {/* Imagen central */}
+        <div className="relative w-full h-[500px] rounded-lg overflow-hidden shadow-md">
+          <Image
+            src={imagenes[imagenActual]}
+            alt={`img-${imagenActual}`}
+            fill
+            className="object-cover"
+          />
+        </div>
+
+        {/* Flecha derecha */}
+        <button
+          onClick={() =>
+            setImagenActual((prev) => (prev === imagenes.length - 1 ? 0 : prev + 1))
+          }
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-100 p-2 rounded-full shadow-md z-10"
+        >
+          →
+        </button>
+      </div>
+
+  
+    </div>
+  </div>
+)}
+
     <div className="relative min-h-screen bg-[#f9f9f9] text-[#2C3639]">
       {/* Imagen de fondo portada */}
       <div className="absolute inset-0 -z-10"></div>
@@ -86,31 +197,33 @@ export default function Home() {
           <Image src="/buffet.png" alt="Desayuno Buffet" width={600} height={400} className="rounded-lg shadow-md object-cover w-full h-auto" />
         </div>
       </section>
-
-{/* Tipos de habitaciones */}
-<section className="py-16 px-6 bg-[#DCD7C9] text-center">
-  <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Unidades Disponibles</h3>
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-    {[
-      { nombre: 'Apart 1 dormitorio', img: '/Apart-1D.PNG' },
-      { nombre: 'Apart 2 dormitorios', img: '/Apart-2D.PNG' },
-      { nombre: 'Apart superior', img: '/Apart-Sup.PNG' },
-      { nombre: 'Habitación', img: '/Habitacion.PNG' },
-    ].map((tipo, index) => (
-      <div key={index} className="bg-white rounded-lg overflow-hidden shadow-md">
-        <Image
-          src={tipo.img}
-          alt={tipo.nombre}
-          width={400}
-          height={250}
-          className="object-cover w-full h-[200px]"
-        />
-        <div className="p-4 text-[#2C3639] font-medium">{tipo.nombre}</div>
-      </div>
-    ))}
-  </div>
-</section>
-
+    {/* Tipos de habitaciones */}
+      <section className="py-16 px-6 bg-[#DCD7C9] text-center">
+        <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Unidades Disponibles</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          {[
+            { nombre: 'Apart 1 dormitorio', img: '/Apart-1D.PNG', carpeta: 'Apart-1D' },
+            { nombre: 'Apart 2 dormitorios', img: '/Apart-2D.PNG', carpeta: 'Apart-2D' },
+            { nombre: 'Apart superior', img: '/Apart-Sup.PNG', carpeta: 'Apart-Sup' },
+            { nombre: 'Habitación', img: '/Habitacion.PNG', carpeta: 'Habitacion' },
+          ].map((tipo, index) => (
+            <div
+              key={index}
+              onClick={() => abrirCarrusel(tipo.carpeta)}
+              className="bg-white rounded-lg overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition"
+            >
+              <Image
+                src={tipo.img}
+                alt={tipo.nombre}
+                width={400}
+                height={250}
+                className="object-cover w-full h-[200px]"
+              />
+              <div className="p-4 text-[#2C3639] font-medium">{tipo.nombre}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Ubicación */}
       <section className="py-12 px-6 bg-[#3F4E4F] text-[#DCD7C9] text-center relative z-10">
@@ -125,16 +238,18 @@ export default function Home() {
           loading="lazy"
         ></iframe>
       </section>
-
-      {/* Formulario */}
+      {/* Formulario y demás secciones siguen igual */}
       <section id="formulario" className="py-16 px-6 bg-[#DCD7C9] relative z-10">
-        <Consulta></Consulta>
+        <Consulta />
       </section>
 
-      {/* Footer */}
       <footer className="text-center text-sm text-[#3F4E4F] py-4 border-t bg-[#DCD7C9] relative z-10">
         © 2025 Hotel Central Suites. Todos los derechos reservados.
       </footer>
     </div>
+    </div>
   )
 }
+
+
+   
