@@ -140,7 +140,7 @@ export default function Consulta() {
   if (loading) return <Loader />
 
   return (
-    <section className="py-16 px-6 bg-[#DCD7C9]">
+    <section className="py-16 px-6 bg-[#d9d9d9]">
       <h3 className="text-2xl font-semibold text-center mb-6 text-[#2C3639]">Consultá disponibilidad</h3>
 
       <div className="max-w-4xl mx-auto grid gap-4 mb-6 md:grid-cols-4">

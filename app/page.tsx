@@ -62,10 +62,10 @@ const abrirCarrusel = (carpeta: string) => {
 
 
   return (
-    <div className="relative min-h-screen bg-[#f9f9f9] text-[#2C3639]">
+    <div className="relative min-h-screen bg-[#c89859] text-[#2C3639]">
       {/* MODAL */}
   {modalAbierto && (
-  <div className="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center px-4">
+  <div className="fixed inset-0 z-50 bg-opacity-30 flex items-center justify-center px-4">
     <div className="bg-white p-6 rounded-lg w-full max-w-4xl relative">
       <button
         onClick={() => setModalAbierto(false)}
@@ -117,12 +117,12 @@ const abrirCarrusel = (carpeta: string) => {
   </div>
 )}
 
-    <div className="relative min-h-screen bg-[#f9f9f9] text-[#2C3639]">
+    <div className="relative min-h-screen bg-[##c89859] text-[#2C3639]">
       {/* Imagen de fondo portada */}
       <div className="absolute inset-0 -z-10"></div>
 
       {/* Navbar */}
-      <header className="flex justify-between items-center px-6 py-4 bg-[#DCD7C9] shadow relative z-10">
+      <header className="flex justify-between items-center px-6 py-4 bg-[##c89859] shadow relative z-10">
         <div className="flex items-center gap-2">
           <Image src="/central-suites-bg.svg" alt="Logo" width={100} height={100} />
         </div>
@@ -132,18 +132,24 @@ const abrirCarrusel = (carpeta: string) => {
       </header>
 
       {/* Hero */}
-      <section className="text-center py-20 px-4 bg-[#DCD7C9]/80 backdrop-blur-sm relative z-10">
-        <h2 className="text-4xl font-bold mb-4">Descansá en el corazón de la Ciudad</h2>
-        <p className="max-w-xl mx-auto mb-6 text-lg">
-          Espacios confortables con todos los servicios que necesitás.
-        </p>
-        <button
-          onClick={() => document.getElementById('formulario')?.scrollIntoView({ behavior: 'smooth' })}
-          className="bg-[#A27B5B] text-white px-6 py-3 rounded-lg hover:bg-[#8e664e]"
-        >
-          Reservá tu lugar
-        </button>
-      </section>
+   {/* Hero */}
+<section
+  className="text-center py-20 px-4 bg-[url('/fondo.jpg')] bg-cover bg-center bg-no-repeat relative z-10 text-white"
+>
+  <div className="absolute inset-0 bg-black/40 backdrop-blur -z-10" />
+  <h2 className="text-4xl font-bold mb-4">Descansá en el corazón de la Ciudad</h2>
+  <p className="max-w-xl mx-auto mb-6 text-lg">
+    Espacios confortables con todos los servicios que necesitás.
+  </p>
+  <button
+    onClick={() =>
+      document.getElementById('formulario')?.scrollIntoView({ behavior: 'smooth' })
+    }
+    className="bg-[#d9d9d9] text-white px-6 py-3 rounded-lg hover:bg-[#8e664e]"
+  >
+    Reservá tu lugar
+  </button>
+</section>
 
       {/* Galería tipo carrusel scroll horizontal */} 
       <section className="py-12 px-6 max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-[#A27B5B]">
@@ -175,7 +181,7 @@ const abrirCarrusel = (carpeta: string) => {
       </section>
 
       {/* Amenities y Servicios */}
-      <section className="py-16 px-6 bg-[#f0ebe3] text-center">
+      <section className="py-16 px-6 bg-[#d9d9d9] text-center">
         <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Amenities y Servicios</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 max-w-4xl mx-auto text-[#3F4E4F]">
           {[
@@ -198,7 +204,7 @@ const abrirCarrusel = (carpeta: string) => {
         </div>
       </section>
     {/* Tipos de habitaciones */}
-      <section className="py-16 px-6 bg-[#DCD7C9] text-center">
+      <section className="py-16 px-6 bg-[#c89859] text-center">
         <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Unidades Disponibles</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {[
@@ -226,7 +232,7 @@ const abrirCarrusel = (carpeta: string) => {
       </section>
 
       {/* Ubicación */}
-      <section className="py-12 px-6 bg-[#3F4E4F] text-[#DCD7C9] text-center relative z-10">
+      <section className="py-12 px-6 bg-[#00242F] text-[#DCD7C9] text-center relative z-10">
         <h3 className="text-2xl font-semibold mb-4">¿Dónde estamos?</h3>
         <p className="mb-4">Av. Libertad 21, Villa Carlos Paz, Córdoba, Argentina</p>
         <iframe
@@ -239,11 +245,11 @@ const abrirCarrusel = (carpeta: string) => {
         ></iframe>
       </section>
       {/* Formulario y demás secciones siguen igual */}
-      <section id="formulario" className="py-16 px-6 bg-[#DCD7C9] relative z-10">
+      <section id="formulario" className="py-16 px-6 bg-[#d9d9d9] relative z-10">
         <Consulta />
       </section>
 
-      <footer className="text-center text-sm text-[#3F4E4F] py-4 border-t bg-[#DCD7C9] relative z-10">
+      <footer className="text-center text-sm text-[#3F4E4F] py-4 border-t bg-[#d9d9d9] relative z-10">
         © 2025 Hotel Central Suites. Todos los derechos reservados.
       </footer>
     </div>
