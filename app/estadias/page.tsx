@@ -1,11 +1,16 @@
+
+/* eslint-disable @next/next/no-img-element */
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp, Download, Users } from 'lucide-react';
 import { formatearMoneda } from '@/lib/formato';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const coloresEstado: Record<string, string> = {
   'sin confirmar': '#9ca3af',
@@ -17,15 +22,11 @@ const coloresEstado: Record<string, string> = {
   'cancelada pendiente': '#eab308',
 };
 
-const ITEMS_POR_PAGINA = 10;
-const calcularNoches = (ingreso: string, egreso: string) => {
-  const fechaIngreso = new Date(ingreso)
-  const fechaEgreso = new Date(egreso)
-  const diff = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24))
-  return diff > 0 ? diff : 0
-}
+
 
 export default function ListaEstadias() {
+
+  const [planillaData, setPlanillaData] = useState<any | null>(null)
   const [estadias, setEstadias] = useState<any[]>([]);
   const [pagos, setPagos] = useState<any[]>([]);
   const [filtroEstado, setFiltroEstado] = useState('');
@@ -43,19 +44,32 @@ const [expandirHuespedes, setExpandirHuespedes] = useState<Record<string, boolea
   const router = useRouter();
 const [filtroNumeroEstadia, setFiltroNumeroEstadia] = useState('');
 const [filtroNombreHabitacion, setFiltroNombreHabitacion] = useState('');
+const sectionTitleStyle = {
+  fontWeight: 'bold',
+  textDecoration: 'underline',
+  marginTop: '20px',
+  marginBottom: '6px',
+} as const
 
-const descargarPlanilla = async (estadiaId: string, nroEstadia: number) => {
-  const res = await fetch(`/api/planilla?id=${estadiaId}`)
-  const blob = await res.blob()
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `planilla_estadia_${nroEstadia}.pdf` // 👈 acá está el cambio
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+const itemStyle = {
+  margin: '2px 0',
+  borderBottom: '1px solid #000',
+  paddingBottom: '2px',
+} as const
+
+const paragraphStyle = {
+  fontSize: '10pt',
+  marginBottom: '6px',
+} as const
+
+const planillaRef = useRef<HTMLDivElement>(null)
+const ITEMS_POR_PAGINA = 10;
+const calcularNoches = (ingreso: string, egreso: string) => {
+  const fechaIngreso = new Date(ingreso)
+  const fechaEgreso = new Date(egreso)
+  const diff = Math.ceil((fechaEgreso.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24))
+  return diff > 0 ? diff : 0
 }
-
   useEffect(() => {
     const fetchData = async () => {
       const resEstadias = await fetch('/api/estadias');
@@ -76,7 +90,21 @@ useEffect(() => {
   };
   fetchHuespedes();
 }, []);
+const generarPlanillaPDF = async (estadiaId: string, nroEstadia: number) => {
+  const res = await fetch(`/api/planilla?id=${estadiaId}`)
+  const data = await res.json()
+  setPlanillaData(data)
 
+  setTimeout(async () => {
+    if (!planillaRef.current) return
+    const canvas = await html2canvas(planillaRef.current)
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    pdf.addImage(imgData, 'PNG', 10, 10, 190, 0)
+    pdf.save(`planilla_estadia_${nroEstadia}.pdf`)
+    setPlanillaData(null) // limpiar para la próxima
+  }, 300) // espera que renderice el DOM
+}
 const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.estadia_id === id);
   const estadiasFiltradas = estadias.filter((e) => {
     const coincideEstado = filtroEstado ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase() : true;
@@ -108,6 +136,10 @@ const coincideNombreHabitacion = filtroNombreHabitacion
       : true;
 
     const soloUnoActivo = !(filtroIngresoDesde || filtroIngresoHasta) || !(filtroEgresoDesde || filtroEgresoHasta);
+// ⚠️ DIV oculto donde se va a renderizar la planilla para capturar
+
+
+
 
 return coincideEstado && coincideCliente && coincideNombreCliente && coincideNumeroEstadia && coincideNombreHabitacion && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
  });
@@ -382,13 +414,14 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
     {expandirPagos[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
   </button>
 
-  <button
-    onClick={() => window.open(`/api/planilla?id=${e.id}`, '_blank')}
-    title="Descargar planilla"
-    className="w-9 h-9 flex items-center justify-center rounded bg-green-600 hover:bg-green-700 text-white"
-  >
-    <Download size={16} />
-  </button>
+<button
+  onClick={() => generarPlanillaPDF(e.id, e.nro_estadia)}
+  title="Descargar planilla"
+  className="w-9 h-9 flex items-center justify-center rounded bg-green-600 hover:bg-green-700 text-white"
+>
+  <Download size={16} />
+</button>
+
 
   {['reservado', 'pagado'].includes(e.estado_nombre?.toLowerCase()) && (
     <>
@@ -474,6 +507,79 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
           ))}
         </div>
       )}
+      {planillaData && (
+  <div
+    ref={planillaRef}
+    style={{
+      position: 'absolute',
+      top: '-9999px',
+      left: '-9999px',
+      width: '800px',
+      padding: '30px',
+      backgroundColor: 'white',
+      color: 'black',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '11pt',
+      lineHeight: '1.4',
+    }}
+  >
+    {/* Header con logo y datos de la estadía */}
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <img src="/logo.png" alt="logo" style={{ height: '80px' }} />
+      <div style={{ width: '60%', fontSize: '10.5pt' }}>
+        <div style={itemStyle}><strong>Habitación Nº:</strong> {planillaData.unidad?.nombre}</div>
+        <div style={itemStyle}><strong>Tipo:</strong> {planillaData.tipo_habitacion?.nombre}</div>
+        <div style={itemStyle}><strong>Check in:</strong> {planillaData.estadia.fecha_ingreso}</div>
+        <div style={itemStyle}><strong>Check out:</strong> {planillaData.estadia.fecha_egreso}</div>
+      </div>
+    </div>
+
+    {/* Datos del cliente */}
+    <div style={sectionTitleStyle}>DATOS DEL TITULAR</div>
+    <div style={itemStyle}><strong>Nombre y apellido:</strong> {planillaData.cliente?.nombre_completo}</div>
+    <div style={itemStyle}><strong>Teléfono:</strong> {planillaData.cliente?.telefono} &nbsp;&nbsp;&nbsp; <strong>DNI:</strong> {planillaData.cliente?.dni}</div>
+    <div style={itemStyle}><strong>Localidad:</strong> {planillaData.cliente?.localidad} &nbsp;&nbsp;&nbsp; <strong>E-mail:</strong> {planillaData.cliente?.email}</div>
+    <div style={itemStyle}><strong>Dirección:</strong></div>
+    <div style={itemStyle}><strong>Provincia:</strong> {planillaData.cliente?.provincia} &nbsp;&nbsp;&nbsp; <strong>Fecha de nacimiento:</strong></div>
+    <div style={itemStyle}><strong>Nacionalidad:</strong> Argentina</div>
+    <div style={itemStyle}><strong>Patente/marca/modelo/color:</strong> {planillaData.vehiculo ? `${planillaData.vehiculo.patente} / ${planillaData.vehiculo.marca} / ${planillaData.vehiculo.modelo} / ${planillaData.vehiculo.color}` : ''}</div>
+    <div style={itemStyle}><strong>Dietas:</strong></div>
+
+    {/* Acompañantes */}
+    <div style={sectionTitleStyle}>ACOMPAÑANTES</div>
+    {planillaData.huespedes.length > 0 ? (
+      planillaData.huespedes.map((a: any, i: number) => (
+        <div key={i} style={itemStyle}>{a.nombre_completo} - DNI: {a.dni}</div>
+      ))
+    ) : (
+      <div style={itemStyle}>—</div>
+    )}
+
+    {/* Condiciones */}
+    <div style={sectionTitleStyle}>CONDICIONES</div>
+    <p style={paragraphStyle}>
+      El huésped declara haber recibido y aceptado las políticas generales de “Central Suites” al momento del ingreso. El horario de check-in es a partir de las 14 hs y el horario de check-out es hasta las 10 hs, siendo fundamental respetar estos plazos para garantizar el buen funcionamiento del servicio. El ingreso de personas no registradas en el establecimiento está estrictamente prohibido por razones de seguridad y control, de lo contrario el valor de la ocupación será cargado a la cuenta del cliente. Asimismo, está terminantemente prohibido fumar en las habitaciones y en las áreas comunes cerradas. No se permiten mascotas o cualquier otro animal en el interior del hotel.
+    </p>
+    <p style={paragraphStyle}>
+      El huésped será responsable de cualquier daño, rotura o pérdida ocasionada en la habitación, el mobiliario o los elementos provistos durante su estadía, debiendo abonar el costo correspondiente en caso de ser necesario. “Central Suites” no se hace responsable por objetos personales o de valor no declarados y guardados en recepción.
+    </p>
+    <p style={paragraphStyle}>
+      Los pedidos de early check-in o late check-out podrán ser considerados según disponibilidad, estos servicios tienen un costo adicional, y se podrán efectuar siempre que se realicen con previo aviso y hayan sido autorizados por administración.
+    </p>
+    <p style={paragraphStyle}>
+      El pago total de la estadía deberá efectuarse al momento del ingreso, sin excepción. En caso de retiro anticipado, no se realizará devolución por las noches no utilizadas. No se permiten ruidos molestos, con el fin de preservar el descanso de todos los huéspedes.
+    </p>
+
+    {/* Firma */}
+    <div style={{ marginTop: '40px' }}>
+      FIRMA: ________________________________________________________________
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 }
+
+
