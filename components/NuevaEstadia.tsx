@@ -21,10 +21,18 @@ export default function RegistrarEstadia() {
   const [estados, setEstados] = useState<any[]>([])
   const [mensaje, setMensaje] = useState('')
   const [mostrarModal, setMostrarModal] = useState(false)
-  const [nuevoCliente, setNuevoCliente] = useState({ dni: '', nombre_completo: '', email: '', telefono: '' })
-  const [cantidadNoches, setCantidadNoches] = useState<number>(0)
+ const [nuevoCliente, setNuevoCliente] = useState({
+  dni: '',
+  nombre_completo: '',
+  email: '',
+  telefono: '',
+  localidad: '',
+  pais: '',
+  provincia: '',
+})
+ const [cantidadNoches, setCantidadNoches] = useState<number>(0)
 const [tiposHabitacion, setTiposHabitacion] = useState<any[]>([])
-
+  const [paises, setPaises] = useState<string[]>([])
   const [estadia, setEstadia] = useState({
     cantidadPersonas: '', fechaIngreso: '', fechaEgreso: '', cochera: false,
     desayuno: false, pension_media: false, pension_completa: false, ropaBlanca: false,all_inclusive: false,
@@ -32,8 +40,33 @@ const [tiposHabitacion, setTiposHabitacion] = useState<any[]>([])
     estado: '', habitacionId: '', observaciones: '', canalId: '', estadoId: '',tipoHabitacionId: '',
 
   })
+const provinciasAR = [
+  'Buenos Aires','Ciudad Autónoma de Buenos Aires','Catamarca','Chaco',
+  'Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy',
+  'La Pampa','La Rioja','Mendoza','Misiones','Neuquén',
+  'Río Negro','Salta','San Juan','San Luis','Santa Cruz',
+  'Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'
+]
+
+ useEffect(() => {
+  fetch('https://restcountries.com/v3.1/all?fields=name')
+    .then(res => res.json())
+    .then((data: any[]) => {
+      const list = data.map((c: any) => c.name.common).sort()
+      setPaises(list)
+    })
+    .catch(err => console.error('Error al cargar países:', err))
+}, [])
 
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  setNuevoCliente(prev => ({
+    ...prev,
+    [name]: value,
+    ...(name === 'pais' && value !== 'Argentina' ? { provincia: '' } : {}),
+  }));
+};
 
   useEffect(() => {
     const habitacion_id = searchParams.get('habitacion_id')
@@ -599,21 +632,91 @@ await fetch('/api/enviar-confirmacion', {
         {mensaje && <p className="mt-4 text-center text-red-600">{mensaje}</p>}
       </div>
 
-      {mostrarModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-[#DCD7C9] p-6 rounded-lg w-full max-w-md text-[#2C3639]">
-            <h2 className="text-xl font-bold mb-4">Registrar nuevo cliente</h2>
-            <input type="text" placeholder="DNI" value={nuevoCliente.dni} onChange={(e) => setNuevoCliente({ ...nuevoCliente, dni: e.target.value })} className="w-full p-2 mb-2 border border-[#A27B5B] rounded" />
-            <input type="text" placeholder="Nombre completo" value={nuevoCliente.nombre_completo} onChange={(e) => setNuevoCliente({ ...nuevoCliente, nombre_completo: e.target.value })} className="w-full p-2 mb-2 border border-[#A27B5B] rounded" />
-            <input type="email" placeholder="Email" value={nuevoCliente.email} onChange={(e) => setNuevoCliente({ ...nuevoCliente, email: e.target.value })} className="w-full p-2 mb-2 border border-[#A27B5B] rounded" />
-            <input type="tel" placeholder="Teléfono" value={nuevoCliente.telefono} onChange={(e) => setNuevoCliente({ ...nuevoCliente, telefono: e.target.value })} className="w-full p-2 mb-4 border border-[#A27B5B] rounded" />
-            <div className="flex justify-between">
-              <button onClick={registrarNuevoCliente} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Guardar</button>
-              <button onClick={() => setMostrarModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancelar</button>
-            </div>
-          </div>
-        </div>
-      )}
+{mostrarModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-[#DCD7C9] p-6 rounded-lg w-full max-w-md text-[#2C3639]">
+      <h2 className="text-xl font-bold mb-4">Registrar nuevo cliente</h2>
+      <div className="grid gap-2">
+        <input
+          name="dni"
+          placeholder="DNI"
+          value={nuevoCliente.dni}
+          onChange={handleChange}
+          className="w-full p-2 border border-[#A27B5B] rounded"
+        />
+        <input
+          name="nombre_completo"
+          placeholder="Nombre completo"
+          value={nuevoCliente.nombre_completo}
+          onChange={handleChange}
+          className="w-full p-2 border border-[#A27B5B] rounded"
+        />
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          value={nuevoCliente.email}
+          onChange={handleChange}
+          className="w-full p-2 border border-[#A27B5B] rounded"
+        />
+        <input
+          name="telefono"
+          type="tel"
+          placeholder="Teléfono"
+          value={nuevoCliente.telefono}
+          onChange={handleChange}
+          className="w-full p-2 border border-[#A27B5B] rounded"
+        />
+        <input
+          name="localidad"
+          placeholder="Localidad"
+          value={nuevoCliente.localidad}
+          onChange={handleChange}
+          className="w-full p-2 border border-[#A27B5B] rounded"
+        />
+        <select
+          name="pais"
+          value={nuevoCliente.pais}
+          onChange={handleChange}
+          className="w-full p-2 border border-[#A27B5B] rounded"
+        >
+          <option value="">Seleccione país</option>
+          {paises.map(p => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+        {nuevoCliente.pais === 'Argentina' && (
+          <select
+            name="provincia"
+            value={nuevoCliente.provincia}
+            onChange={handleChange}
+            className="w-full p-2 border border-[#A27B5B] rounded"
+          >
+            <option value="">Provincia</option>
+            {provinciasAR.map(prov => (
+              <option key={prov} value={prov}>{prov}</option>
+            ))}
+          </select>
+        )}
+      </div>
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={registrarNuevoCliente}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          Guardar
+        </button>
+        <button
+          onClick={() => setMostrarModal(false)}
+          className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       <div ref={reciboRef} style={{ display: 'none', padding: '24px', fontSize: '14px', color: '#000' }}>
         <h2 style={{ textAlign: 'center', fontSize: '20px', marginBottom: '16px' }}>Comprobante de Reserva</h2>

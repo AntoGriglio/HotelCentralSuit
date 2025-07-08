@@ -171,3 +171,13 @@ export const huesped = pgTable('huesped', {
   dni_frente: varchar('dni_frente', { length: 255 }),
   dni_dorso: varchar('dni_dorso', { length: 255 }),
 });
+export const vehiculo = pgTable('vehiculo', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  estadia_id: uuid('estadia_id').notNull().references(() => estadia.id),
+  patente: varchar('patente', { length: 255 }),
+  color: varchar('color', { length: 255 }),
+  marca: varchar('marca', { length: 255 }),
+  modelo: varchar('modelo', { length: 255 }),
+  cochera_nro: varchar('cochera_nro', { length: 255 }),
+  creado_en: timestamp('creado_en').defaultNow(),
+})

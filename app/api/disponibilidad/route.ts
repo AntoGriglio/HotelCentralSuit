@@ -31,12 +31,13 @@ export async function GET(request: Request) {
   const subquery = db
     .select({ habitacion_id: estadia.habitacion_id })
     .from(estadia)
-    .where(
-      and(
-        lt(estadia.fecha_ingreso, fechaEgreso),
-        gt(estadia.fecha_egreso, fechaIngreso)
-      )
-    );
+   .where(
+  and(
+    lt(estadia.fecha_ingreso, fechaEgreso),
+    gt(estadia.fecha_egreso, fechaIngreso) // esta línea está OK
+  )
+)
+
 
   const condiciones: any[] = [
     eq(tipo_unidad_habitacional.descripcion, 'Alquilable'),
@@ -99,7 +100,5 @@ const resultadosConTotal = disponibles
       tipo_id: res.unidad_habitacional.tipo_habitacion_id, 
     };
   });
-
-console.log('holaa'+resultadosConTotal)
   return Response.json(resultadosConTotal);
 }

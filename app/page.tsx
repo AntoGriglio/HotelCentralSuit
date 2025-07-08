@@ -145,7 +145,7 @@ const abrirCarrusel = (carpeta: string) => {
     onClick={() =>
       document.getElementById('formulario')?.scrollIntoView({ behavior: 'smooth' })
     }
-    className="bg-[#d9d9d9] text-white px-6 py-3 rounded-lg hover:bg-[#8e664e]"
+    className="bg-[#00242F] text-white px-6 py-3 rounded-lg hover:bg-[#8e664e]"
   >
     Reservá tu lugar
   </button>
@@ -236,7 +236,7 @@ const abrirCarrusel = (carpeta: string) => {
         <h3 className="text-2xl font-semibold mb-4">¿Dónde estamos?</h3>
         <p className="mb-4">Av. Libertad 21, Villa Carlos Paz, Córdoba, Argentina</p>
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d212.79412304086387!2d-64.4949173927307!3d-31.42222620741587!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x942d6644500c6ad3%3A0xe9313a402e35f83c!2sDomus%20Center%20Hotel!5e0!3m2!1ses!2sar!4v1750684396467!5m2!1ses!2sar"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d506.11294062904807!2d-64.4946122329637!3d-31.422157584949815!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x942d67c0c2f977e7%3A0xeb5aae61be03c5a2!2sCentral%20Suites%20Hotel!5e0!3m2!1ses!2sar!4v1751755615622!5m2!1ses!2sar"
           width="100%"
           height="300"
           className="rounded-lg mx-auto max-w-4xl"

@@ -30,6 +30,7 @@ export default function ListaEstadias() {
   const [pagos, setPagos] = useState<any[]>([]);
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroCliente, setFiltroCliente] = useState('');
+  const [filtroNombreCliente, setFiltroNombreCliente] = useState('');
   const [filtroIngresoDesde, setFiltroIngresoDesde] = useState('');
   const [filtroIngresoHasta, setFiltroIngresoHasta] = useState('');
   const [filtroEgresoDesde, setFiltroEgresoDesde] = useState('');
@@ -42,6 +43,18 @@ const [expandirHuespedes, setExpandirHuespedes] = useState<Record<string, boolea
   const router = useRouter();
 const [filtroNumeroEstadia, setFiltroNumeroEstadia] = useState('');
 const [filtroNombreHabitacion, setFiltroNombreHabitacion] = useState('');
+
+const descargarPlanilla = async (estadiaId: string, nroEstadia: number) => {
+  const res = await fetch(`/api/planilla?id=${estadiaId}`)
+  const blob = await res.blob()
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `planilla_estadia_${nroEstadia}.pdf` // 👈 acá está el cambio
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,7 +80,15 @@ useEffect(() => {
 const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.estadia_id === id);
   const estadiasFiltradas = estadias.filter((e) => {
     const coincideEstado = filtroEstado ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase() : true;
-    const coincideCliente = filtroCliente ? e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) : true;
+    const coincideCliente = filtroCliente
+  ? (e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) ||
+     e.cliente_nombre?.toLowerCase().includes(filtroCliente.toLowerCase()))
+  : true;
+
+const coincideNombreCliente = filtroNombreCliente
+  ? e.cliente_nombre?.toLowerCase().includes(filtroNombreCliente.toLowerCase())
+  : true;
+
 const coincideNumeroEstadia = filtroNumeroEstadia
   ? e.nro_estadia?.toString().includes(filtroNumeroEstadia)
   : true;
@@ -88,7 +109,7 @@ const coincideNombreHabitacion = filtroNombreHabitacion
 
     const soloUnoActivo = !(filtroIngresoDesde || filtroIngresoHasta) || !(filtroEgresoDesde || filtroEgresoHasta);
 
-return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNombreHabitacion && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
+return coincideEstado && coincideCliente && coincideNombreCliente && coincideNumeroEstadia && coincideNombreHabitacion && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
  });
 
   const totalPaginas = Math.ceil(estadiasFiltradas.length / ITEMS_POR_PAGINA);
@@ -165,49 +186,116 @@ return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNom
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 text-[#2C3639]">
-        <input type="text" placeholder="DNI" value={filtroCliente} onChange={(e) => setFiltroCliente(e.target.value)} className="p-2 border rounded" />
-<input
-  type="text"
-  placeholder="N° Estadía"
-  className="p-2 border rounded w-full max-w-[120px]"
-  value={filtroNumeroEstadia}
-  onChange={(e) => setFiltroNumeroEstadia(e.target.value)}
-/>
-<input
-  type="text"
-  placeholder="Habitación"
-  className="p-2 border rounded w-full max-w-[120px]"
-  value={filtroNombreHabitacion}
-  onChange={(e) => setFiltroNombreHabitacion(e.target.value)}
-/>
+   <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4 text-[#2C3639]">
+  {/* Fila 1 */}
+  <input
+    type="text"
+    placeholder="DNI"
+    value={filtroCliente}
+    onChange={(e) => setFiltroCliente(e.target.value)}
+    className="p-2 border rounded"
+  />
+  <input
+    type="text"
+    placeholder="Nombre cliente"
+    value={filtroNombreCliente}
+    onChange={(e) => setFiltroNombreCliente(e.target.value)}
+    className="p-2 border rounded"
+  />
+  <input
+    type="text"
+    placeholder="N° Estadía"
+    className="p-2 border rounded"
+    value={filtroNumeroEstadia}
+    onChange={(e) => setFiltroNumeroEstadia(e.target.value)}
+  />
+  <input
+    type="text"
+    placeholder="Habitación"
+    className="p-2 border rounded"
+    value={filtroNombreHabitacion}
+    onChange={(e) => setFiltroNombreHabitacion(e.target.value)}
+  />
+  <select
+    value={filtroEstado}
+    onChange={(e) => setFiltroEstado(e.target.value)}
+    className="p-2 border rounded"
+  >
+    <option value="">Todos los estados</option>
+    {Object.keys(coloresEstado).map((estado) => (
+      <option key={estado} value={estado}>{estado}</option>
+    ))}
+  </select>
+  <button
+    onClick={limpiarFiltros}
+    className="bg-[#DCD7C9] px-4 py-2 rounded hover:bg-[#c9c4b7]"
+  >
+    Limpiar
+  </button>
+</div>
 
+{/* Fila 2: Fechas en una nueva línea */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <div>
+    <label className="block text-sm mb-1">Ingreso</label>
+    <div className="flex gap-2">
+      <input
+        type="date"
+        value={filtroIngresoDesde}
+        onChange={(e) => {
+          setFiltroIngresoDesde(e.target.value);
+          setFiltroEgresoDesde('');
+          setFiltroEgresoHasta('');
+        }}
+        className="p-2 border rounded w-full"
+        placeholder="Ingreso desde"
+        title="Ingreso desde"
+      />
+      <input
+        type="date"
+        value={filtroIngresoHasta}
+        onChange={(e) => {
+          setFiltroIngresoHasta(e.target.value);
+          setFiltroEgresoDesde('');
+          setFiltroEgresoHasta('');
+        }}
+        className="p-2 border rounded w-full"
+        placeholder="Ingreso hasta"
+        title="Ingreso hasta"
+      />
+    </div>
+  </div>
 
-
-        <div className="col-span-2">
-          <label className="block text-sm mb-1">Ingreso</label>
-          <div className="flex gap-2">
-            <input type="date" value={filtroIngresoDesde} onChange={(e) => { setFiltroIngresoDesde(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso desde" title="Ingreso desde" />
-            <input type="date" value={filtroIngresoHasta} onChange={(e) => { setFiltroIngresoHasta(e.target.value); setFiltroEgresoDesde(''); setFiltroEgresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Ingreso hasta" title="Ingreso hasta" />
-          </div>
-        </div>
-
-        <div className="col-span-2">
-          <label className="block text-sm  mb-1">Egreso</label>
-          <div className="flex gap-2">
-            <input type="date" value={filtroEgresoDesde} onChange={(e) => { setFiltroEgresoDesde(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso desde" title="Egreso desde" />
-            <input type="date" value={filtroEgresoHasta} onChange={(e) => { setFiltroEgresoHasta(e.target.value); setFiltroIngresoDesde(''); setFiltroIngresoHasta(''); }} className="p-2 border rounded w-full" placeholder="Egreso hasta" title="Egreso hasta" />
-          </div>
-        </div>
-
-        <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="p-2 border rounded">
-          <option value="">Todos los estados</option>
-          {Object.keys(coloresEstado).map((estado) => (
-            <option key={estado} value={estado}>{estado}</option>
-          ))}
-        </select>
-        <button onClick={limpiarFiltros} className="bg-[#DCD7C9] px-4 py-2 rounded hover:bg-[#c9c4b7]">Limpiar</button>
-      </div>
+  <div>
+    <label className="block text-sm mb-1">Egreso</label>
+    <div className="flex gap-2">
+      <input
+        type="date"
+        value={filtroEgresoDesde}
+        onChange={(e) => {
+          setFiltroEgresoDesde(e.target.value);
+          setFiltroIngresoDesde('');
+          setFiltroIngresoHasta('');
+        }}
+        className="p-2 border rounded w-full"
+        placeholder="Egreso desde"
+        title="Egreso desde"
+      />
+      <input
+        type="date"
+        value={filtroEgresoHasta}
+        onChange={(e) => {
+          setFiltroEgresoHasta(e.target.value);
+          setFiltroIngresoDesde('');
+          setFiltroIngresoHasta('');
+        }}
+        className="p-2 border rounded w-full"
+        placeholder="Egreso hasta"
+        title="Egreso hasta"
+      />
+    </div>
+  </div>
+</div>
 
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm text-left">
@@ -234,7 +322,8 @@ return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNom
   {new Date(e.fecha_creacion).toISOString().slice(0, 10)}
 </td>
 
-                <td className="px-4 py-2">{e.cliente_dni ?? '—'}</td>
+                <td className="px-4 py-2">{e.cliente_nombre}, DNI:{e.cliente_dni ?? '—'}</td>
+
                 <td className="px-4 py-2">{e.habitacion_nombre}</td>
                 <td className="px-4 py-2">{e.fecha_ingreso}</td>
                 <td className="px-4 py-2">{e.fecha_egreso}</td>
@@ -254,42 +343,81 @@ return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNom
                 </td>
                 <td className="px-4 py-2">
                   <div className="flex gap-2 flex-wrap">
-                    {['pendiente', 'reservado'].includes(e.estado_nombre?.toLowerCase()) && (
-  <button onClick={() => router.push(`/pagos?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)} title="Agregar pago" className="bg-[#3F4E4F] text-white p-2 rounded hover:bg-[#2C3639]">
-    <DollarSign size={16} />
-  </button>
-)}
+     
+  {['pendiente', 'reservado'].includes(e.estado_nombre?.toLowerCase()) && (
+    <>
+      <button
+        onClick={() => router.push(`/pagos?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)}
+        title="Agregar pago"
+        className="w-9 h-9 flex items-center justify-center rounded bg-[#3F4E4F] hover:bg-[#2C3639] text-white"
+      >
+        <DollarSign size={16} />
+      </button>
+    </>
+  )}
 
-                    <button onClick={() => router.push(`/estadias/editar?id=${e.id}`)} title="Modificar" className="bg-[#A27B5B] text-white p-2 rounded hover:bg-[#8b6244]">
-                      <Pencil size={16} />
-                    </button>
-                    {(e.estado_nombre?.toLowerCase() === 'sin confirmar' || e.estado_nombre?.toLowerCase() === 'pendiente') && (
-                      <button onClick={() => eliminarEstadia(e.id)} title="Eliminar" className="bg-red-600 text-white p-2 rounded hover:bg-red-700">
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                    <button onClick={() => setExpandirPagos((prev) => ({ ...prev, [e.id]: !prev[e.id] }))} title="Ver pagos" className="bg-[#DCD7C9] text-[#2C3639] p-2 rounded hover:bg-[#c9c4b7]">
-                      {expandirPagos[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </button>
-                  </div>
-                  {['reservado', 'pagado'].includes(e.estado_nombre?.toLowerCase()) && (
-  <>
+  <button
+    onClick={() => router.push(`/estadias/editar?id=${e.id}`)}
+    title="Modificar"
+    className="w-9 h-9 flex items-center justify-center rounded bg-[#A27B5B] hover:bg-[#8b6244] text-white"
+  >
+    <Pencil size={16} />
+  </button>
+
+  {(e.estado_nombre?.toLowerCase() === 'sin confirmar' || e.estado_nombre?.toLowerCase() === 'pendiente') && (
     <button
-      onClick={() => router.push(`/huesped/nuevo?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)}
-      title="Agregar huéspedes"
-      className="bg-[#4B5563] text-white p-2 rounded hover:bg-[#374151]"
+      onClick={() => eliminarEstadia(e.id)}
+      title="Eliminar"
+      className="w-9 h-9 flex items-center justify-center rounded bg-red-600 hover:bg-red-700 text-white"
     >
-      <Users size={16} />
+      <Trash2 size={16} />
     </button>
-    <button
-      onClick={() => setExpandirHuespedes((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
-      title="Ver huéspedes"
-      className="bg-[#E5E7EB] text-[#1F2937] p-2 rounded hover:bg-[#D1D5DB]"
-    >
-      {expandirHuespedes[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-    </button>
-  </>
-)}
+  )}
+
+  <button
+    onClick={() => setExpandirPagos((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
+    title="Ver pagos"
+    className="w-9 h-9 flex items-center justify-center rounded bg-[#DCD7C9] hover:bg-[#c9c4b7] text-[#2C3639]"
+  >
+    {expandirPagos[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+  </button>
+
+  <button
+    onClick={() => window.open(`/api/planilla?id=${e.id}`, '_blank')}
+    title="Descargar planilla"
+    className="w-9 h-9 flex items-center justify-center rounded bg-green-600 hover:bg-green-700 text-white"
+  >
+    <Download size={16} />
+  </button>
+
+  {['reservado', 'pagado'].includes(e.estado_nombre?.toLowerCase()) && (
+    <>
+      <button
+        onClick={() => router.push(`/huesped/nuevo?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)}
+        title="Agregar huéspedes"
+        className="w-9 h-9 flex items-center justify-center rounded bg-[#4B5563] hover:bg-[#374151] text-white"
+      >
+        <Users size={16} />
+      </button>
+
+      <button
+        onClick={() => setExpandirHuespedes((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
+        title="Ver huéspedes"
+        className="w-9 h-9 flex items-center justify-center rounded bg-[#E5E7EB] hover:bg-[#D1D5DB] text-[#1F2937]"
+      >
+        {expandirHuespedes[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+
+      <button
+        onClick={() => router.push(`/vehiculo/nuevo?estadia_id=${e.id}&nro_estadia=${e.nro_estadia}`)}
+        title="Ingresar vehículo"
+        className="w-9 h-9 flex items-center justify-center rounded bg-[#A27B5B] hover:bg-[#8b6244] text-white"
+      >
+        🚗
+      </button>
+    </>
+  )}
+</div>
 {expandirHuespedes[e.id] && (
   <div className="mt-2 text-sm text-[#2C3639] bg-[#f3f4f6] rounded p-2">
     <strong>Huéspedes:</strong>
@@ -324,6 +452,7 @@ return coincideEstado && coincideCliente && coincideNumeroEstadia && coincideNom
         <Download size={18} />
       </a>
     )}
+    
   </li>
 ))}
 

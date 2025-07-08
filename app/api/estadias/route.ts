@@ -1,16 +1,14 @@
-// ✅ BACKEND MODIFICADO PARA SALDO PENDIENTE EN /api/estadias
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { estadia, estado_estadia, unidad_habitacional, pago } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { estadia, estado_estadia, unidad_habitacional, pago, cliente } from '@/db/schema';
+import { eq, desc } from 'drizzle-orm';
 import { esTransicionValida } from '@/lib/estadiaEstados';
 import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
-import { desc } from 'drizzle-orm';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
-console.log('id',id)
+
   try {
     if (id) {
       const result = await db.select().from(estadia).where(eq(estadia.id, id)).limit(1);
@@ -23,6 +21,7 @@ console.log('id',id)
         .select({
           id: estadia.id,
           cliente_dni: estadia.cliente_dni,
+          cliente_nombre: cliente.nombre_completo, // ✅ Nuevo campo
           habitacion_id: estadia.habitacion_id,
           cantidad_personas: estadia.cantidad_personas,
           fecha_ingreso: estadia.fecha_ingreso,
@@ -49,12 +48,17 @@ console.log('id',id)
         .from(estadia)
         .orderBy(desc(estadia.fecha_creacion))
         .leftJoin(estado_estadia, eq(estadia.estado_id, estado_estadia.id))
-        .leftJoin(unidad_habitacional, eq(estadia.habitacion_id, unidad_habitacional.id));
+        .leftJoin(unidad_habitacional, eq(estadia.habitacion_id, unidad_habitacional.id))
+        .leftJoin(cliente, eq(estadia.cliente_dni, cliente.dni)); // ✅ Unión con cliente
 
       const dataConSaldo = await Promise.all(
         data.map(async (e) => {
-          const pagosEstadia = await db.select({ monto: pago.monto }).from(pago).where(eq(pago.estadia_id, e.id));
+          const pagosEstadia = await db
+            .select({ monto: pago.monto })
+            .from(pago)
+            .where(eq(pago.estadia_id, e.id));
           const totalPagado = pagosEstadia.reduce((sum, p) => sum + Number(p.monto), 0);
+
           return {
             ...e,
             saldo_pendiente: Math.max((e.total || 0) - totalPagado, 0),
@@ -69,6 +73,7 @@ console.log('id',id)
     return NextResponse.json({ error: 'Error al obtener estadía(s)' }, { status: 500 });
   }
 }
+
 export async function POST(req: NextRequest) {
   const data = await req.json();
   try {
