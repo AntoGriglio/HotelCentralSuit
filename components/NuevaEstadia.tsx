@@ -307,9 +307,10 @@ const reciboHTML = `
     </div>
     <div style="margin-top: 1.5rem; border-top: 1px dashed #999; padding-top: 1rem;">
   <p style="font-weight: bold; font-size: 16px; margin-bottom: 0.5rem;">Cuenta para transferir reserva:</p>
-  <p><strong>Cta:</strong> 2648/0 - Banco Roela</p>
-  <p><strong>CBU:</strong> 2470005610000000264801</p>
-  <p><strong>Empresa:</strong> IDLG SA</p>
+  <p><strong>Cta:</strong>Alejandro Javier Griglio</p>
+  <p><strong>CVU:</strong>0000003100032742714987</p>
+  <p><strong>Alias:</strong>ALEJANDRO.J.GRIGLIO</p>
+  <p><strong>Empresa:</strong> Mercado Pago</p>
 </div>
 
   </div>
