@@ -117,13 +117,18 @@ export default function Consulta() {
 
     console.log(payload)
 
-    await fetch('/api/estadias', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    const res = await fetch('/api/estadias', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload),
+});
 
-    const texto = `Hola! Soy ${form.nombre}, consulto por disponibilidad:
+const nuevaEstadia = await res.json();
+const nroEstadia = nuevaEstadia?.nro_estadia ?? 'sin número';
+
+
+  const texto = `Hola! Soy ${form.nombre}, consulto por disponibilidad:
+- Nro. de Estadía: ${nroEstadia}
 - Tipo de habitación: ${h.tipo_habitacion_nombre}
 - Ingreso: ${form.fechaIngreso}
 - Egreso: ${form.fechaEgreso}
@@ -131,6 +136,7 @@ export default function Consulta() {
 - Estimado: ${formatearMoneda(totalEstadia)}
 - Señal (30%): ${formatearMoneda(montoReserva)}
 `
+
 
     window.open(`https://wa.me/5493541774444?text=${encodeURIComponent(texto)}`, '_blank')
     setShowModal(false)

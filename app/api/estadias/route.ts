@@ -73,14 +73,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Error al obtener estadía(s)' }, { status: 500 });
   }
 }
-
 export async function POST(req: NextRequest) {
   const data = await req.json();
   try {
-    await db.insert(estadia).values({
+    const result = await db.insert(estadia).values({
       cliente_dni: data.cliente_dni,
       habitacion_id: data.habitacion_id,
-      tipo_habitacion_id: data.tipo_habitacion_id, // 👈 agregado
+      tipo_habitacion_id: data.tipo_habitacion_id,
       cantidad_personas: Number(data.cantidad_personas),
       fecha_ingreso: data.fecha_ingreso,
       fecha_egreso: data.fecha_egreso,
@@ -97,9 +96,9 @@ export async function POST(req: NextRequest) {
       estado_id: data.estado_id,
       canal_id: data.canal_id,
       observaciones: data.observaciones || '',
-    });
+    }).returning({ id: estadia.id, nro_estadia: estadia.nro_estadia });
 
-    return NextResponse.json({ message: 'Estadía registrada' });
+    return NextResponse.json(result[0]); // 👈 Devolvemos la estadía insertada
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Error al registrar estadía' }, { status: 500 });

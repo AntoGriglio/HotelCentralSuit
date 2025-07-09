@@ -25,12 +25,12 @@ const IMAGENES_POR_TIPO: Record<string, string[]> = {
   ],
   'Apart-Sup': [
     '/Apart-Sup/apartsup-1.png',
-    '/Apart-Sup/apartsup-2.png',
-    '/Apart-Sup/apartsup-3.png',
+    '/Apart-Sup/apartsup-2.PNG',
+    '/Apart-Sup/apartsup-3.PNG',
     '/Apart-Sup/apartsup-4.jpg',
-    '/Apart-Sup/apartsup-5.png',
-    '/Apart-Sup/apartsup-6.png',
-    '/Apart-Sup/apartsup-7.png',
+    '/Apart-Sup/apartsup-5.PNG',
+    '/Apart-Sup/apartsup-6.PNG',
+    '/Apart-Sup/apartsup-7.PNG',
     '/Apart-Sup/apartsup-8.jpg',
     '/Apart-Sup/apartsup-9.jpg',
     '/Apart-Sup/apartsup-10.jpg',
@@ -153,9 +153,9 @@ const abrirCarrusel = (carpeta: string) => {
         <div className="flex gap-4 w-max">
           {[
             '/Apart-1D/apart1d-2.jpg',
-             '/Apart-Sup/apartsup-2.png',
+             '/Apart-Sup/apartsup-2.PNG',
            '/Apart-Sup/apartsup-4.jpg',
-            '/Apart-Sup/apartsup-5.png',
+            '/Apart-Sup/apartsup-5.PNG',
             '/Apart-Sup/apartsup-10.jpg',
             '/frente.png',
           ].map((src, index) => (
@@ -209,7 +209,7 @@ const abrirCarrusel = (carpeta: string) => {
           {[
             { nombre: 'Apart 1 dormitorio', img:     '/Apart-1D/apart1d-2.jpg', carpeta: 'Apart-1D' },
             { nombre: 'Apart 2 dormitorios', img: '/Apart-2D/apart2d-2.jpg', carpeta: 'Apart-2D' },
-            { nombre: 'Apart superior', img:     '/Apart-Sup/apartsup-2.png', carpeta: 'Apart-Sup' },
+            { nombre: 'Apart superior', img:     '/Apart-Sup/apartsup-2.PNG', carpeta: 'Apart-Sup' },
             { nombre: 'Habitación', img: '/Habitacion/hab-3.jpg', carpeta: 'Habitacion' },
           ].map((tipo, index) => (
             <div
