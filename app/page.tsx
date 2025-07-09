@@ -7,43 +7,38 @@ import { useState } from 'react'
 
 const IMAGENES_POR_TIPO: Record<string, string[]> = {
   'Apart-1D': [
-    '/Apart-1D/Apart-1D-1.jpg',
-    '/Apart-1D/Apart-1D-2.jpg',
-    '/Apart-1D/Apart-1D-3.jpg',
-    '/Apart-1D/Apart-1D-4.jpg',
-    '/Apart-1D/Apart-1D-5.jpg',
-    '/Apart-1D/Apart-1D-6.jpg',
-    '/Apart-1D/Apart-1D-7.jpg',
-    '/Apart-1D/Apart-1D-8.jpg',
-    '/Apart-1D/Apart-1D-9.jpg',
+    '/Apart-1D/apart1d-1.png',
+     '/Apart-1D/apart1d-2.jpg',
+      '/Apart-1D/apart1d-3.jpg',
+       '/Apart-1D/apart1d-4.jpg',
+        '/Apart-1D/apart1d-5.jpg',
+         '/Apart-1D/apart1d-6.jpg',
+          '/Apart-1D/apart1d-7.jpg',
   ],
   'Apart-2D': [
-    '/Apart-2D/Apart-2D-1.jpg',
-    '/Apart-2D/Apart-2D-2.jpg',
-    '/Apart-2D/Apart-2D-3.jpg',
-    '/Apart-2D/Apart-2D-4.jpg',
-    '/Apart-2D/Apart-2D-5.jpg',
-    '/Apart-2D/Apart-2D-6.jpg',
-    '/Apart-2D/Apart-2D-7.jpg',
+    '/Apart-2D/apart2d-1.png',
+    '/Apart-2D/apart2d-2.jpg',
+    '/Apart-2D/apart2d-3.jpg',
+    '/Apart-2D/apart2d-4.jpg',
+    '/Apart-2D/apart2d-5.jpg',
+    '/Apart-2D/apart2d-6.jpg',
   ],
   'Apart-Sup': [
-    '/Apart-Sup/Apart-Sup-1.jpg',
-    '/Apart-Sup/Apart-Sup-2.jpg',
-    '/Apart-Sup/Apart-Sup-3.PNG',
-    '/Apart-Sup/Apart-Sup-4.jpg',
-    '/Apart-Sup/Apart-Sup-5.PNG',
-    '/Apart-Sup/Apart-Sup-6.PNG',
-    '/Apart-Sup/Apart-Sup-7.PNG',
-    '/Apart-Sup/Apart-Sup-8.PNG',
-    '/Apart-Sup/Apart-Sup-9.jpg',
-    '/Apart-Sup/Apart-Sup-10.jpg',
-    '/Apart-Sup/Apart-Sup-11.PNG',
-    '/Apart-Sup/Apart-Sup-12.PNG',
-    '/Apart-Sup/Apart-Sup-13.PNG',
+    '/Apart-Sup/apartsup-1.png',
+    '/Apart-Sup/apartsup-2.png',
+    '/Apart-Sup/apartsup-3.png',
+    '/Apart-Sup/apartsup-4.jpg',
+    '/Apart-Sup/apartsup-5.png',
+    '/Apart-Sup/apartsup-6.png',
+    '/Apart-Sup/apartsup-7.png',
+    '/Apart-Sup/apartsup-8.jpg',
+    '/Apart-Sup/apartsup-9.jpg',
+    '/Apart-Sup/apartsup-10.jpg',
   ],
   'Habitacion': [
-    '/Habitacion/img1.jpg',
-    '/Habitacion/img2.jpg',
+    '/Habitacion/hab-1.png',
+    '/Habitacion/hab-2.jpg',
+    '/Habitacion/hab-3.jpg',
   ],
 }
 
@@ -66,7 +61,7 @@ const abrirCarrusel = (carpeta: string) => {
       {/* MODAL */}
   {modalAbierto && (
   <div className="fixed inset-0 z-50 bg-opacity-30 flex items-center justify-center px-4">
-    <div className="bg-white p-6 rounded-lg w-full max-w-4xl relative">
+    <div className="bg-white p-6 rounded-lg w-full max-w-4xl h-full relative">
       <button
         onClick={() => setModalAbierto(false)}
         className="absolute top-2 right-4 text-2xl text-gray-600 hover:text-black font-bold"
@@ -92,14 +87,16 @@ const abrirCarrusel = (carpeta: string) => {
         </button>
 
         {/* Imagen central */}
-        <div className="relative w-full h-[500px] rounded-lg overflow-hidden shadow-md">
-          <Image
-            src={imagenes[imagenActual]}
-            alt={`img-${imagenActual}`}
-            fill
-            className="object-cover"
-          />
-        </div>
+       {/* Imagen central */}
+<div className="relative w-full h-[800px] p-4 bg-white rounded-lg shadow-md">
+  <Image
+    src={imagenes[imagenActual]}
+    alt={`img-${imagenActual}`}
+    fill
+    className="object-contain"
+  />
+</div>
+
 
         {/* Flecha derecha */}
         <button
@@ -155,10 +152,12 @@ const abrirCarrusel = (carpeta: string) => {
       <section className="py-12 px-6 max-w-6xl mx-auto overflow-x-auto scrollbar-thin scrollbar-thumb-[#A27B5B]">
         <div className="flex gap-4 w-max">
           {[
-            '/habitacion2.jpg',
-            '/habitacion4.jpg',
-            '/habitacion5.jpg',
-            '/habitacion3.jpg',
+            '/Apart-1D/apart1d-2.jpg',
+             '/Apart-Sup/apartsup-2.png',
+           '/Apart-Sup/apartsup-4.jpg',
+            '/Apart-Sup/apartsup-5.png',
+            '/Apart-Sup/apartsup-10.jpg',
+            '/frente.png',
           ].map((src, index) => (
             <a
               key={index}
@@ -208,10 +207,10 @@ const abrirCarrusel = (carpeta: string) => {
         <h3 className="text-3xl font-semibold mb-6 text-[#2C3639]">Unidades Disponibles</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {[
-            { nombre: 'Apart 1 dormitorio', img: '/Apart-1D.PNG', carpeta: 'Apart-1D' },
-            { nombre: 'Apart 2 dormitorios', img: '/Apart-2D.PNG', carpeta: 'Apart-2D' },
-            { nombre: 'Apart superior', img: '/Apart-Sup.PNG', carpeta: 'Apart-Sup' },
-            { nombre: 'Habitación', img: '/Habitacion.PNG', carpeta: 'Habitacion' },
+            { nombre: 'Apart 1 dormitorio', img:     '/Apart-1D/apart1d-2.jpg', carpeta: 'Apart-1D' },
+            { nombre: 'Apart 2 dormitorios', img: '/Apart-2D/apart2d-2.jpg', carpeta: 'Apart-2D' },
+            { nombre: 'Apart superior', img:     '/Apart-Sup/apartsup-2.png', carpeta: 'Apart-Sup' },
+            { nombre: 'Habitación', img: '/Habitacion/hab-3.jpg', carpeta: 'Habitacion' },
           ].map((tipo, index) => (
             <div
               key={index}
