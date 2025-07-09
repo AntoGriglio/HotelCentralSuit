@@ -157,7 +157,7 @@ const abrirCarrusel = (carpeta: string) => {
            '/Apart-Sup/apartsup-4.jpg',
             '/Apart-Sup/apartsup-5.PNG',
             '/Apart-Sup/apartsup-10.jpg',
-            '/frente.png',
+            '/Frente.png',
           ].map((src, index) => (
             <a
               key={index}
