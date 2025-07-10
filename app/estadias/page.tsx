@@ -253,15 +253,18 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
     onChange={(e) => setFiltroNombreHabitacion(e.target.value)}
   />
   <select
-    value={filtroEstado}
-    onChange={(e) => setFiltroEstado(e.target.value)}
-    className="p-2 border rounded"
-  >
-    <option value="">Todos los estados</option>
-    {Object.keys(coloresEstado).map((estado) => (
+  value={filtroEstado}
+  onChange={(e) => setFiltroEstado(e.target.value)}
+  className="p-2 border rounded"
+>
+  <option value="">Todos los estados</option>
+  {Object.keys(coloresEstado)
+    .filter((estado) => estado.toLowerCase() !== 'sin confirmar')
+    .map((estado) => (
       <option key={estado} value={estado}>{estado}</option>
     ))}
-  </select>
+</select>
+
   <button
     onClick={limpiarFiltros}
     className="bg-[#DCD7C9] px-4 py-2 rounded hover:bg-[#c9c4b7]"
@@ -351,8 +354,15 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
             </tr>
           </thead>
           <tbody>
-            {estadiasPaginadas.map((e) => (
-              <tr key={e.id} className="border-b hover:bg-[#2C3639]/10">
+  {estadiasPaginadas.length === 0 ? (
+    <tr>
+      <td colSpan={11} className="text-center py-6 text-gray-500">
+        No se encontraron estadías con los filtros aplicados.
+      </td>
+    </tr>
+  ) : (
+    estadiasPaginadas.map((e) => (
+      <tr key={e.id} className="border-b hover:bg-[#2C3639]/10">
                 <td className="px-4 py-2">{e.nro_estadia}</td>
                 <td className="px-4 py-2">
   {new Date(e.fecha_creacion).toISOString().slice(0, 10)}
@@ -499,8 +509,9 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
                   )}
                 </td>
               </tr>
-            ))}
-          </tbody>
+    ))
+  )}
+</tbody>
         </table>
       </div>
 

@@ -16,6 +16,12 @@ export default function Consulta() {
     cantidad: '',
     tipoHabitacion: '',
   })
+const imagenesPorTipo: Record<string, string> = {
+  'Apart-1D': '/Apart-1D/Apart1d-2.jpg',
+  'Apart-2D': '/Apart-2D/apart2d-2.jpg',
+  'Apart-Sup': '/Apart-Sup/apartsup-5.PNG',
+  'Habitacion': '/Habitacion/hab-2.jpg',
+};
 
   const [habitaciones, setHabitaciones] = useState<any[]>([])
   const [tipos, setTipos] = useState<any[]>([])
@@ -163,19 +169,30 @@ const nroEstadia = nuevaEstadia?.nro_estadia ?? 'sin número';
           <option value="">Todos los tipos</option>
           {tipos.map((t: any) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
         </select>
-        <button onClick={buscar} className="bg-[#A27B5B] text-white px-4 py-2 rounded hover:bg-[#8e664e] md:col-span-1">Buscar</button>
-      </div>
+   <button
+  onClick={buscar}
+  disabled={!form.fechaIngreso || !form.fechaEgreso || !form.cantidad}
+  className={`px-4 py-2 rounded md:col-span-1 ${
+    !form.fechaIngreso || !form.fechaEgreso || !form.cantidad
+      ? 'bg-gray-400 cursor-not-allowed'
+      : 'bg-[#A27B5B] text-white hover:bg-[#8e664e]'
+  }`}
+>
+  Buscar
+</button>
+   </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {habitaciones.map((h: any) => (
           <div key={h.unidad_habitacional.id} className="bg-white rounded-lg shadow p-4">
-            <Image
-              src={`/${h.tipo_habitacion_nombre.replace(/\s+/g, '-')}.PNG`}
-              width={300}
-              height={200}
-              alt={h.tipo_habitacion_nombre}
-              className="rounded mb-2 object-cover"
-            />
+           <Image
+  src={imagenesPorTipo[h.tipo_habitacion_nombre] || '/default.jpg'}
+  width={300}
+  height={200}
+  alt={h.tipo_habitacion_nombre}
+  className="rounded mb-2 object-cover"
+/>
+
             <h4 className="text-lg font-bold">{h.tipo_habitacion_nombre}</h4>
             <p>Capacidad: {h.unidad_habitacional.cantidad_normal}</p>
             <p className="mt-2 font-semibold">Total estimado: {formatearMoneda(h.total_estadia || h.precio_habitacion * parseInt(form.cantidad))}</p>

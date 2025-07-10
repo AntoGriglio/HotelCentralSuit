@@ -247,6 +247,24 @@ const abrirCarrusel = (carpeta: string) => {
       <section id="formulario" className="py-16 px-6 bg-[#d9d9d9] relative z-10">
         <Consulta />
       </section>
+{/* Sección de Contacto */}
+<section className="py-16 px-6 bg-[#00242F] text-white text-center">
+  <h3 className="text-3xl font-semibold mb-6">Contacto</h3>
+  <div className="max-w-xl mx-auto space-y-4 text-lg">
+    <p>
+      <strong>Teléfono / WhatsApp:</strong>{' '}
+      <a href="https://wa.me/5493541774444" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#c89859]">
+        +54 9 3541 77-4444
+      </a>
+    </p>
+    <p>
+      <strong>Email:</strong>{' '}
+      <a href="mailto:estadias@centralsuites.com.ar" className="underline hover:text-[#c89859]">
+        estadias@centralsuites.com.ar
+      </a>
+    </p>
+  </div>
+</section>
 
       <footer className="text-center text-sm text-[#3F4E4F] py-4 border-t bg-[#d9d9d9] relative z-10">
         © 2025 Hotel Central Suites. Todos los derechos reservados.
