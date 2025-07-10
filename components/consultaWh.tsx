@@ -10,6 +10,7 @@ export default function Consulta() {
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
     nombre: '',
+    telefono:'',
     fechaIngreso: '',
     fechaEgreso: '',
     cantidad: '',
@@ -43,6 +44,8 @@ export default function Consulta() {
       fecha_egreso: form.fechaEgreso,
       cantidad_personas: form.cantidad,
       tipo_habitacion_id: form.tipoHabitacion,
+      nombre: form.nombre,
+      telefono: form.telefono
     })
 
     const res = await fetch(`/api/disponibilidad?${params}`)
@@ -112,10 +115,10 @@ export default function Consulta() {
       precio_por_noche: parseFloat(precioPorNoche.toFixed(2)),
       monto_reserva: parseFloat(montoReserva.toFixed(2)),
       porcentaje_reserva: 30,
-      tipo_habitacion_id: h.unidad_habitacional.tipo_habitacion_id
+      tipo_habitacion_id: h.unidad_habitacional.tipo_habitacion_id,
+      nombre: form.nombre,
+      telefono: form.telefono
     }
-
-    console.log(payload)
 
     const res = await fetch('/api/estadias', {
   method: 'POST',
@@ -151,6 +154,8 @@ const nroEstadia = nuevaEstadia?.nro_estadia ?? 'sin número';
 
       <div className="max-w-4xl mx-auto grid gap-4 mb-6 md:grid-cols-4">
         <input type="text" placeholder="Tu nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="p-2 border rounded" />
+       <input type="text" placeholder="Tu Telefono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="p-2 border rounded" />
+       
         <input type="date" value={form.fechaIngreso} onChange={e => setForm({ ...form, fechaIngreso: e.target.value })} className="p-2 border rounded" />
         <input type="date" value={form.fechaEgreso} onChange={e => setForm({ ...form, fechaEgreso: e.target.value })} className="p-2 border rounded" />
         <input type="number" value={form.cantidad} placeholder="Personas" onChange={e => setForm({ ...form, cantidad: e.target.value })} className="p-2 border rounded" />
@@ -158,7 +163,7 @@ const nroEstadia = nuevaEstadia?.nro_estadia ?? 'sin número';
           <option value="">Todos los tipos</option>
           {tipos.map((t: any) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
         </select>
-        <button onClick={buscar} className="bg-[#A27B5B] text-white px-4 py-2 rounded hover:bg-[#8e664e] md:col-span-2">Buscar</button>
+        <button onClick={buscar} className="bg-[#A27B5B] text-white px-4 py-2 rounded hover:bg-[#8e664e] md:col-span-1">Buscar</button>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

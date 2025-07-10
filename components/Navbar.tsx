@@ -37,6 +37,8 @@ export default function Navbar() {
       </Link>
 
       <Link href="/estadias" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Estadías</Link>
+       <Link href="/estadias/sin-confirmar" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Sin Confirmar</Link>
+    
       <Link href="/clientes" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Clientes</Link>
       <Link href="/unidades" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Unidades</Link>
       <Link href="/precios" className="hover:bg-white hover:text-[#374e4e] px-3 py-2 rounded transition-colors">Precios</Link>

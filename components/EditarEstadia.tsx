@@ -46,7 +46,6 @@ useEffect(() => {
   fetch(`/api/estadias?id=${id}`)
     .then(res => res.json())
     .then(async data => {
-      console.log(data)
       setEstadia({
         ...data,
         cantidad_personas: data.cantidad_personas?.toString() || '',
@@ -133,7 +132,6 @@ useEffect(() => {
     const filtradas = disponiblesConActual.filter(
       (h: any) => h.tipo_id === estadia.tipoHabitacionId
     )
-console.log('filtradas',filtradas)
     setHabitaciones(filtradas)
 
     if (!filtradas.find((h: any) => h.id === estadia.habitacion_id)) {
@@ -204,7 +202,6 @@ useEffect(() => {
 const handleTipoHabitacionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
   const nuevoTipo = e.target.value
   const porTipo = todasHabitacionesDisponibles.filter(h => h.tipo_id === nuevoTipo)
-console.log('portipo', porTipo)
   setHabitaciones(porTipo)
   setEstadia((prev: any) => ({
     ...prev,

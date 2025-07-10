@@ -90,6 +90,8 @@ export const estadia = pgTable('estadia', {
   habitacion_id: uuid('habitacion_id').references(() => unidad_habitacional.id),
   estado_id: uuid('estado_id').references(() => estado_estadia.id),
    tipo_habitacion_id: uuid('tipo_habitacion_id').references(() => tipo_habitacion.id),
+   nombre: varchar('Nombre', { length: 1000 }),
+   telefono: varchar('Telefono', { length: 1000 }),
 });
 
 // Tabla pago

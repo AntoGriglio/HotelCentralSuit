@@ -44,6 +44,8 @@ export async function GET(req: NextRequest) {
           fecha_creacion: estadia.fecha_creacion,
           nro_estadia: estadia.nro_estadia,
           tipo_habitacion_id: estadia.tipo_habitacion_id,
+          nombre: estadia.nombre,
+          telefono: estadia.telefono
         })
         .from(estadia)
         .orderBy(desc(estadia.fecha_creacion))
@@ -96,6 +98,9 @@ export async function POST(req: NextRequest) {
       estado_id: data.estado_id,
       canal_id: data.canal_id,
       observaciones: data.observaciones || '',
+      nombre: data.nombre || '',
+      telefono: data.telefono || '',
+
     }).returning({ id: estadia.id, nro_estadia: estadia.nro_estadia });
 
     return NextResponse.json(result[0]); // 👈 Devolvemos la estadía insertada
@@ -107,12 +112,10 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  console.log('searche', searchParams)
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
   const data = await req.json();
-console.log('dataaa', data )
   try {
     await db.update(estadia)
       .set({

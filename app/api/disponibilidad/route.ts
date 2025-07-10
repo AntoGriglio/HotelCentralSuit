@@ -12,7 +12,6 @@ import {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  console.log(searchParams)
   const fechaIngreso = searchParams.get('fecha_ingreso');
   const fechaEgreso = searchParams.get('fecha_egreso');
   const cantidadPersonas = searchParams.get('cantidad_personas');

@@ -51,15 +51,8 @@ useEffect(() => {
     pago.monto.toString().trim().length > 0;
 
   if (datosCompletos) {
-    console.log('🟢 Datos completos, generando PDF...');
     generarPDF();
   } else {
-    console.log('🔴 Esperando datos para generar PDF:', 
-      'mensaje:', mensaje, 
-      '| clienteNombre:', clienteNombre, 
-      '| habitacionNumero:', habitacionNumero, 
-      '| monto:', pago.monto
-    );
   }
 }, [mensaje, clienteNombre, habitacionNumero, pago.monto]);
 
@@ -95,7 +88,6 @@ useEffect(() => {
           const resCliente = await fetch(`/api/clientes?dni=${clienteDNI}`);
          
           const dataCliente = await resCliente.json();
-           console.log(dataCliente)
           setClienteNombre(dataCliente?.nombre_completo || `Cliente DNI: ${clienteDNI}`);
 setClienteEmail(dataCliente?.email || '');
 
@@ -140,7 +132,6 @@ setClienteEmail(dataCliente?.email || '');
   const handleTipoPagoChange = (tipoPagoId: string) => {
     const estadiaSeleccionada = estadias.find(e => e.id === pago.estadiaId);
     const tipoReserva = tiposPago.find(tp => tp.descripcion === 'Reserva');
-    console.log('tipo', tipoReserva)
     const tipoSaldo = tiposPago.find(tp => tp.descripcion.includes('Saldo'));
     const yaTieneReserva = pagosEstadia.some((p: any) => p.tipo_pago_id === tipoReserva?.id);
 

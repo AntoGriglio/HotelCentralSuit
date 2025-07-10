@@ -107,8 +107,12 @@ const generarPlanillaPDF = async (estadiaId: string, nroEstadia: number) => {
 }
 const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.estadia_id === id);
   const estadiasFiltradas = estadias.filter((e) => {
-    const coincideEstado = filtroEstado ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase() : true;
-    const coincideCliente = filtroCliente
+  if (e.estado_nombre?.toLowerCase() === 'sin confirmar') return false;
+
+  const coincideEstado = filtroEstado
+    ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase()
+    : true;
+  const coincideCliente = filtroCliente
   ? (e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) ||
      e.cliente_nombre?.toLowerCase().includes(filtroCliente.toLowerCase()))
   : true;

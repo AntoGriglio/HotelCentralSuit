@@ -28,10 +28,8 @@ export async function GET() {
   const body = await req.json()
   const { itemId, nuevoPrecio } = body
 
-  console.log('📥 Body recibido:', body)
 
   if (!itemId || !nuevoPrecio) {
-    console.log('❌ Faltan datos')
     return new Response(JSON.stringify({ error: 'Faltan datos' }), { status: 400 })
   }
 
@@ -52,10 +50,8 @@ export async function GET() {
     .where(eq(item_precio.id, itemId))
     .then(res => res[0])
 
-  console.log('🧾 item_precio:', item)
 
   if (!item?.nombre) {
-    console.log('❌ No se encontró el item_precio')
     return new Response(JSON.stringify({ error: 'No se encontró el ítem' }), { status: 404 })
   }
 
@@ -65,10 +61,8 @@ export async function GET() {
     .where(eq(tipo_habitacion.nombre, item.nombre))
     .then(res => res[0])
 
-  console.log('🏷️ tipo_habitacion encontrado:', tipo)
 
   if (!tipo?.id) {
-    console.log('❌ No se encontró tipo_habitacion con nombre:', item.nombre)
     return new Response(JSON.stringify({ error: 'No se encontró tipo de habitación' }), { status: 404 })
   }
 
@@ -80,15 +74,11 @@ export async function GET() {
     .from(unidad_habitacional)
     .where(eq(unidad_habitacional.tipo_habitacion_id, tipo.id))
 
-  console.log('🛏️ Habitaciones encontradas:', habitaciones)
 
   await Promise.all(
     habitaciones.map(async (hab) => {
       const cantidad = hab.cantidad_normal ?? 1
       const montoFinal = cantidad * nuevoPrecio
-
-      console.log(`💰 Insertando precio para hab ${hab.id}: ${cantidad} * ${nuevoPrecio} = ${montoFinal}`)
-
       await db
         .delete(precio_habitacion)
         .where(eq(precio_habitacion.habitacion_id, hab.id))
@@ -99,7 +89,5 @@ export async function GET() {
       })
     })
   )
-
-  console.log('✅ Proceso de actualización de precios completado.')
   return new Response(JSON.stringify({ success: true }))
 }
