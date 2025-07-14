@@ -73,14 +73,17 @@ const provinciasAR = [
     const fecha_ingreso = searchParams.get('fecha_ingreso')
     const fecha_egreso = searchParams.get('fecha_egreso')
     const cantidad = searchParams.get('cantidad_personas')
+const tipo_habitacion_id = searchParams.get('tipo_habitacion_id')
 
-    setEstadia(prev => ({
-      ...prev,
-      habitacionId: habitacion_id || prev.habitacionId,
-      fechaIngreso: fecha_ingreso || prev.fechaIngreso,
-      fechaEgreso: fecha_egreso || prev.fechaEgreso,
-      cantidadPersonas: cantidad || prev.cantidadPersonas,
-    }))
+setEstadia(prev => ({
+  ...prev,
+  habitacionId: habitacion_id || prev.habitacionId,
+  fechaIngreso: fecha_ingreso || prev.fechaIngreso,
+  fechaEgreso: fecha_egreso || prev.fechaEgreso,
+  cantidadPersonas: cantidad || prev.cantidadPersonas,
+  tipoHabitacionId: tipo_habitacion_id || prev.tipoHabitacionId,
+}))
+
   }, [searchParams])
 
   useEffect(() => {
@@ -118,23 +121,35 @@ fetch('/api/tipos-habitacion')
   }, [estadia.fechaIngreso, estadia.fechaEgreso, estadia.precioPorNoche, estadia.porcentajeReserva])
 
 useEffect(() => {
-  const obtenerDisponibles = async () => {
-    if (!estadia.fechaIngreso || !estadia.fechaEgreso || !estadia.cantidadPersonas) return;
+const obtenerDisponibles = async () => {
+  if (!estadia.fechaIngreso || !estadia.fechaEgreso || !estadia.cantidadPersonas) return;
 
-    let url = `/api/disponibilidad?fecha_ingreso=${estadia.fechaIngreso}&fecha_egreso=${estadia.fechaEgreso}&cantidad_personas=${estadia.cantidadPersonas}`
+  let url = `/api/disponibilidad?fecha_ingreso=${estadia.fechaIngreso}&fecha_egreso=${estadia.fechaEgreso}&cantidad_personas=${estadia.cantidadPersonas}`
 
-    if (estadia.tipoHabitacionId) {
-      url += `&tipo=${estadia.tipoHabitacionId}`
-    }
-
-    try {
-      const res = await fetch(url)
-      const data = await res.json()
-      setHabitaciones(data)
-    } catch (err) {
-      console.error('Error al obtener disponibilidad:', err)
-    }
+  if (estadia.tipoHabitacionId) {
+    url += `&tipo=${estadia.tipoHabitacionId}`
   }
+
+  try {
+    const res = await fetch(url)
+    const data = await res.json()
+
+    // Si la habitación actual no está en la lista, agregarla
+    const yaIncluida = data.some((h: any) => h.unidad_habitacional?.id === estadia.habitacionId)
+    if (!yaIncluida && estadia.habitacionId) {
+      const todas = await fetch('/api/unidades').then(res => res.json())
+      const actual = todas.find((h: any) => h.unidad_habitacional?.id === estadia.habitacionId)
+      if (actual) {
+        data.push(actual)
+      }
+    }
+
+    setHabitaciones(data)
+  } catch (err) {
+    console.error('Error al obtener disponibilidad:', err)
+  }
+}
+
 
   obtenerDisponibles()
 }, [

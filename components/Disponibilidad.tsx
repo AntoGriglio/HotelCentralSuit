@@ -116,9 +116,10 @@ export default function Disponibilidad() {
                 <td className="px-4 py-2">{formatearMoneda(total_estadia)}</td>
                 <td className="px-4 py-2">
                   <button
-                    onClick={() =>
-                      router.push(`/estadias/nueva?habitacion_id=${h.id}&fecha_ingreso=${fechaIngreso}&fecha_egreso=${fechaEgreso}&cantidad_personas=${cantidad}`)
-                    }
+  onClick={() =>
+    router.push(`/estadias/nueva?habitacion_id=${h.id}&fecha_ingreso=${fechaIngreso}&fecha_egreso=${fechaEgreso}&cantidad_personas=${cantidad}&tipo_habitacion_id=${t.id}`)
+  }
+
                     className="bg-[#2C3639] text-white px-3 py-1 rounded hover:bg-[#1f272a]"
                   >
                     Reservar

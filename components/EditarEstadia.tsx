@@ -134,12 +134,13 @@ useEffect(() => {
     )
     setHabitaciones(filtradas)
 
-    if (!filtradas.find((h: any) => h.id === estadia.habitacion_id)) {
-      setEstadia((prev: any) => ({
-        ...prev,
-        habitacion_id: filtradas[0]?.id || ''
-      }))
-    }
+   if (!filtradas.find((h: any) => h.id === estadia.habitacion_id) && !estadia.habitacion_id) {
+  setEstadia((prev: any) => ({
+    ...prev,
+    habitacion_id: filtradas[0]?.id || ''
+  }))
+}
+
     setCargando(false)
 
   }

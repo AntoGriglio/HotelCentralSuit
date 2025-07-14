@@ -61,6 +61,9 @@ const paragraphStyle = {
   fontSize: '10pt',
   marginBottom: '6px',
 } as const
+const formatearFecha = (fecha: string) => {
+  return new Date(fecha).toLocaleDateString('es-AR')
+}
 
 const planillaRef = useRef<HTMLDivElement>(null)
 const ITEMS_POR_PAGINA = 10;
@@ -364,15 +367,12 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
     estadiasPaginadas.map((e) => (
       <tr key={e.id} className="border-b hover:bg-[#2C3639]/10">
                 <td className="px-4 py-2">{e.nro_estadia}</td>
-                <td className="px-4 py-2">
-  {new Date(e.fecha_creacion).toISOString().slice(0, 10)}
-</td>
-
+                <td className="px-4 py-2">{formatearFecha(e.fecha_creacion)}</td>
                 <td className="px-4 py-2">{e.cliente_nombre}, DNI:{e.cliente_dni ?? '—'}</td>
 
                 <td className="px-4 py-2">{e.habitacion_nombre}</td>
-                <td className="px-4 py-2">{e.fecha_ingreso}</td>
-                <td className="px-4 py-2">{e.fecha_egreso}</td>
+<td className="px-4 py-2">{formatearFecha(e.fecha_ingreso)}</td>
+<td className="px-4 py-2">{formatearFecha(e.fecha_egreso)}</td>
                 <td className="px-4 py-2">{calcularNoches(e.fecha_ingreso, e.fecha_egreso)}</td>
 
              <td className="px-4 py-2 text-left align-middle whitespace-nowrap">
