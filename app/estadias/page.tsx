@@ -1,6 +1,5 @@
 
 /* eslint-disable @next/next/no-img-element */
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
@@ -22,10 +21,7 @@ const coloresEstado: Record<string, string> = {
   'cancelada pendiente': '#eab308',
 };
 
-
-
 export default function ListaEstadias() {
-
   const [planillaData, setPlanillaData] = useState<any | null>(null)
   const [estadias, setEstadias] = useState<any[]>([]);
   const [pagos, setPagos] = useState<any[]>([]);
@@ -50,13 +46,11 @@ const sectionTitleStyle = {
   marginTop: '20px',
   marginBottom: '6px',
 } as const
-
 const itemStyle = {
   margin: '2px 0',
   borderBottom: '1px solid #000',
   paddingBottom: '2px',
 } as const
-
 const paragraphStyle = {
   fontSize: '10pt',
   marginBottom: '6px',
@@ -68,7 +62,6 @@ const formatearFecha = (fecha: string) => {
 const formatearFecha1 = (fecha: string) => {
   return new Date(fecha).toLocaleDateString('es-AR');
 };
-
 const planillaRef = useRef<HTMLDivElement>(null)
 const ITEMS_POR_PAGINA = 10;
 const calcularNoches = (ingreso: string, egreso: string) => {
@@ -82,7 +75,6 @@ const calcularNoches = (ingreso: string, egreso: string) => {
       const resEstadias = await fetch('/api/estadias');
       const dataEstadias = await resEstadias.json();
       setEstadias(dataEstadias);
-console.log(dataEstadias)
       const resPagos = await fetch('/api/pagos');
       const dataPagos = await resPagos.json();
       setPagos(dataPagos);
@@ -101,7 +93,6 @@ const generarPlanillaPDF = async (estadiaId: string, nroEstadia: number) => {
   const res = await fetch(`/api/planilla?id=${estadiaId}`)
   const data = await res.json()
   setPlanillaData(data)
-
   setTimeout(async () => {
     if (!planillaRef.current) return
     const canvas = await html2canvas(planillaRef.current)
@@ -115,7 +106,6 @@ const generarPlanillaPDF = async (estadiaId: string, nroEstadia: number) => {
 const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.estadia_id === id);
   const estadiasFiltradas = estadias.filter((e) => {
   if (e.estado_nombre?.toLowerCase() === 'sin confirmar') return false;
-
   const coincideEstado = filtroEstado
     ? e.estado_nombre?.toLowerCase() === filtroEstado.toLowerCase()
     : true;
@@ -123,38 +113,26 @@ const obtenerHuespedesEstadia = (id: string) => huespedes.filter((h: any) => h.e
   ? (e.cliente_dni?.toLowerCase().includes(filtroCliente.toLowerCase()) ||
      e.cliente_nombre?.toLowerCase().includes(filtroCliente.toLowerCase()))
   : true;
-
 const coincideNombreCliente = filtroNombreCliente
   ? e.cliente_nombre?.toLowerCase().includes(filtroNombreCliente.toLowerCase())
   : true;
-
 const coincideNumeroEstadia = filtroNumeroEstadia
   ? e.nro_estadia?.toString().includes(filtroNumeroEstadia)
   : true;
-
 const coincideNombreHabitacion = filtroNombreHabitacion
   ? e.habitacion_nombre?.toLowerCase().includes(filtroNombreHabitacion.toLowerCase())
   : true;
-
     const fechaIngresoValida = filtroIngresoDesde || filtroIngresoHasta
       ? (!filtroIngresoDesde || new Date(e.fecha_ingreso) >= new Date(filtroIngresoDesde)) &&
         (!filtroIngresoHasta || new Date(e.fecha_ingreso) <= new Date(filtroIngresoHasta))
       : true;
-
     const fechaEgresoValida = filtroEgresoDesde || filtroEgresoHasta
       ? (!filtroEgresoDesde || new Date(e.fecha_egreso) >= new Date(filtroEgresoDesde)) &&
         (!filtroEgresoHasta || new Date(e.fecha_egreso) <= new Date(filtroEgresoHasta))
       : true;
-
-    const soloUnoActivo = !(filtroIngresoDesde || filtroIngresoHasta) || !(filtroEgresoDesde || filtroEgresoHasta);
-// ⚠️ DIV oculto donde se va a renderizar la planilla para capturar
-
-
-
-
+  const soloUnoActivo = !(filtroIngresoDesde || filtroIngresoHasta) || !(filtroEgresoDesde || filtroEgresoHasta);
 return coincideEstado && coincideCliente && coincideNombreCliente && coincideNumeroEstadia && coincideNombreHabitacion && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
  });
- console.log('filtradas',estadiasFiltradas)
   const totalPaginas = Math.ceil(estadiasFiltradas.length / ITEMS_POR_PAGINA);
   const estadiasPaginadas = estadiasFiltradas.slice(
     (paginaActual - 1) * ITEMS_POR_PAGINA,
@@ -373,7 +351,6 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
                 <td className="px-4 py-2">{e.nro_estadia}</td>
                 <td className="px-4 py-2">{formatearFecha1(e.fecha_creacion)}</td>
                 <td className="px-4 py-2">{e.cliente_nombre}, DNI:{e.cliente_dni ?? '—'}</td>
-
                 <td className="px-4 py-2">{e.habitacion_nombre}</td>
 <td className="px-4 py-2">{formatearFecha(e.fecha_ingreso)}</td>
 <td className="px-4 py-2">{formatearFecha(e.fecha_egreso)}</td>

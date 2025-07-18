@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { unidad_habitacional, tipo_unidad_habitacional, tipo_habitacion, precio_habitacion } from '@/db/schema';
+import {
+  unidad_habitacional,
+  tipo_unidad_habitacional,
+  tipo_habitacion,
+  precio_habitacion,
+  bloqueo_unidad,
+} from '@/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
-
 
 // POST
 export async function POST(req: Request) {
@@ -35,10 +40,11 @@ export async function POST(req: Request) {
   }
 }
 
+// GET
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id');
   const conBloqueos = req.nextUrl.searchParams.get('conBloqueos');
-  const hoy = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const hoy = new Date().toISOString().slice(0, 10);
 
   try {
     const query = db
@@ -66,8 +72,6 @@ export async function GET(req: NextRequest) {
           ? sql`EXISTS (
               SELECT 1 FROM bloqueo_unidad
               WHERE bloqueo_unidad.unidad_id = ${unidad_habitacional.id}
-              AND fecha_desde <= ${hoy}
-              AND fecha_hasta >= ${hoy}
             )`.as('bloqueada')
           : sql`false`.as('bloqueada'),
       })
@@ -77,18 +81,30 @@ export async function GET(req: NextRequest) {
       .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
       .orderBy(desc(precio_habitacion.id));
 
-    if (id) {
-      const data = await query.where(eq(unidad_habitacional.id, id));
-      return NextResponse.json(data);
-    } else {
-      const data = await query;
-      return NextResponse.json(data);
-    }
+    const unidades = id ? await query.where(eq(unidad_habitacional.id, id)) : await query;
+
+    const unidadesConBloqueos = await Promise.all(
+      unidades.map(async (unidad) => {
+        const bloqueos = await db
+          .select()
+          .from(bloqueo_unidad)
+          .where(eq(bloqueo_unidad.unidad_id, unidad.id))
+          .orderBy(desc(bloqueo_unidad.fecha_desde));
+
+        return {
+          ...unidad,
+          bloqueos,
+        };
+      })
+    );
+
+    return NextResponse.json(unidadesConBloqueos);
   } catch (error) {
     console.error('[API HABITACION GET ERROR]', error);
     return NextResponse.json({ error: 'Error al obtener unidades' }, { status: 500 });
   }
 }
+
 // PUT
 export async function PUT(req: NextRequest) {
   const data = await req.json();

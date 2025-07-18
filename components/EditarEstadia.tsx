@@ -360,10 +360,7 @@ const reciboHTML = `
       const pdf = new jsPDF()
       pdf.addImage(imgData, 'PNG', 10, 10, 190, 0)
       pdf.save(`reserva_${cliente?.dni || 'nueva'}.pdf`)
-      // Generar Blob del PDF
 const blob = pdf.output('blob')
-
-// Enviarlo al endpoint con FormData
 const formData = new FormData()
 formData.append('to', cliente.email)
 formData.append('pdf', blob, 'reserva.pdf')
@@ -383,8 +380,7 @@ await fetch('/api/enviar-confirmacion', {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
   if (!estadia) return
-  setCargando(true) // mostrar loader
-
+  setCargando(true) 
   const estadoSeleccionado = estados.find(e => e.id === estadia.estado_id)
 
   if (estadoSeleccionado?.nombre !== 'sin confirmar' && !cliente) {
@@ -392,19 +388,15 @@ const handleSubmit = async (e: React.FormEvent) => {
     setCargando(false)
     return
   }
-
   await fetch(`/api/estadias?id=${id}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(estadia),
-  credentials: 'include', // ✅ necesario para que Supabase sepa quién sos
+  credentials: 'include', 
 })
-
-
   await generarPDF()
   router.push('/estadias') 
 }
-
   const estadoSeleccionado = estados.find((e) => e.id === estadia?.estado_id)
 if (cargando) return <Loader />
 
