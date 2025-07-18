@@ -19,9 +19,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Error al registrar bloqueo' }, { status: 500 });
   }
 }
-
 export async function GET(req: NextRequest) {
   const unidadId = req.nextUrl.searchParams.get('unidadId');
+  if (!unidadId) {
+    return NextResponse.json({ error: 'unidadId es requerido' }, { status: 400 });
+  }
+
   const hoyStr = new Date().toISOString().split('T')[0];
 
   try {
@@ -29,7 +32,7 @@ export async function GET(req: NextRequest) {
       .select()
       .from(bloqueo_unidad)
       .where(and(
-        eq(bloqueo_unidad.unidad_id, unidadId),
+        eq(bloqueo_unidad.unidad_id, unidadId as string),
         lte(bloqueo_unidad.fecha_desde, hoyStr),
         gte(bloqueo_unidad.fecha_hasta, hoyStr),
       ));
@@ -40,6 +43,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Error al obtener bloqueos' }, { status: 500 });
   }
 }
+
 
 export async function PUT(req: NextRequest) {
   const data = await req.json();
