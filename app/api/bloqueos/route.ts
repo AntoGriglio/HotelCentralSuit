@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { bloqueo_unidad } from '@/db/schema';
 import { and, eq, lte, gte } from 'drizzle-orm';
 
+// POST
 export async function POST(req: NextRequest) {
   const data = await req.json();
   try {
@@ -19,23 +20,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Error al registrar bloqueo' }, { status: 500 });
   }
 }
+
+// GET
 export async function GET(req: NextRequest) {
   const unidadId = req.nextUrl.searchParams.get('unidadId');
   if (!unidadId) {
     return NextResponse.json({ error: 'unidadId es requerido' }, { status: 400 });
   }
 
-  const hoyStr = new Date().toISOString().split('T')[0];
-
   try {
     const bloqueos = await db
       .select()
       .from(bloqueo_unidad)
-      .where(and(
-        eq(bloqueo_unidad.unidad_id, unidadId as string),
-        lte(bloqueo_unidad.fecha_desde, hoyStr),
-        gte(bloqueo_unidad.fecha_hasta, hoyStr),
-      ));
+      .where(eq(bloqueo_unidad.unidad_id, unidadId));
 
     return NextResponse.json(bloqueos);
   } catch (error) {
@@ -44,7 +41,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-
+// PUT
 export async function PUT(req: NextRequest) {
   const data = await req.json();
   try {
@@ -65,5 +62,20 @@ export async function PUT(req: NextRequest) {
   } catch (error) {
     console.error('[API BLOQUEO PUT ERROR]', error);
     return NextResponse.json({ error: 'Error al actualizar bloqueo' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const id = req.nextUrl.searchParams.get('id');
+  if (!id) {
+    return NextResponse.json({ error: 'Falta el ID del bloqueo' }, { status: 400 });
+  }
+
+  try {
+    await db.delete(bloqueo_unidad).where(eq(bloqueo_unidad.id, id));
+    return NextResponse.json({ message: 'Bloqueo eliminado correctamente' });
+  } catch (error) {
+    console.error('[API BLOQUEO DELETE ERROR]', error);
+    return NextResponse.json({ error: 'Error al eliminar bloqueo' }, { status: 500 });
   }
 }

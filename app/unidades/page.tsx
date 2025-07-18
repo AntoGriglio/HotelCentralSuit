@@ -19,7 +19,7 @@ export default function ListaUnidadesHabitacionales() {
   const [hasta, setHasta] = useState('');
   const [tipo, setTipo] = useState('Por grupos');
   const router = useRouter();
-const [bloqueosVisibles, setBloqueosVisibles] = useState<Record<string, boolean>>({});
+  const [bloqueosVisibles, setBloqueosVisibles] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchUnidades = async () => {
@@ -56,8 +56,20 @@ const [bloqueosVisibles, setBloqueosVisibles] = useState<Record<string, boolean>
     if (res.ok) {
       alert('Bloqueo guardado con éxito');
       cerrarModal();
+      window.location.reload();
     } else {
       alert('Error al guardar el bloqueo');
+    }
+  };
+
+  const eliminarBloqueo = async (id: string) => {
+    if (!confirm('¿Estás segura de que querés eliminar este bloqueo?')) return;
+    const res = await fetch(`/api/bloqueos?id=${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      alert('Bloqueo eliminado');
+      window.location.reload();
+    } else {
+      alert('Error al eliminar el bloqueo');
     }
   };
 
@@ -98,93 +110,85 @@ const [bloqueosVisibles, setBloqueosVisibles] = useState<Record<string, boolean>
               </tr>
             </thead>
             <tbody>
-{alquilables.map((u) => (
-  <React.Fragment key={u.id}>
-    <tr className={`border-b ${u.bloqueada ? 'bg-red-100 text-red-700' : 'hover:bg-[#F5F5F5]'}`}>
-      <td className="px-4 py-2 flex items-center gap-2">
-        {u.numero}
-        {u.bloqueos?.length > 0 && (
-          <button
-            onClick={() =>
-              setBloqueosVisibles((prev) => ({ ...prev, [u.id]: !prev[u.id] }))
-            }
-            className="text-sm"
-          >
-            {bloqueosVisibles[u.id] ? '▾' : '▸'}
-          </button>
-        )}
-      </td>
-      <td className="px-4 py-2">{u.nombre}</td>
-      <td className="px-4 py-2">{u.piso}</td>
-      <td className="px-4 py-2">{u.tipo_habitacion || '-'}</td>
-      <td className="px-4 py-2">
-        <button onClick={() => router.push(`/unidades/editar?id=${u.id}`)} className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-          Editar
-        </button>
-        <button
-          onClick={() => {
-            setUnidadSeleccionada(u);
-            setTipo('Por grupos');
-            setDescripcion('');
-            setDesde('');
-            setHasta('');
-            setBloqueoId(null);
-            setModalAbierto(true);
-          }}
-          className="text-sm bg-red-500 text-white px-3 py-1 rounded ml-2 hover:bg-red-600"
-        >
-          Bloquear
-        </button>
-      </td>
-    </tr>
-
-    {bloqueosVisibles[u.id] && u.bloqueos && u.bloqueos.length > 0 && (
-      <tr>
-        <td colSpan={5} className="bg-white px-4 py-4 border-t border-b">
-          <p className="font-semibold mb-2 text-red-700">Historial de bloqueos:</p>
-          <table className="w-full text-sm text-left border">
-            <thead className="bg-[#EEE] text-[#2C3639]">
-              <tr>
-                <th className="px-2 py-1">Tipo</th>
-                <th className="px-2 py-1">Desde</th>
-                <th className="px-2 py-1">Hasta</th>
-                <th className="px-2 py-1">Descripción</th>
-                <th className="px-2 py-1">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {u.bloqueos.map((bloqueo: any) => (
-                <tr key={bloqueo.id}>
-                  <td className="px-2 py-1">{bloqueo.tipo}</td>
-                  <td className="px-2 py-1">{bloqueo.fecha_desde?.slice(0, 10)}</td>
-                  <td className="px-2 py-1">{bloqueo.fecha_hasta?.slice(0, 10)}</td>
-                  <td className="px-2 py-1">{bloqueo.descripcion}</td>
-                  <td className="px-2 py-1">
-                    <button
-                      onClick={() => {
+              {alquilables.map((u) => (
+                <React.Fragment key={u.id}>
+                  <tr className={`border-b ${u.bloqueada ? 'bg-red-100 text-red-700' : 'hover:bg-[#F5F5F5]'}`}>
+                    <td className="px-4 py-2 flex items-center gap-2">
+                      {u.numero}
+                      {u.bloqueos?.length > 0 && (
+                        <button onClick={() => setBloqueosVisibles((prev) => ({ ...prev, [u.id]: !prev[u.id] }))}>
+                          {bloqueosVisibles[u.id] ? '▾' : '▸'}
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">{u.nombre}</td>
+                    <td className="px-4 py-2">{u.piso}</td>
+                    <td className="px-4 py-2">{u.tipo_habitacion || '-'}</td>
+                    <td className="px-4 py-2">
+                      <button onClick={() => router.push(`/unidades/editar?id=${u.id}`)} className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                        Editar
+                      </button>
+                      <button onClick={() => {
                         setUnidadSeleccionada(u);
-                        setBloqueoId(bloqueo.id);
-                        setTipo(bloqueo.tipo || 'Por grupos');
-                        setDescripcion(bloqueo.descripcion || '');
-                        setDesde(bloqueo.fecha_desde?.slice(0, 10) || '');
-                        setHasta(bloqueo.fecha_hasta?.slice(0, 10) || '');
-                        setModalInfoBloqueo(true);
-                      }}
-                      className="text-blue-600 underline text-sm"
-                    >
-                      ✏️
-                    </button>
-                  </td>
-                </tr>
+                        setTipo('Por grupos');
+                        setDescripcion('');
+                        setDesde('');
+                        setHasta('');
+                        setBloqueoId(null);
+                        setModalAbierto(true);
+                      }} className="text-sm bg-red-500 text-white px-3 py-1 rounded ml-2 hover:bg-red-600">
+                        Bloquear
+                      </button>
+                    </td>
+                  </tr>
+
+                  {bloqueosVisibles[u.id] && u.bloqueos && u.bloqueos.length > 0 && (
+                    <tr>
+                      <td colSpan={5} className="bg-white px-4 py-4 border-t border-b">
+                        <p className="font-semibold mb-2 text-red-700">Historial de bloqueos:</p>
+                        <table className="w-full text-sm text-left border">
+                          <thead className="bg-[#EEE] text-[#2C3639]">
+                            <tr>
+                              <th className="px-2 py-1">Tipo</th>
+                              <th className="px-2 py-1">Desde</th>
+                              <th className="px-2 py-1">Hasta</th>
+                              <th className="px-2 py-1">Descripción</th>
+                              <th className="px-2 py-1">Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {u.bloqueos.map((bloqueo: any) => (
+                              <tr key={bloqueo.id}>
+                                <td className="px-2 py-1">{bloqueo.tipo}</td>
+                                <td className="px-2 py-1">{bloqueo.fecha_desde?.slice(0, 10)}</td>
+                                <td className="px-2 py-1">{bloqueo.fecha_hasta?.slice(0, 10)}</td>
+                                <td className="px-2 py-1">{bloqueo.descripcion}</td>
+                                <td className="px-2 py-1 flex gap-2">
+                                  <button onClick={() => {
+                                    setUnidadSeleccionada(u);
+                                    setBloqueoId(bloqueo.id);
+                                    setTipo(bloqueo.tipo || 'Por grupos');
+                                    setDescripcion(bloqueo.descripcion || '');
+                                    setDesde(bloqueo.fecha_desde?.slice(0, 10) || '');
+                                    setHasta(bloqueo.fecha_hasta?.slice(0, 10) || '');
+                                    setModalInfoBloqueo(true);
+                                  }} className="text-blue-600 underline text-sm">
+                                    ✏️
+                                  </button>
+                                  <button onClick={() => eliminarBloqueo(bloqueo.id)} className="text-red-600 underline text-sm">
+                                    🗑️
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
-          </table>
-        </td>
-      </tr>
-    )}
-  </React.Fragment>
-))}
-           </tbody>
           </table>
         </div>
       )}
