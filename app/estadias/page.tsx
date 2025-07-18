@@ -62,9 +62,12 @@ const paragraphStyle = {
   marginBottom: '6px',
 } as const
 const formatearFecha = (fecha: string) => {
-  return new Date(fecha).toLocaleDateString('es-AR')
-}
-
+  const fechaLocal = new Date(`${fecha}T12:00:00`); // 👈 fuerza el mediodía, evita desfasajes
+  return fechaLocal.toLocaleDateString('es-AR');
+};
+const formatearFecha1 = (fecha: string) => {
+  return new Date.toLocaleDateString('es-AR');
+};
 const planillaRef = useRef<HTMLDivElement>(null)
 const ITEMS_POR_PAGINA = 10;
 const calcularNoches = (ingreso: string, egreso: string) => {
@@ -78,7 +81,7 @@ const calcularNoches = (ingreso: string, egreso: string) => {
       const resEstadias = await fetch('/api/estadias');
       const dataEstadias = await resEstadias.json();
       setEstadias(dataEstadias);
-
+console.log(dataEstadias)
       const resPagos = await fetch('/api/pagos');
       const dataPagos = await resPagos.json();
       setPagos(dataPagos);
@@ -150,7 +153,7 @@ const coincideNombreHabitacion = filtroNombreHabitacion
 
 return coincideEstado && coincideCliente && coincideNombreCliente && coincideNumeroEstadia && coincideNombreHabitacion && soloUnoActivo && fechaIngresoValida && fechaEgresoValida;
  });
-
+ console.log('filtradas',estadiasFiltradas)
   const totalPaginas = Math.ceil(estadiasFiltradas.length / ITEMS_POR_PAGINA);
   const estadiasPaginadas = estadiasFiltradas.slice(
     (paginaActual - 1) * ITEMS_POR_PAGINA,

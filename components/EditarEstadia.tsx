@@ -394,10 +394,12 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 
   await fetch(`/api/estadias?id=${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(estadia),
-  })
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(estadia),
+  credentials: 'include', // ✅ necesario para que Supabase sepa quién sos
+})
+
 
   await generarPDF()
   router.push('/estadias') 

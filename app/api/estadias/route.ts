@@ -4,7 +4,11 @@ import { estadia, estado_estadia, unidad_habitacional, pago, cliente } from '@/d
 import { eq, desc } from 'drizzle-orm';
 import { esTransicionValida } from '@/lib/estadiaEstados';
 import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
-
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabaseSession } from '@/lib/supabaseServer';
+import { cookies } from 'next/headers';
+import { sql } from 'drizzle-orm'; 
+import { validate as uuidValidate } from 'uuid';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
@@ -109,37 +113,53 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Error al registrar estadía' }, { status: 500 });
   }
 }
-
 export async function PUT(req: NextRequest) {
+  const { supabase, session, res, error } = await getSupabaseSession(req);
+
+  if (!session?.user?.id) {
+    console.log('Sesión no encontrada o inválida', error);
+    return NextResponse.json({ error: 'Usuario no autenticado' }, { status: 401 });
+  }
+
+  const usuarioId = session.user.id;
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
   const data = await req.json();
+
   try {
-    await db.update(estadia)
-      .set({
-        cliente_dni: data.cliente_dni,
-        habitacion_id: data.habitacion_id,
-        tipo_habitacion_id: data.tipo_habitacion_id, // 👈 agregado
-        cantidad_personas: Number(data.cantidad_personas),
-        fecha_ingreso: data.fecha_ingreso,
-        fecha_egreso: data.fecha_egreso,
-        cochera: Boolean(data.cochera),
-        desayuno: Boolean(data.desayuno),
-        pension_media: Boolean(data.pension_media),
-        pension_completa: Boolean(data.pension_completa),
-        all_inclusive: Boolean(data.all_inclusive),
-        ropa_blanca: Boolean(data.ropa_blanca),
-        precio_por_noche: parseFloat(data.precio_por_noche),
-        porcentaje_reserva: parseFloat(data.porcentaje_reserva),
-        monto_reserva: parseFloat(data.monto_reserva),
-        total: parseFloat(data.total),
-        estado_id: data.estado_id,
-        canal_id: data.canal_id,
-        observaciones: data.observaciones || '',
-      })
-      .where(eq(estadia.id, id));
+      // 👇 Establecer el claim del usuario en el contexto de esta transacción
+await db.transaction(async (tx) => {
+  await tx.execute(
+    sql.raw(`SET LOCAL "jwt.claims.usuario_id" = '${usuarioId}'`)
+  );
+      // 👇 Hacer el update dentro del mismo contexto
+      await tx
+        .update(estadia)
+        .set({
+          cliente_dni: data.cliente_dni,
+          habitacion_id: data.habitacion_id,
+          tipo_habitacion_id: data.tipo_habitacion_id,
+          cantidad_personas: Number(data.cantidad_personas),
+          fecha_ingreso: data.fecha_ingreso,
+          fecha_egreso: data.fecha_egreso,
+          cochera: Boolean(data.cochera),
+          desayuno: Boolean(data.desayuno),
+          pension_media: Boolean(data.pension_media),
+          pension_completa: Boolean(data.pension_completa),
+          all_inclusive: Boolean(data.all_inclusive),
+          ropa_blanca: Boolean(data.ropa_blanca),
+          precio_por_noche: parseFloat(data.precio_por_noche),
+          porcentaje_reserva: parseFloat(data.porcentaje_reserva),
+          monto_reserva: parseFloat(data.monto_reserva),
+          total: parseFloat(data.total),
+          estado_id: data.estado_id,
+          canal_id: data.canal_id,
+          observaciones: data.observaciones || '',
+        })
+        .where(eq(estadia.id, id));
+    });
 
     return NextResponse.json({ message: 'Estadía actualizada correctamente' });
   } catch (error) {
@@ -147,7 +167,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Error al actualizar estadía' }, { status: 500 });
   }
 }
-
 
 export async function PATCH(req: NextRequest) {
   const { searchParams } = new URL(req.url);

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -14,13 +14,46 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const supabase = createPagesBrowserClient()
 
-    if (error) {
-      setError(error.message)
-    } else {
-      router.push('/dashboard') // redirige después del login
+    // Iniciar sesión y guardar cookie automáticamente
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      setError(signInError.message)
+      return
     }
+
+    const { data: userData, error: getUserError } = await supabase.auth.getUser()
+
+    if (getUserError || !userData?.user?.id || !userData?.user?.email) {
+      setError('No se pudo obtener el usuario')
+      return
+    }
+
+    const userId = userData.user.id
+    const userEmail = userData.user.email
+
+    // Buscar si existe en la tabla `usuario`
+    const { data: usuarioExistente, error: errorBuscar } = await supabase
+      .from('usuario')
+      .select('id')
+      .eq('id', userId)
+      .single()
+
+    if (errorBuscar && errorBuscar.code !== 'PGRST116') {
+      setError('Error al verificar usuario')
+      return
+    }
+
+    // Guardar en localStorage si lo usás más adelante en el frontend
+    localStorage.setItem('usuario_id', userId)
+
+    // Redirigir
+    router.push('/dashboard')
   }
 
   return (

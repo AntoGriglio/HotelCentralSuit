@@ -183,3 +183,12 @@ export const vehiculo = pgTable('vehiculo', {
   cochera_nro: varchar('cochera_nro', { length: 255 }),
   creado_en: timestamp('creado_en').defaultNow(),
 })
+export const bloqueo_unidad = pgTable('bloqueo_unidad', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  unidad_id: uuid('unidad_id').notNull().references(() => unidad_habitacional.id),
+    tipo: text('tipo').notNull(),
+  descripcion: text('descripcion').notNull(),
+  fecha_desde: date('fecha_desde').notNull(),
+  fecha_hasta: date('fecha_hasta').notNull(),
+  creado_en: timestamp('creado_en').defaultNow(),
+});

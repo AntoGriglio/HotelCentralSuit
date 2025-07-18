@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { estadia, estado_estadia, unidad_habitacional, tipo_unidad_habitacional } from '@/db/schema'
+import {
+  estadia,
+  estado_estadia,
+  unidad_habitacional,
+  tipo_unidad_habitacional,
+  bloqueo_unidad
+} from '@/db/schema'
 import { and, eq, gte, lte } from 'drizzle-orm'
 import { addMonths, endOfMonth, format } from 'date-fns'
 
@@ -53,6 +59,16 @@ export async function GET(req: Request) {
       )
     )
 
+  const bloqueos = await db
+    .select()
+    .from(bloqueo_unidad)
+    .where(
+      and(
+        gte(bloqueo_unidad.fecha_hasta, format(desde, 'yyyy-MM-dd')),
+        lte(bloqueo_unidad.fecha_desde, format(hasta, 'yyyy-MM-dd'))
+      )
+    )
+
   const resultado = habitaciones.map((hab) => {
     const estadiasDeHab = estadiasConEstado
       .filter(e => e.habitacion_id === hab.id)
@@ -62,12 +78,21 @@ export async function GET(req: Request) {
         estado: est.estado_nombre?.toLowerCase()
       }))
 
+    const bloqueosDeHab = bloqueos
+      .filter(b => b.unidad_id === hab.id)
+      .map(b => ({
+        desde: b.fecha_desde,
+        hasta: b.fecha_hasta,
+        descripcion: b.descripcion
+      }))
+
     return {
       habitacion_id: hab.id,
       numero: hab.numero,
       nombre: hab.nombre,
-      estadias: estadiasDeHab,
       tipo_habitacion_id: hab.tipo_habitacion_id,
+      estadias: estadiasDeHab,
+      bloqueos: bloqueosDeHab, // 👈 agregado
     }
   })
 

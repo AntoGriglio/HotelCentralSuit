@@ -108,52 +108,62 @@ export default function TablaDisponibilidad() {
                   <td className="border px-2 py-1 font-semibold sticky left-0 bg-white z-10 w-[100px] min-w-[100px]">
                     {hab.numero || hab.nombre || 'Hab'}
                   </td>
-                  {diasDelMes.map((dia) => {
-                    const estadiasDelDia = hab.estadias.filter(
-                      (e: any) => dia >= e.ingreso && dia <= e.egreso
-                    )
+{diasDelMes.map((dia) => {
+  const estadiasDelDia = hab.estadias.filter(
+    (e: any) => dia >= e.ingreso && dia <= e.egreso
+  )
 
-                    const tieneIngreso = hab.estadias.some((e: any) => e.ingreso === dia)
-                    const tieneEgreso = hab.estadias.some((e: any) => e.egreso === dia)
+  const tieneIngreso = hab.estadias.some((e: any) => e.ingreso === dia)
+  const tieneEgreso = hab.estadias.some((e: any) => e.egreso === dia)
 
-                    const baseEstado = estadiasDelDia[0]?.estado
-                    const baseColor =
-                      baseEstado === 'reservado' || baseEstado === 'pagado'
-                        ? '#ef4444'
-                        : baseEstado === 'pendiente'
-                        ? '#fde047'
-                        : baseEstado
-                        ? '#86efac'
-                        : 'transparent'
+  const baseEstado = estadiasDelDia[0]?.estado
+  const baseColor =
+    baseEstado === 'reservado' || baseEstado === 'pagado'
+      ? '#ef4444'
+      : baseEstado === 'pendiente'
+      ? '#fde047'
+      : baseEstado
+      ? '#86efac'
+      : 'transparent'
 
-                    return (
-                      <td
-                        key={`${hab.habitacion_id}-${dia}`}
-                        className="relative border p-0 min-w-[40px] w-[40px] h-[32px] bg-[#86efac]"
-                      >
-                        {(tieneIngreso || tieneEgreso) ? (
-                          <div className="flex w-full h-full">
-                            {tieneIngreso && (
-                              <div
-                                title="Ingreso"
-                                className="absolute top-0 right-0 h-full w-1/2 pointer-events-none z-10"
-                                style={{ backgroundColor: baseColor, opacity: 1 }}
-                              />
-                            )}
-                            {tieneEgreso && (
-                              <div
-                                title="Egreso"
-                                className="absolute top-0 left-0 h-full w-1/2 pointer-events-none z-10"
-                                style={{ backgroundColor: baseColor, opacity: 0.5 }}
-                              />
-                            )}
-                          </div>
-                        ) : baseEstado ? (
-                          <div className="w-full h-full" style={{ backgroundColor: baseColor , opacity: 1}} />
-                        ) : null}
-                      </td>
-                    )
-                  })}
+  const bloqueadoEseDia = hab.bloqueos?.some(
+    (b: any) => dia >= b.desde && dia <= b.hasta
+  )
+
+  return (
+    <td
+      key={`${hab.habitacion_id}-${dia}`}
+      className="relative border p-0 min-w-[40px] w-[40px] h-[32px]"
+    >
+      {(tieneIngreso || tieneEgreso) ? (
+        <div className="flex w-full h-full">
+          {tieneIngreso && (
+            <div
+              title="Ingreso"
+              className="absolute top-0 right-0 h-full w-1/2 pointer-events-none z-10"
+              style={{ backgroundColor: baseColor, opacity: 1 }}
+            />
+          )}
+          {tieneEgreso && (
+            <div
+              title="Egreso"
+              className="absolute top-0 left-0 h-full w-1/2 pointer-events-none z-10"
+              style={{ backgroundColor: baseColor, opacity: 0.5 }}
+            />
+          )}
+        </div>
+      ) : baseEstado ? (
+        <div className="w-full h-full" style={{ backgroundColor: baseColor }} />
+      ) : bloqueadoEseDia ? (
+        <div className="w-full h-full bg-blue-400 opacity-80" title="Bloqueado" />
+      ) : (
+        <div className="w-full h-full bg-[#bbf7d0]" title="Disponible" />
+      )}
+    </td>
+  )
+})}
+
+
                 </tr>
               ))}
           </tbody>

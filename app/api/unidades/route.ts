@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { unidad_habitacional, tipo_unidad_habitacional, tipo_habitacion, precio_habitacion } from '@/db/schema';
-import { eq } from 'drizzle-orm';
-import { desc } from 'drizzle-orm'
+import { eq, desc, sql } from 'drizzle-orm';
+
 
 // POST
 export async function POST(req: Request) {
@@ -35,37 +35,47 @@ export async function POST(req: Request) {
   }
 }
 
-// GET
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id');
+  const conBloqueos = req.nextUrl.searchParams.get('conBloqueos');
+  const hoy = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
   try {
     const query = db
-  .select({
-    id: unidad_habitacional.id,
-    nombre: unidad_habitacional.nombre,
-    piso: unidad_habitacional.piso,
-    capacidad_minima: unidad_habitacional.capacidad_min,
-    capacidad_normal: unidad_habitacional.cantidad_normal,
-    capacidad_maxima: unidad_habitacional.capacidad_max,
-    numero: unidad_habitacional.numero,
-    estado_limpieza: unidad_habitacional.check_limpieza,
-    tipo: tipo_unidad_habitacional.descripcion,
-    tipo_habitacion: tipo_habitacion.nombre,
-    tipo_unidad_id: unidad_habitacional.tipo_unidad_id,
-    tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id,
-    cantidad_habitaciones: unidad_habitacional.cantidad_habitaciones,
-    cantidad_banios: unidad_habitacional.cantidad_banos,
-    camas_matrimonial: unidad_habitacional.camas_matrimonial,
-    camas_individual: unidad_habitacional.camas_individual,
-    metros_cuadrados: unidad_habitacional.metros_cuadrados,
-    balcon: unidad_habitacional.balcon,
-    precio: precio_habitacion.monto,
-  })
-  .from(unidad_habitacional)
-  .leftJoin(tipo_unidad_habitacional, eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id))
-  .leftJoin(tipo_habitacion, eq(unidad_habitacional.tipo_habitacion_id, tipo_habitacion.id))
-  .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
-  .orderBy(desc(precio_habitacion.id))
+      .select({
+        id: unidad_habitacional.id,
+        nombre: unidad_habitacional.nombre,
+        piso: unidad_habitacional.piso,
+        capacidad_minima: unidad_habitacional.capacidad_min,
+        capacidad_normal: unidad_habitacional.cantidad_normal,
+        capacidad_maxima: unidad_habitacional.capacidad_max,
+        numero: unidad_habitacional.numero,
+        estado_limpieza: unidad_habitacional.check_limpieza,
+        tipo: tipo_unidad_habitacional.descripcion,
+        tipo_habitacion: tipo_habitacion.nombre,
+        tipo_unidad_id: unidad_habitacional.tipo_unidad_id,
+        tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id,
+        cantidad_habitaciones: unidad_habitacional.cantidad_habitaciones,
+        cantidad_banios: unidad_habitacional.cantidad_banos,
+        camas_matrimonial: unidad_habitacional.camas_matrimonial,
+        camas_individual: unidad_habitacional.camas_individual,
+        metros_cuadrados: unidad_habitacional.metros_cuadrados,
+        balcon: unidad_habitacional.balcon,
+        precio: precio_habitacion.monto,
+        bloqueada: conBloqueos
+          ? sql`EXISTS (
+              SELECT 1 FROM bloqueo_unidad
+              WHERE bloqueo_unidad.unidad_id = ${unidad_habitacional.id}
+              AND fecha_desde <= ${hoy}
+              AND fecha_hasta >= ${hoy}
+            )`.as('bloqueada')
+          : sql`false`.as('bloqueada'),
+      })
+      .from(unidad_habitacional)
+      .leftJoin(tipo_unidad_habitacional, eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id))
+      .leftJoin(tipo_habitacion, eq(unidad_habitacional.tipo_habitacion_id, tipo_habitacion.id))
+      .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
+      .orderBy(desc(precio_habitacion.id));
 
     if (id) {
       const data = await query.where(eq(unidad_habitacional.id, id));
@@ -79,7 +89,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Error al obtener unidades' }, { status: 500 });
   }
 }
-
 // PUT
 export async function PUT(req: NextRequest) {
   const data = await req.json();
