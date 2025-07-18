@@ -66,8 +66,9 @@ const formatearFecha = (fecha: string) => {
   return fechaLocal.toLocaleDateString('es-AR');
 };
 const formatearFecha1 = (fecha: string) => {
-  return new Date.toLocaleDateString('es-AR');
+  return new Date(fecha).toLocaleDateString('es-AR');
 };
+
 const planillaRef = useRef<HTMLDivElement>(null)
 const ITEMS_POR_PAGINA = 10;
 const calcularNoches = (ingreso: string, egreso: string) => {
@@ -370,7 +371,7 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
     estadiasPaginadas.map((e) => (
       <tr key={e.id} className="border-b hover:bg-[#2C3639]/10">
                 <td className="px-4 py-2">{e.nro_estadia}</td>
-                <td className="px-4 py-2">{formatearFecha(e.fecha_creacion)}</td>
+                <td className="px-4 py-2">{formatearFecha1(e.fecha_creacion)}</td>
                 <td className="px-4 py-2">{e.cliente_nombre}, DNI:{e.cliente_dni ?? '—'}</td>
 
                 <td className="px-4 py-2">{e.habitacion_nombre}</td>
