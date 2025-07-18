@@ -16,8 +16,7 @@ export default function LoginPage() {
 
     const supabase = createPagesBrowserClient()
 
-    // Iniciar sesión y guardar cookie automáticamente
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -28,20 +27,18 @@ export default function LoginPage() {
     }
 
     const { data: userData, error: getUserError } = await supabase.auth.getUser()
+    const user = userData?.user
 
-    if (getUserError || !userData?.user?.id || !userData?.user?.email) {
+    if (getUserError || !user?.id || !user?.email) {
       setError('No se pudo obtener el usuario')
       return
     }
 
-    const userId = userData.user.id
-    const userEmail = userData.user.email
-
-    // Buscar si existe en la tabla `usuario`
-    const { data: usuarioExistente, error: errorBuscar } = await supabase
+    // Verificamos si el usuario existe en Supabase
+    const { error: errorBuscar } = await supabase
       .from('usuario')
       .select('id')
-      .eq('id', userId)
+      .eq('id', user.id)
       .single()
 
     if (errorBuscar && errorBuscar.code !== 'PGRST116') {
@@ -49,10 +46,7 @@ export default function LoginPage() {
       return
     }
 
-    // Guardar en localStorage si lo usás más adelante en el frontend
-    localStorage.setItem('usuario_id', userId)
-
-    // Redirigir
+    localStorage.setItem('usuario_id', user.id)
     router.push('/dashboard')
   }
 
@@ -79,7 +73,6 @@ export default function LoginPage() {
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#374e4e]"
           />
-
           <button
             type="submit"
             className="w-full py-3 bg-white text-[#374e4e] border border-[#374e4e] font-semibold rounded-lg hover:bg-[#2e3f3f] hover:text-white transition-colors"
