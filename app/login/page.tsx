@@ -47,7 +47,8 @@ export default function LoginPage() {
     }
 
     localStorage.setItem('usuario_id', user.id)
-    router.push('/dashboard')
+window.location.href = '/dashboard'
+
   }
 
   return (

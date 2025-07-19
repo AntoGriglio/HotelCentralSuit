@@ -1,23 +1,26 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 import Image from 'next/image'
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
+    const supabase = createPagesBrowserClient()
+
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return router.push('/login')
       setUser(data.user)
+      setLoading(false)
     })
   }, [router])
 
-  if (!user) return null // o spinner
+  if (loading) return null // o spinner
 
   return (
     <div className="relative min-h-screen bg-[#f9f9f9]">
