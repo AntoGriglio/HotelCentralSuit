@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -18,22 +17,25 @@ export default function ListaUnidadesHabitacionales() {
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
   const [tipo, setTipo] = useState('Por grupos');
-  const router = useRouter();
   const [bloqueosVisibles, setBloqueosVisibles] = useState<Record<string, boolean>>({});
+  const router = useRouter();
+
+  // ✅ Mover la función acá afuera del useEffect
+  const fetchUnidades = async () => {
+    const res = await fetch('/api/unidades?conBloqueos=true');
+    const data = await res.json();
+    const alquilablesOrdenados = data
+      .filter((u: any) => u.tipo === 'Alquilable')
+      .sort((a: any, b: any) => a.numero - b.numero);
+    setAlquilables(alquilablesOrdenados);
+    setOcupacionales(data.filter((u: any) => u.tipo === 'Uso comun'));
+  };
 
   useEffect(() => {
-    const fetchUnidades = async () => {
-      const res = await fetch('/api/unidades?conBloqueos=true');
-      const data = await res.json();
-      const alquilablesOrdenados = data
-        .filter((u: any) => u.tipo === 'Alquilable')
-        .sort((a: any, b: any) => a.numero - b.numero);
-      setAlquilables(alquilablesOrdenados);
-      setOcupacionales(data.filter((u: any) => u.tipo === 'Uso comun'));
-    };
     fetchUnidades();
   }, []);
 
+  // ✅ Ahora esta función sí tiene acceso
   const guardarBloqueo = async () => {
     if (!unidadSeleccionada) return;
 
@@ -56,7 +58,7 @@ export default function ListaUnidadesHabitacionales() {
     if (res.ok) {
       alert('Bloqueo guardado con éxito');
       cerrarModal();
-      window.location.reload();
+      await fetchUnidades(); // ya disponible
     } else {
       alert('Error al guardar el bloqueo');
     }
@@ -67,7 +69,7 @@ export default function ListaUnidadesHabitacionales() {
     const res = await fetch(`/api/bloqueos?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       alert('Bloqueo eliminado');
-      window.location.reload();
+      await fetchUnidades(); // ya disponible
     } else {
       alert('Error al eliminar el bloqueo');
     }
@@ -83,7 +85,6 @@ export default function ListaUnidadesHabitacionales() {
     setDesde('');
     setHasta('');
   };
-
   return (
     <div className="p-6 text-[#2C3639] bg-white">
       <h1 className="text-3xl font-bold mb-6">Unidades Habitacionales</h1>

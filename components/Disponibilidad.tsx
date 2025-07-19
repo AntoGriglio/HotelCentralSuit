@@ -14,30 +14,45 @@ export default function Disponibilidad() {
   const [tipoHabitacion, setTipoHabitacion] = useState('');
   const [tipos, setTipos] = useState<any[]>([]);
   const [habitaciones, setHabitaciones] = useState<any[]>([]);
+const buscar = async () => {
+  const params = new URLSearchParams({
+    fecha_ingreso: fechaIngreso,
+    fecha_egreso: fechaEgreso,
+  });
 
-  const buscar = async () => {
-    const params = new URLSearchParams({
-      fecha_ingreso: fechaIngreso,
-      fecha_egreso: fechaEgreso,
-    });
+  if (cantidad) params.append('cantidad_personas', cantidad);
+  if (tipoHabitacion) params.append('tipo_habitacion_id', tipoHabitacion);
 
-    if (cantidad) params.append('cantidad_personas', cantidad);
-    if (tipoHabitacion) params.append('tipo_habitacion_id', tipoHabitacion);
+  try {
+    const res = await fetch(`/api/disponibilidad?${params.toString()}`);
 
-    try {
-      const res = await fetch(`/api/disponibilidad?${params.toString()}`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setHabitaciones(data);
-      } else {
-        console.error('Respuesta inesperada al buscar habitaciones:', data);
-        setHabitaciones([]);
-      }
-    } catch (err) {
-      console.error('Error al buscar habitaciones:', err);
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Error del backend:', errorText);
+      setHabitaciones([]);
+      return;
+    }
+
+    const text = await res.text();
+    if (!text) {
+      console.error('Respuesta vacía del backend');
+      setHabitaciones([]);
+      return;
+    }
+
+    const data = JSON.parse(text);
+    if (Array.isArray(data)) {
+      setHabitaciones(data);
+    } else {
+      console.error('Respuesta inesperada al buscar habitaciones:', data);
       setHabitaciones([]);
     }
-  };
+  } catch (err) {
+    console.error('Error al buscar habitaciones:', err);
+    setHabitaciones([]);
+  }
+};
+
 
   const limpiarFiltros = () => {
     setFechaIngreso('');

@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// ✅ BACKEND MODIFICADO
+// ✅ BACKEND FUNCIONAL CON SQL MANUAL
 import { eq, and, sql, lt, gt } from 'drizzle-orm';
 import { db } from '../../../lib/db';
 import {
-  estadia,
   unidad_habitacional,
   tipo_unidad_habitacional,
   precio_habitacion,
-  tipo_habitacion,
-  bloqueo_unidad
+  tipo_habitacion
 } from '../../../db/schema';
 
 export async function GET(request: Request) {
@@ -28,32 +26,26 @@ export async function GET(request: Request) {
   );
   const personas = parseInt(cantidadPersonas || '0');
 
-  // SUBCONSULTA: habitaciones ocupadas
-  const subqueryEstadias = db
-    .select({ habitacion_id: estadia.habitacion_id })
-    .from(estadia)
-    .where(
-      and(
-        lt(estadia.fecha_ingreso, fechaEgreso),
-        gt(estadia.fecha_egreso, fechaIngreso)
-      )
-    );
-
-  // SUBCONSULTA: unidades bloqueadas
-  const subqueryBloqueos = db
-    .select({ unidad_id: bloqueo_unidad.unidad_id })
-    .from(bloqueo_unidad)
-    .where(
-      and(
-        lt(bloqueo_unidad.fecha_desde, fechaEgreso),
-        gt(bloqueo_unidad.fecha_hasta, fechaIngreso)
-      )
-    );
-
   const condiciones: any[] = [
     eq(tipo_unidad_habitacional.descripcion, 'Alquilable'),
-    sql`${unidad_habitacional.id} NOT IN (${subqueryEstadias})`,
-    sql`${unidad_habitacional.id} NOT IN (${subqueryBloqueos})`,
+    sql.raw(`
+      unidad_habitacional.id NOT IN (
+        SELECT estadia.habitacion_id
+        FROM estadia
+        INNER JOIN estado_estadia ON estadia.estado_id = estado_estadia.id
+        WHERE estadia.fecha_ingreso < '${fechaEgreso}'
+          AND estadia.fecha_egreso > '${fechaIngreso}'
+          AND estado_estadia.nombre IN ('Pendiente', 'Reservado')
+      )
+    `),
+    sql.raw(`
+      unidad_habitacional.id NOT IN (
+        SELECT unidad_id
+        FROM bloqueo_unidad
+        WHERE bloqueo_unidad.fecha_desde < '${fechaEgreso}'
+          AND bloqueo_unidad.fecha_hasta > '${fechaIngreso}'
+      )
+    `)
   ];
 
   if (tipoHabitacionId) {
@@ -108,7 +100,7 @@ export async function GET(request: Request) {
       return {
         ...res,
         total_estadia: total,
-        tipo_id: res.unidad_habitacional.tipo_habitacion_id,
+        tipo_id: res.unidad_habitacional.tipo_habitacion_id
       };
     });
 
