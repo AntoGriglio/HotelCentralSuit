@@ -42,14 +42,16 @@ const [filtroNumeroEstadia, setFiltroNumeroEstadia] = useState('');
 const [filtroNombreHabitacion, setFiltroNombreHabitacion] = useState('');
 const sectionTitleStyle = {
   fontWeight: 'bold',
-  textDecoration: 'underline',
   marginTop: '20px',
   marginBottom: '6px',
+  paddingBottom: '10px',
+  fontSize: '16pt'
 } as const
 const itemStyle = {
-  margin: '2px 0',
+  margin: '3px 1px',
   borderBottom: '1px solid #000',
-  paddingBottom: '2px',
+  paddingBottom: '9px',
+  fontSize:'13pt'
 } as const
 const paragraphStyle = {
   fontSize: '10pt',
@@ -417,9 +419,9 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
   <Download size={16} />
 </button>
 
-
-  {['reservado', 'pagado'].includes(e.estado_nombre?.toLowerCase()) && (
-    <>
+{['reservado', 'pagado'].includes(e.estado_nombre?.toLowerCase()) && (
+  <>
+    {obtenerHuespedesEstadia(e.id).length === 0 && (
       <button
         onClick={() => router.push(`/huesped/nuevo?nro_estadia=${e.nro_estadia}&estadia_id=${e.id}`)}
         title="Agregar huéspedes"
@@ -427,24 +429,25 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
       >
         <Users size={16} />
       </button>
+    )}
 
-      <button
-        onClick={() => setExpandirHuespedes((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
-        title="Ver huéspedes"
-        className="w-9 h-9 flex items-center justify-center rounded bg-[#E5E7EB] hover:bg-[#D1D5DB] text-[#1F2937]"
-      >
-        {expandirHuespedes[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
+    <button
+      onClick={() => setExpandirHuespedes((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
+      title="Ver huéspedes"
+      className="w-9 h-9 flex items-center justify-center rounded bg-[#E5E7EB] hover:bg-[#D1D5DB] text-[#1F2937]"
+    >
+      {expandirHuespedes[e.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+    </button>
 
-      <button
-        onClick={() => router.push(`/vehiculo/nuevo?estadia_id=${e.id}&nro_estadia=${e.nro_estadia}`)}
-        title="Ingresar vehículo"
-        className="w-9 h-9 flex items-center justify-center rounded bg-[#A27B5B] hover:bg-[#8b6244] text-white"
-      >
-        🚗
-      </button>
-    </>
-  )}
+    <button
+      onClick={() => router.push(`/vehiculo/nuevo?estadia_id=${e.id}&nro_estadia=${e.nro_estadia}`)}
+      title="Ingresar vehículo"
+      className="w-9 h-9 flex items-center justify-center rounded bg-[#A27B5B] hover:bg-[#8b6244] text-white"
+    >
+      🚗
+    </button>
+  </>
+)}
 </div>
 {expandirHuespedes[e.id] && (
   <div className="mt-2 text-sm text-[#2C3639] bg-[#f3f4f6] rounded p-2">
@@ -522,7 +525,7 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
     {/* Header con logo y datos de la estadía */}
     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
       <img src="/logo.png" alt="logo" style={{ height: '80px' }} />
-      <div style={{ width: '60%', fontSize: '10.5pt' }}>
+      <div style={{ width: '60%', fontSize: '14.5pt' }}>
         <div style={itemStyle}><strong>Habitación Nº:</strong> {planillaData.unidad?.nombre}</div>
         <div style={itemStyle}><strong>Tipo:</strong> {planillaData.tipo_habitacion?.nombre}</div>
         <div style={itemStyle}><strong>Check in:</strong> {planillaData.estadia.fecha_ingreso}</div>
@@ -535,8 +538,7 @@ return coincideEstado && coincideCliente && coincideNombreCliente && coincideNum
     <div style={itemStyle}><strong>Nombre y apellido:</strong> {planillaData.cliente?.nombre_completo}</div>
     <div style={itemStyle}><strong>Teléfono:</strong> {planillaData.cliente?.telefono} &nbsp;&nbsp;&nbsp; <strong>DNI:</strong> {planillaData.cliente?.dni}</div>
     <div style={itemStyle}><strong>Localidad:</strong> {planillaData.cliente?.localidad} &nbsp;&nbsp;&nbsp; <strong>E-mail:</strong> {planillaData.cliente?.email}</div>
-    <div style={itemStyle}><strong>Dirección:</strong></div>
-    <div style={itemStyle}><strong>Provincia:</strong> {planillaData.cliente?.provincia} &nbsp;&nbsp;&nbsp; <strong>Fecha de nacimiento:</strong></div>
+    <div style={itemStyle}><strong>Provincia:</strong> {planillaData.cliente?.provincia} &nbsp;&nbsp;&nbsp;</div>
     <div style={itemStyle}><strong>Nacionalidad:</strong> Argentina</div>
     <div style={itemStyle}><strong>Patente/marca/modelo/color:</strong> {planillaData.vehiculo ? `${planillaData.vehiculo.patente} / ${planillaData.vehiculo.marca} / ${planillaData.vehiculo.modelo} / ${planillaData.vehiculo.color}` : ''}</div>
     <div style={itemStyle}><strong>Dietas:</strong></div>
