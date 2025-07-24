@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
@@ -87,9 +88,6 @@ setEstadia(prev => ({
   }, [searchParams])
 
   useEffect(() => {
-    fetch('/api/unidades').then(res => res.json()).then(data => {
-      setHabitaciones(data)
-    }).catch(console.error)
 fetch('/api/tipos-habitacion')
   .then(res => res.json())
   .then(setTiposHabitacion)
@@ -119,46 +117,52 @@ fetch('/api/tipos-habitacion')
       }))
     }
   }, [estadia.fechaIngreso, estadia.fechaEgreso, estadia.precioPorNoche, estadia.porcentajeReserva])
-
 useEffect(() => {
-const obtenerDisponibles = async () => {
-  if (!estadia.fechaIngreso || !estadia.fechaEgreso || !estadia.cantidadPersonas) return;
+  const obtenerDisponibles = async () => {
+    if (!estadia.fechaIngreso || !estadia.fechaEgreso || !estadia.cantidadPersonas) return;
 
-  let url = `/api/disponibilidad?fecha_ingreso=${estadia.fechaIngreso}&fecha_egreso=${estadia.fechaEgreso}&cantidad_personas=${estadia.cantidadPersonas}`
-
-  if (estadia.tipoHabitacionId) {
-    url += `&tipo=${estadia.tipoHabitacionId}`
-  }
-
-  try {
-    const res = await fetch(url)
-    const data = await res.json()
-
-    // Si la habitación actual no está en la lista, agregarla
-    const yaIncluida = data.some((h: any) => h.unidad_habitacional?.id === estadia.habitacionId)
-    if (!yaIncluida && estadia.habitacionId) {
-      const todas = await fetch('/api/unidades').then(res => res.json())
-      const actual = todas.find((h: any) => h.unidad_habitacional?.id === estadia.habitacionId)
-      if (actual) {
-        data.push(actual)
-      }
+    let url = `/api/disponibilidad?fecha_ingreso=${estadia.fechaIngreso}&fecha_egreso=${estadia.fechaEgreso}&cantidad_personas=${estadia.cantidadPersonas}`;
+    if (estadia.tipoHabitacionId) {
+      url += `&tipo=${estadia.tipoHabitacionId}`;
     }
 
-    setHabitaciones(data)
-  } catch (err) {
-    console.error('Error al obtener disponibilidad:', err)
-  }
-}
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
 
+      let habitacionesDisponibles = [...data];
 
-  obtenerDisponibles()
+      const yaIncluida = habitacionesDisponibles.some(
+        (h: any) => h.unidad_habitacional?.id === estadia.habitacionId
+      );
+
+      // Si no está incluida, buscarla por ID
+      if (!yaIncluida && estadia.habitacionId) {
+        const resExtra = await fetch(`/api/unidades?id=${estadia.habitacionId}`);
+        const extra = await resExtra.json();
+        if (extra?.length) {
+          habitacionesDisponibles.push(extra[0]);
+          console.log('➡️ Se agregó la habitación seleccionada manualmente:', extra[0].unidad_habitacional?.id);
+        } else {
+          console.warn('⚠️ No se encontró la habitación seleccionada con ID:', estadia.habitacionId);
+        }
+      }
+
+      console.log('✅ habitaciones actualizadas:', habitacionesDisponibles.map(h => h.unidad_habitacional?.id));
+      setHabitaciones(habitacionesDisponibles);
+    } catch (err) {
+      console.error('❌ Error al obtener disponibilidad:', err);
+    }
+  };
+
+  obtenerDisponibles();
 }, [
   estadia.fechaIngreso,
   estadia.fechaEgreso,
   estadia.cantidadPersonas,
-  estadia.tipoHabitacionId
-])
-
+  estadia.tipoHabitacionId,
+  estadia.habitacionId, // por si cambia manualmente
+]);
 
   useEffect(() => {
     const estadoAuto = cliente ? 'pendiente' : 'sin confirmar'
@@ -460,7 +464,6 @@ await fetch('/api/enviar-confirmacion', {
     setEstadia(prev => ({
       ...prev,
       tipoHabitacionId: nuevoTipo,
-      habitacionId: '' // resetear habitación
     }))
   }}
   className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]"
@@ -472,7 +475,7 @@ await fetch('/api/enviar-confirmacion', {
 </select>
 
 
-         <select
+  <select
   value={estadia.habitacionId}
   onChange={(e) => {
     const nuevaHabitacionId = e.target.value
@@ -488,16 +491,13 @@ await fetch('/api/enviar-confirmacion', {
 >
   <option value="">Seleccionar habitación</option>
   {habitaciones
-    .filter(h =>
-      h.unidad_habitacional &&
-      h.unidad_habitacional.id &&
-      h.tipo_habitacion?.id === estadia.tipoHabitacionId
-    )
+    .filter(h => {
+      if (!h.unidad_habitacional?.id) return false
+      if (!estadia.habitacionId) return h.tipo_habitacion?.id === estadia.tipoHabitacionId
+      return h.unidad_habitacional.id === estadia.habitacionId || h.tipo_habitacion?.id === estadia.tipoHabitacionId
+    })
     .map(h => (
-      <option
-        key={h.unidad_habitacional.id}
-        value={h.unidad_habitacional.id}
-      >
+      <option key={h.unidad_habitacional.id} value={h.unidad_habitacional.id}>
         {h.unidad_habitacional.nombre} - Piso {h.unidad_habitacional.piso} - Capacidad {h.unidad_habitacional.cantidad_normal}
       </option>
     ))}
