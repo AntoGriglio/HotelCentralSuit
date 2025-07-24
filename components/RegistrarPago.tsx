@@ -5,7 +5,7 @@
 // Actualizado: RegistrarPago.tsx con soporte para subir comprobante (imagen o PDF) a Supabase
 
 'use client';
-
+ 
 import { useEffect, useState, useRef, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
@@ -14,12 +14,12 @@ import { supabase } from '@/lib/supabaseClient';
 import { formatearMoneda } from '@/lib/formato';
 import InputMoneda from './inputMoneda';
 import Loader from './loader';
-
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 export default function RegistrarPago() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reciboRef = useRef<HTMLDivElement | null>(null);
-
+  const supabase = createPagesBrowserClient()
   const estadiaIdFromUrl = searchParams.get('estadia_id');
   const [estadias, setEstadias] = useState<any[]>([]);
   const [tiposPago, setTiposPago] = useState<any[]>([]);
@@ -248,6 +248,11 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     const montoIngresado = parseFloat(pago.monto || '0');
 
     let comprobanteURL = '';
+    const { data: userData } = await supabase.auth.getUser()
+    if (!userData.user) {
+      alert('Debés iniciar sesión para subir archivos.')
+      throw new Error('Sesión no iniciada')
+    }
     if (pago.comprobantePago) {
       const archivo = pago.comprobantePago;
       const extension = archivo.name.split('.').pop();
