@@ -153,12 +153,20 @@ useEffect(() => {
   estadia?.tipoHabitacionId
 ])
 useEffect(() => {
-  const estadoAuto = cliente ? 'pendiente' : 'sin confirmar'
-  const encontrado = estados.find(e => e.nombre.toLowerCase() === estadoAuto)
-  if (encontrado) {
-    setEstadia((prev: any) => ({ ...prev, estado_id: encontrado.id }))
+  if (!estadia) return
+
+  const estadoActual = estados.find(e => e.id === estadia.estado_id)?.nombre.toLowerCase()
+
+  // Solo autoasignar si el estado actual es vacío, sin confirmar o pendiente
+  if (!estadoActual || estadoActual === 'sin confirmar' || estadoActual === 'pendiente') {
+    const estadoAuto = cliente ? 'pendiente' : 'sin confirmar'
+    const nuevoEstado = estados.find(e => e.nombre.toLowerCase() === estadoAuto)
+    if (nuevoEstado && nuevoEstado.id !== estadia.estado_id) {
+      setEstadia((prev: any) => ({ ...prev, estado_id: nuevoEstado.id }))
+    }
   }
 }, [cliente, estados])
+
 
 // Recalcular precio
 useEffect(() => {

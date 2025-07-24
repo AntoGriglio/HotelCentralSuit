@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // ✅ BACKEND FUNCIONAL CON SQL MANUAL
-import { eq, and, sql, lt, gt } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../../lib/db';
 import {
   unidad_habitacional,
@@ -52,31 +52,32 @@ export async function GET(request: Request) {
     condiciones.push(eq(unidad_habitacional.tipo_habitacion_id, tipoHabitacionId));
   }
 
-  const disponibles = await db
-    .select({
-      unidad_habitacional: {
-        id: unidad_habitacional.id,
-        nombre: unidad_habitacional.nombre,
-        cantidad_normal: unidad_habitacional.cantidad_normal,
-        piso: unidad_habitacional.piso,
-        numero: unidad_habitacional.numero,
-        tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id,
-        precio: precio_habitacion.monto
-      },
-      tipo_unidad_habitacional: {
-        id: tipo_unidad_habitacional.id,
-        descripcion: tipo_unidad_habitacional.descripcion
-      },
-      tipo_habitacion: {
-        id: tipo_habitacion.id,
-        descripcion: tipo_habitacion.nombre
-      }
-    })
-    .from(unidad_habitacional)
-    .innerJoin(tipo_unidad_habitacional, eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id))
-    .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
-    .leftJoin(tipo_habitacion, eq(unidad_habitacional.tipo_habitacion_id, tipo_habitacion.id))
-    .where(and(...condiciones));
+ const disponibles = await db
+  .select({
+    unidad_habitacional: {
+      id: unidad_habitacional.id,
+      nombre: unidad_habitacional.nombre,
+      cantidad_normal: unidad_habitacional.cantidad_normal,
+      piso: unidad_habitacional.piso,
+      numero: unidad_habitacional.numero,
+      tipo_habitacion_id: unidad_habitacional.tipo_habitacion_id,
+      precio: precio_habitacion.monto
+    },
+    tipo_unidad_habitacional: {
+      id: tipo_unidad_habitacional.id,
+      descripcion: tipo_unidad_habitacional.descripcion
+    },
+    tipo_habitacion: {
+      id: tipo_habitacion.id,
+      descripcion: tipo_habitacion.nombre
+    }
+  })
+  .from(unidad_habitacional)
+  .innerJoin(tipo_unidad_habitacional, eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id))
+  .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
+  .leftJoin(tipo_habitacion, eq(unidad_habitacional.tipo_habitacion_id, tipo_habitacion.id))
+  .where(and(...condiciones))
+  .orderBy(unidad_habitacional.numero) // <-- acá agregás el orden
 
   const resultadosConTotal = disponibles
     .filter((res) => {

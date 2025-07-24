@@ -44,7 +44,6 @@ export async function POST(req: Request) {
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id');
   const conBloqueos = req.nextUrl.searchParams.get('conBloqueos');
-  const hoy = new Date().toISOString().slice(0, 10);
 
   try {
     const query = db
@@ -79,7 +78,8 @@ export async function GET(req: NextRequest) {
       .leftJoin(tipo_unidad_habitacional, eq(unidad_habitacional.tipo_unidad_id, tipo_unidad_habitacional.id))
       .leftJoin(tipo_habitacion, eq(unidad_habitacional.tipo_habitacion_id, tipo_habitacion.id))
       .leftJoin(precio_habitacion, eq(precio_habitacion.habitacion_id, unidad_habitacional.id))
-      .orderBy(desc(precio_habitacion.id));
+     .orderBy(unidad_habitacional.piso, unidad_habitacional.numero);
+
 
     const unidades = id ? await query.where(eq(unidad_habitacional.id, id)) : await query;
 

@@ -142,13 +142,10 @@ useEffect(() => {
         const extra = await resExtra.json();
         if (extra?.length) {
           habitacionesDisponibles.push(extra[0]);
-          console.log('➡️ Se agregó la habitación seleccionada manualmente:', extra[0].unidad_habitacional?.id);
         } else {
           console.warn('⚠️ No se encontró la habitación seleccionada con ID:', estadia.habitacionId);
         }
       }
-
-      console.log('✅ habitaciones actualizadas:', habitacionesDisponibles.map(h => h.unidad_habitacional?.id));
       setHabitaciones(habitacionesDisponibles);
     } catch (err) {
       console.error('❌ Error al obtener disponibilidad:', err);

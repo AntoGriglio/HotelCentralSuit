@@ -4,11 +4,8 @@ import { estadia, estado_estadia, unidad_habitacional, pago, cliente } from '@/d
 import { eq, desc } from 'drizzle-orm';
 import { esTransicionValida } from '@/lib/estadiaEstados';
 import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { getSupabaseSession } from '@/lib/supabaseServer';
-import { cookies } from 'next/headers';
 import { sql } from 'drizzle-orm'; 
-import { validate as uuidValidate } from 'uuid';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
@@ -114,10 +111,9 @@ export async function POST(req: NextRequest) {
   }
 }
 export async function PUT(req: NextRequest) {
-  const { supabase, session, res, error } = await getSupabaseSession(req);
+  const {  session} = await getSupabaseSession(req);
 
   if (!session?.user?.id) {
-    console.log('Sesión no encontrada o inválida', error);
     return NextResponse.json({ error: 'Usuario no autenticado' }, { status: 401 });
   }
 

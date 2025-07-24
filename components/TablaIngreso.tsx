@@ -3,8 +3,6 @@
 'use client'
 
 import { useState } from 'react'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
 
 export default function TablaIngresos() {
   const [desde, setDesde] = useState('')
@@ -18,7 +16,10 @@ export default function TablaIngresos() {
     const json = await res.json()
     setDatos(json)
   }
-
+const formatearFecha = (fecha: string) => {
+  const fechaLocal = new Date(`${fecha}T12:00:00`); // 👈 fuerza el mediodía, evita desfasajes
+  return fechaLocal.toLocaleDateString('es-AR');
+};
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Reporte de Ingresos</h1>
@@ -57,8 +58,8 @@ export default function TablaIngresos() {
                 <td className="border px-2">{item.cliente_nombre}</td>
                 <td className="border px-2">{item.unidad_nombre}</td>
                 <td className="border px-2">{item.tipo_habitacion}</td>
-                <td className="border px-2">{format(new Date(item.fecha_ingreso), 'dd/MM/yyyy', { locale: es })}</td>
-                <td className="border px-2">{format(new Date(item.fecha_salida), 'dd/MM/yyyy', { locale: es })}</td>
+                <td className="border px-2">{formatearFecha(item.fecha_ingreso)}</td>
+                <td className="border px-2">{formatearFecha(item.fecha_salida)}</td>
                 <td className="border px-2 text-right">${item.total?.toFixed(2)}</td>
               </tr>
             ))}
