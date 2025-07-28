@@ -124,7 +124,7 @@ export default function TablaDisponibilidad() {
       ? '#fde047'
       : baseEstado
       ? '#86efac'
-      : 'transparent'
+      : 'transparen'
 
   const bloqueadoEseDia = hab.bloqueos?.some(
     (b: any) => dia >= b.desde && dia <= b.hasta

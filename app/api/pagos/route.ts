@@ -4,10 +4,6 @@ import { pago, estadia, tipo_pago } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { obtenerEstadosPorNombre } from '@/lib/estadoHelpers';
 
-const TIPOS_PAGO = {
-  RESERVA: '1b234452-4e8c-42f2-a168-13e286ee3a51',
-  SALDO_TOTAL: 'ac86bb97-f2a0-4f75-a22f-784891ba486c', // <-- actualizá esto con el UUID real
-};
 
 export async function POST(req: Request) {
   try {
@@ -59,7 +55,7 @@ export async function POST(req: Request) {
       await db.update(estadia)
         .set({ estado_id: estadoPagado })
         .where(eq(estadia.id, data.estadia_id));
-    } else if (data.tipo_pago_id === TIPOS_PAGO.RESERVA) {
+    } else {
       if (!estadoReservado) {
         return NextResponse.json({ error: 'Estado "reservado" no definido' }, { status: 500 });
       }
