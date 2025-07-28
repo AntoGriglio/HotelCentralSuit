@@ -28,16 +28,17 @@ export async function GET(request: Request) {
 
   const condiciones: any[] = [
     eq(tipo_unidad_habitacional.descripcion, 'Alquilable'),
-    sql.raw(`
-      unidad_habitacional.id NOT IN (
-        SELECT estadia.habitacion_id
-        FROM estadia
-        INNER JOIN estado_estadia ON estadia.estado_id = estado_estadia.id
-        WHERE estadia.fecha_ingreso < '${fechaEgreso}'
-          AND estadia.fecha_egreso > '${fechaIngreso}'
-          AND estado_estadia.nombre IN ('Pendiente', 'Reservado')
-      )
-    `),
+  sql.raw(`
+  unidad_habitacional.id NOT IN (
+    SELECT estadia.habitacion_id
+    FROM estadia
+    INNER JOIN estado_estadia ON estadia.estado_id = estado_estadia.id
+    WHERE estadia.fecha_ingreso < '${fechaEgreso}'
+      AND estadia.fecha_egreso > '${fechaIngreso}'
+      AND estado_estadia.nombre IN ('Pendiente', 'Reservado', 'Pagado')
+  )
+`)
+,
     sql.raw(`
       unidad_habitacional.id NOT IN (
         SELECT unidad_id
