@@ -44,8 +44,13 @@ export default function LoginPage() {
       return
     }
 
-    localStorage.setItem('usuario_id', user.id)
-window.location.href = '/dashboard'
+localStorage.setItem('usuario_id', user.id);
+
+// 🔍 Auditar login
+await fetch('/api/auth/auditar-login', { method: 'POST' });
+
+// Redireccionar
+window.location.href = '/dashboard';
 
   }
 

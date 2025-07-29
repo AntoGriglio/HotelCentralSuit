@@ -1,4 +1,4 @@
-import { pgTable, uuid, serial, varchar, integer, boolean, timestamp, date, doublePrecision, text } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, serial, varchar, integer, boolean, timestamp, date, doublePrecision, text, jsonb } from 'drizzle-orm/pg-core';
 
 // Tabla cliente
 export const cliente = pgTable('cliente', {
@@ -191,4 +191,13 @@ export const bloqueo_unidad = pgTable('bloqueo_unidad', {
   fecha_desde: date('fecha_desde').notNull(),
   fecha_hasta: date('fecha_hasta').notNull(),
   creado_en: timestamp('creado_en').defaultNow(),
+});
+export const auditoria = pgTable('auditoria', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tabla: text('tabla').notNull(),              
+  accion: text('accion').notNull(),         
+  registro_id: uuid('registro_id'),             
+  usuario_id: uuid('usuario_id'),              
+  datos: jsonb('datos'),                       
+  fecha: timestamp('fecha', { withTimezone: true }).defaultNow(), 
 });
