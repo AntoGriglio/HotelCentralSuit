@@ -1,12 +1,13 @@
-/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable prefer-const */
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
+import Loader from './loader'
 
 interface Huesped {
   id: string
@@ -27,6 +28,7 @@ export default function RegistrarHuespedesPage() {
   const [cantidad, setCantidad] = useState(0)
   const [huespedes, setHuespedes] = useState<Huesped[]>([])
   const [tab, setTab] = useState(0)
+  const [cargando, setCargando] = useState(false)
 
   useEffect(() => {
     if (!estadiaId) return
@@ -64,7 +66,7 @@ export default function RegistrarHuespedesPage() {
           foto_dni_frente: null,
           foto_dni_dorso: null,
         }))
-
+setCargando(false)
         setHuespedes([primerHuesped, ...restantes])
       })
   }, [estadiaId])
@@ -82,9 +84,7 @@ export default function RegistrarHuespedesPage() {
       h.nombre_completo &&
       h.dni &&
       h.fecha_nacimiento &&
-      h.sexo &&
-      h.foto_dni_frente &&
-      h.foto_dni_dorso
+      h.sexo
   )
 
   const subirArchivo = async (file: File, nombre: string) => {
@@ -114,11 +114,7 @@ export default function RegistrarHuespedesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!todosCompletos) {
-      alert('Completá todos los campos y subí las imágenes de todos los huéspedes.')
-      return
-    }
+    setCargando(true)
 
     const formData = new FormData()
     formData.append('estadia_id', estadiaId ?? '')
@@ -135,6 +131,7 @@ export default function RegistrarHuespedesPage() {
           urlDorso = await subirArchivo(h.foto_dni_dorso, `dorso_${h.dni}`)
       } catch (err) {
         alert(`Error al subir imágenes del huésped ${i + 1}.`)
+        setCargando(false)
         return
       }
 
@@ -151,19 +148,26 @@ export default function RegistrarHuespedesPage() {
       body: formData,
     })
 
+
+
     if (res.ok) {
+     
       router.push('/estadias')
+           setCargando(false)
     } else {
       alert('Error al guardar los huéspedes')
     }
   }
 
-  if (!estadiaId || huespedes.length === 0) {
-    return <div className="p-4">Cargando formulario...</div>
-  }
+ if (!estadiaId || huespedes.length === 0) {
+  return <div className="p-4"><Loader /></div>
+}
 
-  return (
-    <div className="max-w-4xl mx-auto p-6 bg-[#F3EFE0] rounded-xl shadow text-black">
+return (
+  <div className="relative">
+    {cargando && <Loader />}
+
+    <div className="max-w-4xl mx-auto p-6 bg-[#F3EFE0] rounded-xl shadow text-black relative z-10">
       <h2 className="text-2xl font-semibold text-center mb-6">Registrar Huéspedes</h2>
 
       {/* Tabs */}
@@ -171,7 +175,10 @@ export default function RegistrarHuespedesPage() {
         {huespedes.map((_, i) => (
           <button
             key={i}
-            className={`px-4 py-1 rounded-full text-sm font-medium ${tab === i ? 'bg-[#A27B5B] text-black' : 'bg-gray-200 text-gray-700'}`}
+            type="button"
+            className={`px-4 py-1 rounded-full text-sm font-medium ${
+              tab === i ? 'bg-[#A27B5B] text-black' : 'bg-gray-200 text-gray-700'
+            }`}
             onClick={() => setTab(i)}
           >
             Huésped {i + 1}
@@ -217,7 +224,7 @@ export default function RegistrarHuespedesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm">DNI frente</label>
+                <label className="text-sm">DNI frente (opcional)</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -230,7 +237,7 @@ export default function RegistrarHuespedesPage() {
                 )}
               </div>
               <div>
-                <label className="text-sm">DNI dorso</label>
+                <label className="text-sm">DNI dorso (opcional)</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -248,14 +255,18 @@ export default function RegistrarHuespedesPage() {
 
         <button
           type="submit"
-          disabled={!todosCompletos}
+          disabled={!todosCompletos || cargando}
           className={`w-full mt-6 py-3 rounded-md text-white ${
-            todosCompletos ? 'bg-[#3F4E4F] hover:bg-[#2C3639]' : 'bg-gray-400 cursor-not-allowed'
+            todosCompletos && !cargando
+              ? 'bg-[#3F4E4F] hover:bg-[#2C3639]'
+              : 'bg-gray-400 cursor-not-allowed'
           }`}
         >
-          Guardar huéspedes
+          {cargando ? 'Guardando...' : 'Guardar huéspedes'}
         </button>
       </form>
     </div>
-  )
+  </div>
+)
+
 }
