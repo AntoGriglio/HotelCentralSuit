@@ -295,7 +295,8 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         monto: montoIngresado,
         comprobante_pago: comprobanteURL,
         fecha_pago: pago.fechaPago
-      })
+      }),
+     credentials: 'include', 
     });
 
   if (res.ok) {

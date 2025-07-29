@@ -76,37 +76,50 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Error al obtener estadía(s)' }, { status: 500 });
   }
 }
+
 export async function POST(req: NextRequest) {
   const data = await req.json();
+  const { session } = await getSupabaseSession(req);
+
+  // 👇 Usuario por defecto si no hay sesión activa
+  const usuarioId = session?.user?.id || '846126e6-763d-4988-ba3f-1c5fb698bbba'; // Reemplazá por el UUID real del "usuario genérico"
+
   try {
-    const result = await db.insert(estadia).values({
-      cliente_dni: data.cliente_dni,
-      habitacion_id: data.habitacion_id,
-      tipo_habitacion_id: data.tipo_habitacion_id,
-      cantidad_personas: Number(data.cantidad_personas),
-      fecha_ingreso: data.fecha_ingreso,
-      fecha_egreso: data.fecha_egreso,
-      cochera: Boolean(data.cochera),
-      desayuno: Boolean(data.desayuno),
-      pension_media: Boolean(data.pension_media),
-      pension_completa: Boolean(data.pension_completa),
-      all_inclusive: Boolean(data.all_inclusive),
-      ropa_blanca: Boolean(data.ropa_blanca),
-      precio_por_noche: parseFloat(data.precio_por_noche),
-      porcentaje_reserva: parseFloat(data.porcentaje_reserva),
-      monto_reserva: parseFloat(data.monto_reserva),
-      total: parseFloat(data.total),
-      estado_id: data.estado_id,
-      canal_id: data.canal_id,
-      observaciones: data.observaciones || '',
-      nombre: data.nombre || '',
-      telefono: data.telefono || '',
+    const result = await db.transaction(async (tx) => {
+      await tx.execute(
+        sql.raw(`SET LOCAL "jwt.claims.usuario_id" = '${usuarioId}'`)
+      );
 
-    }).returning({ id: estadia.id, nro_estadia: estadia.nro_estadia });
+      const insertado = await tx.insert(estadia).values({
+        cliente_dni: data.cliente_dni,
+        habitacion_id: data.habitacion_id,
+        tipo_habitacion_id: data.tipo_habitacion_id,
+        cantidad_personas: Number(data.cantidad_personas),
+        fecha_ingreso: data.fecha_ingreso,
+        fecha_egreso: data.fecha_egreso,
+        cochera: Boolean(data.cochera),
+        desayuno: Boolean(data.desayuno),
+        pension_media: Boolean(data.pension_media),
+        pension_completa: Boolean(data.pension_completa),
+        all_inclusive: Boolean(data.all_inclusive),
+        ropa_blanca: Boolean(data.ropa_blanca),
+        precio_por_noche: parseFloat(data.precio_por_noche),
+        porcentaje_reserva: parseFloat(data.porcentaje_reserva),
+        monto_reserva: parseFloat(data.monto_reserva),
+        total: parseFloat(data.total),
+        estado_id: data.estado_id,
+        canal_id: data.canal_id,
+        observaciones: data.observaciones || '',
+        nombre: data.nombre || '',
+        telefono: data.telefono || '',
+      }).returning({ id: estadia.id, nro_estadia: estadia.nro_estadia });
 
-    return NextResponse.json(result[0]); // 👈 Devolvemos la estadía insertada
+      return insertado[0];
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error(error);
+    console.error('[ERROR POST /api/estadias]', error);
     return NextResponse.json({ error: 'Error al registrar estadía' }, { status: 500 });
   }
 }
@@ -125,7 +138,6 @@ export async function PUT(req: NextRequest) {
   const data = await req.json();
 
   try {
-      // 👇 Establecer el claim del usuario en el contexto de esta transacción
 await db.transaction(async (tx) => {
   await tx.execute(
     sql.raw(`SET LOCAL "jwt.claims.usuario_id" = '${usuarioId}'`)
