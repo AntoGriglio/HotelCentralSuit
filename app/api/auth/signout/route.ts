@@ -37,5 +37,5 @@ export async function POST(req: NextRequest) {
 
   await supabase.auth.signOut();
 
-  return NextResponse.redirect(new URL('/', process.env.NEXTAUTH_URL));
+return NextResponse.redirect(new URL(process.env.NEXTAUTH_URL!));
 }
