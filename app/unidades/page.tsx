@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -107,6 +109,7 @@ export default function ListaUnidadesHabitacionales() {
                 <th className="px-4 py-2">Nombre</th>
                 <th className="px-4 py-2">Piso</th>
                 <th className="px-4 py-2">Tipo</th>
+                 <th className="px-4 py-2">Precio promedio</th>
                 <th className="px-4 py-2">Acciones</th>
               </tr>
             </thead>
@@ -125,6 +128,7 @@ export default function ListaUnidadesHabitacionales() {
                     <td className="px-4 py-2">{u.nombre}</td>
                     <td className="px-4 py-2">{u.piso}</td>
                     <td className="px-4 py-2">{u.tipo_habitacion || '-'}</td>
+                    <td className="px-4 py-2">{formatearMoneda(u.precio) || '-'}</td>
                     <td className="px-4 py-2">
                       <button onClick={() => router.push(`/unidades/editar?id=${u.id}`)} className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
                         Editar

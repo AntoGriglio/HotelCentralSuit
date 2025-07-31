@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 import {
   unidad_habitacional,
-  tipo_unidad_habitacional,
-  tipo_habitacion,
   precio_habitacion,
-  bloqueo_unidad,
-} from '@/db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+  tipo_habitacion,
+  tipo_unidad_habitacional,
+  item_precio,
+  precio,
+  bloqueo_unidad
+} from '@/db/schema'
+import { eq, and, sql, desc } from 'drizzle-orm'
 
 // POST
 export async function POST(req: Request) {
@@ -104,10 +106,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Error al obtener unidades' }, { status: 500 });
   }
 }
-
-// PUT
 export async function PUT(req: NextRequest) {
   const data = await req.json();
+
+  // 1. Actualizar la unidad habitacional
   await db.update(unidad_habitacional)
     .set({
       tipo_unidad_id: data.tipoUnidadId,
@@ -128,5 +130,71 @@ export async function PUT(req: NextRequest) {
     })
     .where(eq(unidad_habitacional.id, data.id));
 
-  return NextResponse.json({ message: 'Unidad actualizada' });
+  // 2. Buscar si es tipo "Alquilable"
+  const tipoUnidadRes = await db
+    .select()
+    .from(tipo_unidad_habitacional)
+    .where(eq(tipo_unidad_habitacional.id, data.tipoUnidadId));
+
+  const tipoUnidad = tipoUnidadRes[0];
+
+  if (tipoUnidad?.descripcion === 'Alquilable' && data.tipoHabitacionId && data.cantidadNormal) {
+    const capacidad = parseInt(data.cantidadNormal, 10);
+
+    // 3. Buscar nombre del tipo de habitación
+    const tipoHabitacionRes = await db
+      .select()
+      .from(tipo_habitacion)
+      .where(eq(tipo_habitacion.id, data.tipoHabitacionId));
+
+    const tipoHabitacion = tipoHabitacionRes[0];
+    const nombreTipo = tipoHabitacion?.nombre || '';
+
+    // 4. Buscar item_precio con ese nombre
+    const itemRes = await db
+      .select()
+      .from(item_precio)
+      .where(eq(item_precio.nombre, nombreTipo));
+
+    const item = itemRes[0];
+
+    if (item) {
+      // 5. Buscar precio vigente
+      const precioBaseRes = await db
+        .select()
+        .from(precio)
+        .where(and(
+          eq(precio.item_id, item.id),
+          sql`now() BETWEEN ${precio.desde} AND COALESCE(${precio.hasta}, now())`
+        ));
+
+      const precioBase = precioBaseRes[0];
+
+      if (precioBase) {
+        const nuevoMonto = precioBase.monto * capacidad;
+const precioExistente = await db
+  .select()
+  .from(precio_habitacion)
+  .where(eq(precio_habitacion.habitacion_id, data.id));
+
+if (precioExistente.length > 0) {
+  await db.update(precio_habitacion)
+    .set({
+      monto: nuevoMonto,
+      fecha_actualizacion: new Date(),
+    })
+    .where(eq(precio_habitacion.habitacion_id, data.id));
+} else {
+  await db.insert(precio_habitacion).values({
+    habitacion_id: data.id,
+    monto: nuevoMonto,
+    fecha_actualizacion: new Date(),
+  });
+}
+
+      }
+    }
+  }
+
+  return NextResponse.json({ message: 'Unidad actualizada y precios recalculados' });
 }
