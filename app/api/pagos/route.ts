@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
         tipo_pago_id: data.tipo_pago_id,
         fecha_pago: new Date(data.fecha_pago),
         comprobante_pago: data.comprobante_pago || null,
+        forma_pago_id:data.forma_pago_id,
         monto: Number(data.monto),
       });
 

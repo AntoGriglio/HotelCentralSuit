@@ -5,9 +5,10 @@ import { useState } from 'react'
 import TablaDisponibilidad from '@/components/TablaDisponibilidad'
 import TablaIngresos from '@/components/TablaIngreso'
 import TablaEgresos from '@/components/TablaEgresos'
+import TablaPagos from '@/components/TablaPagos'
 
 export default function ReportesPage() {
-  const [vista, setVista] = useState<'disponibilidad' | 'ingresos' | 'egresos'>('disponibilidad')
+  const [vista, setVista] = useState<'disponibilidad' | 'ingresos' | 'egresos' | 'pagos'>('disponibilidad')
 
   return (
     <main className="p-4 bg-white text-black">
@@ -23,11 +24,15 @@ export default function ReportesPage() {
         <button onClick={() => setVista('egresos')} className={`px-4 py-2 rounded ${vista === 'egresos' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
           Egresos
         </button>
+                <button onClick={() => setVista('pagos')} className={`px-4 py-2 rounded ${vista === 'pagos' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+          Pagos
+        </button>
       </div>
 
       {vista === 'disponibilidad' && <TablaDisponibilidad />}
       {vista === 'ingresos' && <TablaIngresos />}
       {vista === 'egresos' && <TablaEgresos />}
+        {vista === 'pagos' && <TablaPagos />}
     </main>
   )
 }

@@ -167,45 +167,34 @@ useEffect(() => {
   }
 }, [cliente, estados])
 
-
-// Recalcular precio
 useEffect(() => {
-  const calcular = async () => {
-    if (
-      !estadia?.habitacion_id ||
-      !estadia?.cantidad_personas ||
-      !estadia?.fecha_ingreso ||
-      !estadia?.fecha_egreso
-    ) return
+  if (!estadia?.precio_por_noche || !estadia?.fecha_ingreso || !estadia?.fecha_egreso || !estadia?.cantidad_personas) return;
 
-    const resultado = await obtenerPrecioConExtras(estadia, habitaciones, precioEditado)
-    if (!resultado) return
+  const noches = Math.ceil(
+    (new Date(estadia.fecha_egreso).getTime() - new Date(estadia.fecha_ingreso).getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
 
-    setCantidadNoches(resultado.noches)
-    setEstadia((prev: any) => ({
-      ...prev,
-      precio_por_noche: resultado.precio_por_noche,
-      total: resultado.total,
-      monto_reserva: resultado.monto_reserva,
-      porcentaje_reserva: resultado.porcentaje_reserva
-    }))
-  }
+  if (noches <= 0) return;
 
-  calcular()
+  const precio = parseFloat(estadia.precio_por_noche) || 0;
+  const total = noches * precio;
+  const porcentaje = parseFloat(estadia.porcentaje_reserva) || 30;
+  const monto_reserva = (total * porcentaje) / 100;
+
+  setCantidadNoches(noches);
+  setEstadia((prev: any) => ({
+    ...prev,
+    total: total.toFixed(2),
+    monto_reserva: monto_reserva.toFixed(2),
+  }));
 }, [
-  estadia?.habitacion_id,
-  estadia?.cantidad_personas,
+  estadia?.precio_por_noche,
   estadia?.fecha_ingreso,
   estadia?.fecha_egreso,
-  estadia?.desayuno,
-  estadia?.pension_media,
-  estadia?.pension_completa,
-  estadia?.all_inclusive,
-  estadia?.cochera,
-  estadia?.ropaBlanca,
-  precioEditado,
-  habitaciones.length
-])
+  estadia?.cantidad_personas,
+  estadia?.porcentaje_reserva,
+]);
 
 // Cambio manual del tipo habitación
 const handleTipoHabitacionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -287,6 +276,28 @@ const obtenerPrecioConExtras = async (datos: any, habitaciones: any[], precioEdi
       console.error('Error al buscar cliente:', error)
     }
   }
+const calcularPrecio = async () => {
+  setCargando(true)
+  if (
+    !estadia?.habitacion_id ||
+    !estadia?.cantidad_personas ||
+    !estadia?.fecha_ingreso ||
+    !estadia?.fecha_egreso
+  ) return
+
+  const resultado = await obtenerPrecioConExtras(estadia, habitaciones, precioEditado)
+  if (!resultado) return
+
+  setCantidadNoches(resultado.noches)
+  setEstadia((prev: any) => ({
+    ...prev,
+    precio_por_noche: resultado.precio_por_noche,
+    total: resultado.total,
+    monto_reserva: resultado.monto_reserva,
+    porcentaje_reserva: resultado.porcentaje_reserva
+  }))
+  setCargando(false)
+}
 
   const registrarNuevoCliente = async () => {
     try {
@@ -484,13 +495,22 @@ if (cargando) return <Loader />
           <input type="date" value={estadia.fecha_ingreso} onChange={(e) => setEstadia({ ...estadia, fecha_ingreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
            <label className="block text-[#2C3639] mb-1">Fecha Egreso</label> 
           <input type="date" value={estadia.fecha_egreso} onChange={(e) => setEstadia({ ...estadia, fecha_egreso: e.target.value })} className="w-full p-2 border border-[#A27B5B] rounded text-[#2C3639]" />
+          <button
+  type="button"
+  onClick={calcularPrecio}
+  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+>
+  Calcular Precio
+</button>
+
            <label className="block text-[#2C3639] mb-1">Precio por noche</label> 
-             <InputMoneda
+   <InputMoneda
   valorInicial={estadia.precio_por_noche}
   onCambio={(nuevoValor) => {
-    setEstadia({ ...estadia, precio_por_noche: nuevoValor.toString() })
-  setPrecioEditado(true)
+    setEstadia({ ...estadia, precio_por_noche: nuevoValor.toString() });
+    setPrecioEditado(true);
   }}
+
   className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
 />
            <label className="block text-[#2C3639] mb-1">Porcentaje Reserva</label> 

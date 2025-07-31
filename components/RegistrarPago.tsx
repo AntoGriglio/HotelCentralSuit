@@ -31,14 +31,15 @@ export default function RegistrarPago() {
   const [habitacionNumero, setHabitacionNumero] = useState('');
 const [clienteEmail, setClienteEmail] = useState('');
 
-  const [pago, setPago] = useState({
-    estadiaId: '',
-    tipoPagoId: '',
-    formaPagoId: '',
-    monto: '',
-    comprobantePago: null as File | null,
-    fechaPago: new Date().toISOString().split('T')[0],
-  });
+const [pago, setPago] = useState({
+  estadiaId: '',
+  tipoPagoId: '',
+  forma_pago_id: '', // 👈 usar este nombre directamente
+  monto: '',
+  comprobantePago: null as File | null,
+  fechaPago: new Date().toISOString().split('T')[0],
+});
+
 
   const [pagosEstadia, setPagosEstadia] = useState<any[]>([]);
 const [cargando, setCargando] = useState(true)
@@ -152,7 +153,7 @@ const generarPDF = async () => {
   if (!clienteNombre || !habitacionNumero || !pago.monto) return
 
   const tipoPagoDesc = tiposPago.find(tp => tp.id === pago.tipoPagoId)?.descripcion || ''
-  const formaPagoDesc = formasPago.find(fp => fp.id === pago.formaPagoId)?.descripcion || ''
+  const formaPagoDesc = formasPago.find(fp => fp.id === pago.forma_pago_id)?.descripcion || ''
   const estadiaSeleccionada = estadias.find(e => e.id === pago.estadiaId)
   if (!estadiaSeleccionada) return
 
@@ -291,7 +292,7 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
       body: JSON.stringify({
         estadia_id: pago.estadiaId,
         tipo_pago_id: pago.tipoPagoId,
-        forma_pago_id: pago.formaPagoId,
+        forma_pago_id: pago.forma_pago_id,
         monto: montoIngresado,
         comprobante_pago: comprobanteURL,
         fecha_pago: pago.fechaPago
@@ -368,8 +369,8 @@ if (cargando) return <Loader/>
             <span className="text-[#2C3639]">Forma de pago</span>
             <select
               required
-              value={pago.formaPagoId}
-              onChange={(e) => setPago({ ...pago, formaPagoId: e.target.value })}
+              value={pago.forma_pago_id}
+              onChange={(e) => setPago({ ...pago, forma_pago_id: e.target.value })}
               className="w-full mt-1 p-2 border border-[#A27B5B] rounded text-[#2C3639]"
             >
               <option value="">Seleccione forma</option>
