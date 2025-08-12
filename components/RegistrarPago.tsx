@@ -156,17 +156,20 @@ const generarPDF = async () => {
   const formaPagoDesc = formasPago.find(fp => fp.id === pago.forma_pago_id)?.descripcion || ''
   const estadiaSeleccionada = estadias.find(e => e.id === pago.estadiaId)
   if (!estadiaSeleccionada) return
-
-  const fechaIngreso = new Date(estadiaSeleccionada.fecha_ingreso).toLocaleDateString('es-AR')
-  const fechaEgreso = new Date(estadiaSeleccionada.fecha_egreso).toLocaleDateString('es-AR')
-
+const formatearFecha = (fecha: string) => {
+  const fechaLocal = new Date(`${fecha}T12:00:00`); // 👈 fuerza el mediodía, evita desfasajes
+  return fechaLocal.toLocaleDateString('es-AR');
+};
+  const fechaIngreso = formatearFecha(estadiaSeleccionada.fecha_ingreso)
+  const fechaEgreso = formatearFecha(estadiaSeleccionada.fecha_egreso)
+console.log('fecha',fechaEgreso,fechaIngreso)
   const conceptoTexto = tipoPagoDesc.includes('Reserva')
     ? `Reserva de estadía desde ${fechaIngreso} hasta ${fechaEgreso}`
     : `Pago correspondiente a estadía desde ${fechaIngreso} hasta ${fechaEgreso}`
 
-  const fechaPagoFormateada = new Date(pago.fechaPago).toLocaleDateString('es-AR')
+  const fechaPagoFormateada = formatearFecha(pago.fechaPago)
   const montoFormateado = `$${parseFloat(pago.monto).toFixed(2)}`
-
+console.log('aa',fechaPagoFormateada)
   const pdf = new jsPDF({ unit: 'pt', format: 'a4' })
   const pageWidth = pdf.internal.pageSize.getWidth()
   const margin = 50
