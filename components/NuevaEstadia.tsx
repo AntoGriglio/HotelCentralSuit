@@ -537,6 +537,7 @@ await fetch('/api/enviar-confirmacion', {
    <InputMoneda
     valorInicial={estadia.montoReserva}
    onCambio={(nuevoValor) => setEstadia({ ...estadia, montoReserva: nuevoValor.toString() })}
+   editable={false}
     className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
   />
 </div>
@@ -546,6 +547,7 @@ await fetch('/api/enviar-confirmacion', {
   <InputMoneda
     valorInicial={estadia.total}
    onCambio={(nuevoValor) => setEstadia({ ...estadia, total: nuevoValor.toString() })}
+   editable={false}
     className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
   />
 </div>

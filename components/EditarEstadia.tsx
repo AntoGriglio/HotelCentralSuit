@@ -597,6 +597,7 @@ export default function EditarEstadia() {
               setEstadia({ ...estadia, monto_reserva: nuevoValor.toString() })
               setPrecioEditado(true)
             }}
+            editable={false}
             className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
           />
 
@@ -607,7 +608,8 @@ export default function EditarEstadia() {
               setEstadia({ ...estadia, total: nuevoValor.toString() })
               setPrecioEditado(true)
             }}
-            className="w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
+            editable={false} 
+            className=" disable w-full p-2 pl-6 border border-[#A27B5B] rounded text-[#2C3639]"
           />
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 text-[#2C3639]">

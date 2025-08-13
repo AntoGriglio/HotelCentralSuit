@@ -6,10 +6,12 @@ export default function InputMoneda({
   valorInicial = '',
   onCambio,
   className = '',
+  editable = true, // 🔹 nuevo parámetro
 }: {
   valorInicial?: string | number
   onCambio: (valor: number) => void
   className?: string
+  editable?: boolean
 }) {
   const [valor, setValor] = useState('')
 
@@ -37,7 +39,8 @@ export default function InputMoneda({
     <input
       type="text"
       value={valor}
-      onChange={handleChange}
+      onChange={editable ? handleChange : undefined} // 🔹 solo cambia si es editable
+      readOnly={!editable} // 🔹 así puede copiar pero no escribir
       className={className}
       placeholder="Ej: $ 1.000.000"
     />
