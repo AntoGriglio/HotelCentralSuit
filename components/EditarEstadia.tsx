@@ -38,9 +38,11 @@ export default function EditarEstadia() {
     nombre_completo: '',
     email: '',
     telefono: '',
-    localidad: ''
+    localidad: '',
+    pais:'',
+    provincia:''
   })
-
+const [paises, setPaises] = useState<string[]>([])
   // --------- HELPERS ----------
   const normalizeHabitacion = (h: any) => ({
     id: String(h.id ?? h.unidad_habitacional?.id ?? ''),
@@ -117,6 +119,30 @@ export default function EditarEstadia() {
     fetch('/api/canales').then(res => res.json()).then(setCanales)
     fetch('/api/tipos-habitacion').then(res => res.json()).then(setTiposHabitacion)
   }, [])
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  setNuevoCliente(prev => ({
+    ...prev,
+    [name]: value,
+    ...(name === 'pais' && value !== 'Argentina' ? { provincia: '' } : {}),
+  }));
+};
+const provinciasAR = [
+  'Buenos Aires','Ciudad Autónoma de Buenos Aires','Catamarca','Chaco',
+  'Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy',
+  'La Pampa','La Rioja','Mendoza','Misiones','Neuquén',
+  'Río Negro','Salta','San Juan','San Luis','Santa Cruz',
+  'Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'
+]
+ useEffect(() => {
+  fetch('https://restcountries.com/v3.1/all?fields=name')
+    .then(res => res.json())
+    .then((data: any[]) => {
+      const list = data.map((c: any) => c.name.common).sort()
+      setPaises(list)
+    })
+    .catch(err => console.error('Error al cargar países:', err))
+}, [])
 
   // --------- EFECTO: recalcular disponibilidad y filtrar por tipo ----------
   useEffect(() => {
@@ -743,6 +769,38 @@ export default function EditarEstadia() {
                 onChange={(e) => setNuevoCliente({ ...nuevoCliente, telefono: e.target.value })}
                 className="w-full p-2 mb-4 border border-[#A27B5B] rounded"
               />
+               <input
+          name="localidad"
+          placeholder="Localidad"
+          value={nuevoCliente.localidad}
+          onChange={handleChange}
+          className="w-full p-2 border border-[#A27B5B] rounded"
+        />
+        <select
+          name="pais"
+          value={nuevoCliente.pais}
+          onChange={handleChange}
+          className="w-full p-2 border border-[#A27B5B] rounded"
+        >
+          <option value="">Seleccione país</option>
+          {paises.map(p => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+        {nuevoCliente.pais === 'Argentina' && (
+          <select
+            name="provincia"
+            value={nuevoCliente.provincia}
+            onChange={handleChange}
+            className="w-full p-2 border border-[#A27B5B] rounded"
+          >
+            <option value="">Provincia</option>
+            {provinciasAR.map(prov => (
+              <option key={prov} value={prov}>{prov}</option>
+            ))}
+          </select>
+        )}
+ 
               <div className="flex justify-between">
                 <button
                   onClick={registrarNuevoCliente}
@@ -758,7 +816,7 @@ export default function EditarEstadia() {
                 </button>
               </div>
             </div>
-          </div>
+                 </div>
         )}
       </div>
     </div>
